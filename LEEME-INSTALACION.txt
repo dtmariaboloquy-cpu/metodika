@@ -1,0 +1,10 @@
+METODIKA V1.0.0
+
+FORMA RECOMENDADA
+1. Abra la dirección web entregada junto con este archivo en Chrome para Android.
+2. Inicie sesión si se solicita.
+3. Abra el menú de Chrome y elija “Instalar aplicación” o “Agregar a pantalla principal”.
+4. Abra METODIKA una vez con conexión. Desde entonces podrá usarla sin internet.
+
+DATOS
+El plantel, las fotos y los partidos se guardan únicamente en ese dispositivo. No borre los datos del navegador si desea conservarlos.
