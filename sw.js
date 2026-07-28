@@ -1,4 +1,4 @@
-const CACHE = "metodika-v1.0.0-yellow";
+const CACHE = "metodika-v1.0.1-export";
 
 const ARCHIVOS = [
   "./",
