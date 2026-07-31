@@ -401,9 +401,11 @@ function PanelCordobeses() {
   const [solicitudes, setSolicitudes] = useState({});
   const [pedidoAbierto, setPedidoAbierto] = useState(false);
   const [nombrePedido, setNombrePedido] = useState("");
+  const [emailPedido, setEmailPedido] = useState("");
   const [jornadaPedido, setJornadaPedido] = useState("");
+  const [adminExtra, setAdminExtra] = useState(false);
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
-  const esCoordinadora = sesion?.uid === ADMIN_UID;
+  const esCoordinadora = sesion?.uid === ADMIN_UID || adminExtra;
   const API_KEY = "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k";
   const DB_URL = "https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
 
@@ -451,7 +453,9 @@ function PanelCordobeses() {
       if (activo) {
         setEstados(est); setExtras(ext); setCruces(cru); setResultados(res); setResponsables(resp);
         setPermisos(await leer(`panelPermisos/${sesion.uid}`) || {});
-        if (sesion.uid === ADMIN_UID) setSolicitudes(await leer("panelSolicitudes") || {});
+        const extra = (await leer(`panelAdministradores/${sesion.uid}`)) === true;
+        setAdminExtra(extra);
+        if (sesion.uid === ADMIN_UID || extra) setSolicitudes(await leer("panelSolicitudes") || {});
       }
     };
     cargar(); const timer = setInterval(cargar, 5000);
@@ -460,12 +464,17 @@ function PanelCordobeses() {
 
   const guardarJornada = (id, campo, valor) => peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
   const solicitarAcceso = async () => {
-    if (!sesion || !nombrePedido.trim() || !jornadaPedido) return;
-    await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), jornadaId: jornadaPedido, creado: Date.now() });
+    if (!sesion || !nombrePedido.trim() || !emailPedido.trim() || !jornadaPedido) return;
+    await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), email: emailPedido.trim().toLowerCase(), jornadaId: jornadaPedido, creado: Date.now() });
     setPedidoAbierto(false);
   };
   const aprobarSolicitud = async (uid, jornadaId) => {
     await peticionDb(`panelPermisos/${uid}/${jornadaId}`, "PUT", true);
+    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
+    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
+  };
+  const aprobarAdministrador = async (uid) => {
+    await peticionDb(`panelAdministradores/${uid}`, "PUT", true);
     await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
     setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
   };
@@ -499,19 +508,20 @@ function PanelCordobeses() {
           {!esCoordinadora && <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
         </div>
         {pedidoAbierto && (
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(150px,1fr) minmax(180px,2fr) auto", gap: 7, marginTop: 9 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
             <input value={nombrePedido} onChange={(e) => setNombrePedido(e.target.value)} placeholder="Tu nombre y apellido" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <input value={emailPedido} onChange={(e) => setEmailPedido(e.target.value)} type="email" placeholder="Tu correo electrónico" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
             <select value={jornadaPedido} onChange={(e) => setJornadaPedido(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
               <option value="">Elegí la jornada</option>
               {[...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].map((j) => <option key={j.id} value={j.id}>{j.fecha} · {j.categoria} · {j.grupo || j.instancia}</option>)}
             </select>
-            <button onClick={solicitarAcceso} disabled={!nombrePedido.trim() || !jornadaPedido} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11 }}>Enviar solicitud</button>
+            <button onClick={solicitarAcceso} disabled={!nombrePedido.trim() || !emailPedido.trim() || !jornadaPedido} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11 }}>Enviar solicitud</button>
           </div>
         )}
         {esCoordinadora && Object.entries(solicitudes).length > 0 && (
           <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Solicitudes pendientes</div>
-            {Object.entries(solicitudes).map(([uid, s]) => <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11 }}><span><strong>{s.nombre}</strong> · {s.jornadaId}</span><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar</button></div>)}
+            {Object.entries(solicitudes).map(([uid, s]) => <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}><span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span><span style={{ display: "flex", gap: 5 }}><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar jornada</button><button onClick={() => aprobarAdministrador(uid)} disabled={s.email !== "cbajuega@gmail.com"} style={{ border: "none", background: s.email === "cbajuega@gmail.com" ? C.primario : C.sub, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: s.email === "cbajuega@gmail.com" ? 1 : 0.45 }}>Hacer administrador</button></span></div>)}
           </div>
         )}
       </div>
