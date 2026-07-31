@@ -1,0 +1,452 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel" data-presets="env,react">
+const { useState } = React;
+
+const C = {
+  bg: "#F4F5F7",
+  card: "#FFFFFF",
+  border: "#E2E5EA",
+  ink: "#1F2430",
+  sub: "#6B7280",
+  primario: "#1E3A5F",
+  primarioClaro: "#EAF0F8",
+  rojoLogo: "#D42D3F",
+  doradoLogo: "#C9973B",
+  verde: "#1D8A4E",
+  rojo: "#C0392B",
+  amarillo: "#B7791F",
+};
+
+const DATOS_CORDOBESES = {"masculino": [{"fecha": "06-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["Centro de Ed. Activa John Dewey", "Fasta Sto Domingo de Guzmán", "IPEM 206 Fernando Fader A", "IPEM 206 Fernando Fader B", "I.P.E.M. N° 155 Juan Jose Paso", "IPEM 20 Rodolfo Walsh"], "id": "m1"}, {"fecha": "10-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["IPEM N° 202 Dr. Luis F. Leloir A", "IPEM N° 202 Dr. Luis F. Leloir B", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "IPET 404", "IPEM Nº 7 \"Prof. Carlos Segreti\""], "id": "m2"}, {"fecha": "12-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-4", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 123", "Instituto Dalmacio Vélez Sarsfield A", "Instituto Dalmacio Vélez Sarsfield B", "Ipem 195 Ttte Pedro Ignacio Bean A", "Ipem 195 Ttte Pedro Ignacio Bean B", "Ipem 311 Pablo Gaitán A", "Ipem 311 Pablo Gaitán B", "San Patricio", "IPEM N 167 José Manuel Estrada", "IPET 64 Malvinas Argentinas", "IPEM 176 Granadero José Márquez", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "IPET N° 416", "IPET 312 Dalmacio Vélez Sarsfield", "IPEM 207 Eduardo Requena", "Ipem 400 Primero de Mayo", "Fasta Villa Eucarística", "IPEM 114 Arturo Jauretche"], "id": "m3"}, {"fecha": "14-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["E.S.C.M.B A", "E.S.C.M.B B", "Escuela San Jerónimo", "IPEM 360 Edgard Toledo", "Ins. Sec. General San Martín", "IPET 383 Nikola Tesla", "Colegio Adolfo Bioy Casares", "Instituto San Carlos", "IPEM N° 433 Manuel Sadosky", "Instituto Técnico Renault", "IPET N° 251 Guarnición Aérea Cba.", "I.P.E.M. N° 138 Jerónimo Luis Cabrera", "IPET N° 247 Ing. Carlos A. Cassaffousth A", "IPET N° 247 Ing. Carlos A. Cassaffousth B", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural"], "id": "m4"}, {"fecha": "18-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-2", "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 375 Leonor Marzano", "Instituto Educativo Alta Córdoba", "IPET 57 Comodoro Martín Rivadavia", "IPEM 169 Rafael M. Escuti", "Liceo Militar General Paz A", "Liceo Militar General Paz B", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM N° 358 Alejandro Papalini", "Instituto Técnico Héctor Valdivielso", "IPET N 351 Augusto Chammas"], "id": "m5"}, {"fecha": "19-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["Instituto Privado San Isidro", "IPEM N° 296 Amancio Williams", "IPEMYT 149 Dr. Alejandro Carbó", "IPETYMT 149 Alejandro Carbó P.I.T", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B", "IPEM y T José Campellone", "IPEM 115 Sarmiento"], "id": "m6"}, {"fecha": "19-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["E.S.C.M.B A", "IPEM 360 Edgard Toledo", "IPET 383 Nikola Tesla", "Colegio Adolfo Bioy Casares", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural", "Instituto Privado San Isidro", "Instituto Nuestra Señora del Huerto", "IPEMYT 149 Dr. Alejandro Carbó", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B"], "id": "m7"}, {"fecha": "20-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "1-2", "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 375 Leonor Marzano", "Instituto Educativo Alta Córdoba", "IPEM 169 Rafael M. Escuti", "Liceo Militar General Paz", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM 338 Dr. Salvador Mazza", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas"], "id": "m8"}, {"fecha": "21-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["Fasta Sto Domingo de Guzmán", "I.P.E.M. N° 155 Juan Jose Paso", "IPEM 20 Rodolfo Walsh", "IPEM N° 202 Dr. Luis F. Leloir A", "IPEM N° 202 Dr. Luis F. Leloir B", "IPEM Nº 7 \"Prof. Carlos Segreti\"", "IPET 404", "Castelfranco"], "id": "m9"}, {"fecha": "28-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "8-4", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 123", "IPET 312 Dalmacio Vélez Sarsfield", "IPET 64 Malvinas Argentinas", "IPEM 176 Granadero José Márquez", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Ipet 77 Gdor. Santiago del Castillo A y B", "San Patricio", "IPEM 207 Eduardo Requena", "Instituto Dalmacio Vélez Sarsfield", "Fasta Villa Eucarística", "IPEM 114 Arturo Jauretche"], "id": "m10"}, {"fecha": "02-09", "categoria": "SUB 16", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m11"}, {"fecha": "02-09", "categoria": "SUB 14", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m12"}, {"fecha": "08-09", "categoria": "SUB 16", "instancia": "REGIONAL SUR", "grupo": null, "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m13"}, {"fecha": "08-09", "categoria": "SUB 14", "instancia": "REGIONAL SUR", "grupo": null, "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m14"}], "femenino": [{"fecha": "11-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "1-1", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["Institución Escuti", "I.P.E.M. N° 155 Juan José Paso", "IPEM 20 Rodolfo Walsh", "IPEM N° 202 \"Dr. Luis F. Leloir\"", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "IPET 404", "Instituto Santa Ana"], "id": "f1"}, {"fecha": "11-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "1-2", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["Liceo Militar General Paz", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM 338 Dr. Salvador Mazza", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas", "IPEM 21 Alfonsina Storni"], "id": "f2"}, {"fecha": "13-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "1-1", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["Institución Escuti", "I.P.E.M. N° 155 Juan José Paso", "IPEM N° 202 \"Dr. Luis F. Leloir\"", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "Instituto Santa Ana"], "id": "f3"}, {"fecha": "13-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "1-2", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["IPET 57 Comodoro Martín Rivadavia", "IPET 22 Juan Filloy", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas", "Instituto Técnico Héctor Valdivielso"], "id": "f4"}, {"fecha": "21-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "8-3", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["E.S.C.M.B", "IPEM 360 Edgard Toledo", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural", "Instituto Privado San Isidro", "IPEMYT 149 Dr. Alejandro Carbó", "Col. Sec. William C. Morris"], "id": "f5"}, {"fecha": "24-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "8-3", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 4, "equipos": ["E.S.C.M.B A", "E.S.C.M.B B", "E.S.C.M.B C", "Escuela San Jerónimo", "IPEM 360 Edgard Toledo", "Inst. Sec. General San Martín A", "Inst. Sec. General San Martín B", "Instituto San Carlos", "IPEM N° 433 Manuel Sadosky", "I.P.E.M. N° 138 Jerónimo L. Cabrera", "Instituto San Luis Gonzaga", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo", "Instituto Privado San Isidro", "IPEM N° 296 Amancio Williams", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B", "Colegio Adolfo Bioy Casares"], "id": "f6"}, {"fecha": "25-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "8-4", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 3, "equipos": ["IPEM 123", "IPEMyT 310 Puerto Argentino", "IPET 312 Dalmacio Vélez Sarsfield A", "IPET 312 Dalmacio Vélez Sarsfield B", "IPET 64 Malvinas Argentinas", "IPEM 176 Gdero. José Márquez A", "IPEM 176 Gdero. José Márquez B", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Ipet 77 Gdor. Santiago del Castillo", "Inst. Parroq. Cristo Redentor", "Colegio 25 de Mayo", "IPEM 207 Eduardo Requena", "Fasta Villa Eucarística", "Colegio Adolfo Bioy Casares"], "id": "f7"}, {"fecha": "26-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "8-4", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["IPEM 123", "IPET 312 Dalmacio Vélez Sarsfield A", "IPET 312 Dalmacio Vélez Sarsfield B", "IPEMyT 310 Puerto Argentino", "IPET 64 Malvinas Argentinas", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Instituto San Patricio", "Colegio 25 de Mayo", "IPEM 207 Eduardo Requena", "Esc. N. Dr. Agustín Garzón Agulla", "IPEM 176 Granadero José Márquez"], "id": "f8"}, {"fecha": "03-09", "categoria": "SUB 15", "instancia": "REGIONAL SUR", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f9"}, {"fecha": "03-09", "categoria": "SUB 18", "instancia": "REGIONAL SUR", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f10"}, {"fecha": "14-09", "categoria": "SUB 15", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f11"}, {"fecha": "14-09", "categoria": "SUB 18", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f12"}]};
+
+
+function Badge({ children, color, bg }) {
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, color: color, background: bg, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap" }}>
+      {children}
+    </span>
+  );
+}
+
+function ResultadoInput({ value, onChange }) {
+  return (
+    <input
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Resultado / posición"
+      style={{ fontSize: 11, padding: "4px 8px", borderRadius: 5, border: `1px solid ${C.border}`, color: C.ink, width: 150 }}
+    />
+  );
+}
+
+function parseCanchas(sede) {
+  const m = (sede || "").match(/(\d+)\s*cancha/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas) {
+  const canchasPorZona = Math.max(1, Math.floor(numCanchas / numZonas));
+  const partidos = [];
+  for (let i = 0; i < equipos.length; i++) {
+    for (let j = i + 1; j < equipos.length; j++) {
+      const k = partidos.length;
+      const cancha = ((zonaIdx * canchasPorZona + k) % numCanchas) + 1;
+      partidos.push({ local: equipos[i], visitante: equipos[j], cancha, key: zonaIdx + "|" + equipos[i] + "|" + equipos[j] });
+    }
+  }
+  return partidos;
+}
+
+function tablaPosiciones(equipos, partidos, resultados) {
+  const tabla = {};
+  equipos.forEach((eq) => (tabla[eq] = { equipo: eq, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }));
+  partidos.forEach((partido) => {
+    const r = resultados[partido.key];
+    if (!r || r.gl === "" || r.gv === "" || r.gl == null || r.gv == null) return;
+    const gl = parseInt(r.gl), gv = parseInt(r.gv);
+    if (isNaN(gl) || isNaN(gv)) return;
+    const L = tabla[partido.local], V = tabla[partido.visitante];
+    L.pj++; V.pj++;
+    L.gf += gl; L.gc += gv;
+    V.gf += gv; V.gc += gl;
+    if (gl > gv) { L.g++; V.p++; }
+    else if (gl < gv) { V.g++; L.p++; }
+    else { L.e++; V.e++; }
+  });
+  return Object.values(tabla)
+    .map((t) => ({ ...t, dg: t.gf - t.gc, pts: t.g * 3 + t.e }))
+    .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+}
+
+function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSorteo, resultados, setResultado, C }) {
+  const numZonas = config?.numZonas || 1;
+  const numCanchas = config?.numCanchas || parseCanchas(jornada.sede);
+
+  const bolsa = sorteo?.bolsa || null;
+  const orden = sorteo?.orden || [];
+  const asignacion = {};
+  orden.forEach((eq, i) => (asignacion[eq] = i % numZonas));
+
+  const iniciarSorteo = () => {
+    const mezclado = [...equiposActivos];
+    for (let i = mezclado.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mezclado[i], mezclado[j]] = [mezclado[j], mezclado[i]];
+    }
+    setSorteo({ bolsa: mezclado, orden: [] });
+  };
+
+  const distribuirAutomatico = () => {
+    const mezclado = [...equiposActivos];
+    for (let i = mezclado.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mezclado[i], mezclado[j]] = [mezclado[j], mezclado[i]];
+    }
+    setSorteo({ bolsa: [], orden: mezclado });
+  };
+
+  const sacarEquipo = () => {
+    if (!bolsa || bolsa.length === 0) return;
+    const [saliente, ...resto] = bolsa;
+    setSorteo({ bolsa: resto, orden: [...orden, saliente] });
+  };
+
+  const reiniciar = () => setSorteo({ bolsa: null, orden: [] });
+
+  // si se agregó o bajó un equipo después de armar el sorteo, lo mandamos de nuevo a la bolsa
+  const enSorteo = new Set([...(bolsa || []), ...orden]);
+  const pendientesDeBolsa = equiposActivos.filter((e) => !enSorteo.has(e));
+
+  const zonas = Array.from({ length: numZonas }, (_, zi) => orden.filter((_, i) => i % numZonas === zi));
+  const ultimoSacado = orden[orden.length - 1];
+
+  return (
+    <div style={{ background: "#F7F8FA", borderRadius: 8, padding: 12, marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Zonas
+          <input type="number" min="1" value={numZonas} onChange={(e) => setConfig({ ...config, numZonas: Math.max(1, parseInt(e.target.value) || 1) })} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+        </label>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Canchas disponibles
+          <input type="number" min="1" value={numCanchas} onChange={(e) => setConfig({ ...config, numCanchas: Math.max(1, parseInt(e.target.value) || 1) })} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+        </label>
+        <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · van entrando a las zonas 1→{numZonas}→1… en el orden que salen</span>
+      </div>
+
+      {!bolsa ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+            🎱 Sorteo en vivo, uno por uno
+          </button>
+          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
+            ⚡ Distribuir automáticamente, todo junto
+          </button>
+        </div>
+      ) : bolsa.length === 0 && orden.length > 0 ? (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <Badge color="#fff" bg={C.verde}>✓ Distribución lista</Badge>
+            {pendientesDeBolsa.length > 0 && (
+              <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin asignar</span>
+            )}
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Volver a armar</button>
+          </div>
+          {pendientesDeBolsa.length > 0 && (
+            <button onClick={() => setSorteo({ bolsa: pendientesDeBolsa, orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
+              Sortear los equipos nuevos
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <button onClick={sacarEquipo} disabled={bolsa.length === 0} style={{ fontSize: 13, padding: "10px 20px", borderRadius: 8, border: "none", background: bolsa.length ? C.verde : "#C9CDD3", color: "#fff", fontWeight: 800, cursor: bolsa.length ? "pointer" : "default" }}>
+              🎱 Sacar el próximo equipo
+            </button>
+            <span style={{ fontSize: 12, color: C.sub }}>Quedan {bolsa.length} en la bolsa</span>
+            {pendientesDeBolsa.length > 0 && (
+              <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin meter en la bolsa</span>
+            )}
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Reiniciar sorteo</button>
+          </div>
+
+          {pendientesDeBolsa.length > 0 && (
+            <button onClick={() => setSorteo({ bolsa: [...bolsa, ...pendientesDeBolsa], orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
+              Meter los nuevos en la bolsa
+            </button>
+          )}
+
+          {ultimoSacado && (
+            <div style={{ background: C.primario, color: "#fff", borderRadius: 10, padding: "14px 18px", textAlign: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 10, opacity: 0.8, letterSpacing: 1, marginBottom: 4 }}>SALIÓ</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{ultimoSacado}</div>
+              <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>→ Zona {((orden.length - 1) % numZonas) + 1}</div>
+            </div>
+          )}
+        </>
+      )}
+
+      {orden.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, 1fr)`, gap: 10, marginTop: 4 }}>
+          {zonas.map((equipos, zi) => {
+            const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas);
+            const tabla = tablaPosiciones(equipos, partidos, resultados);
+            return (
+              <div key={zi} style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.primario, marginBottom: 6 }}>ZONA {zi + 1} ({equipos.length})</div>
+                {equipos.map((eq, i) => (
+                  <div key={eq} style={{ fontSize: 11, color: eq === ultimoSacado ? C.verde : C.ink, fontWeight: eq === ultimoSacado ? 700 : 400, marginBottom: 3 }}>
+                    {i + 1}. {eq}
+                  </div>
+                ))}
+                {equipos.length >= 2 && (
+                  <>
+                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
+                      <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, marginBottom: 4 }}>PARTIDOS Y RESULTADO</div>
+                      {partidos.map((p) => {
+                        const r = resultados[p.key] || {};
+                        return (
+                          <div key={p.key} style={{ fontSize: 10, color: C.ink, marginBottom: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.local} <span style={{ color: C.sub }}>vs</span> {p.visitante}</span>
+                            <input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, { ...r, gl: e.target.value })} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
+                            <span style={{ color: C.sub }}>-</span>
+                            <input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, { ...r, gv: e.target.value })} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
+                            <span style={{ color: C.primario, fontWeight: 700, fontSize: 9, whiteSpace: "nowrap" }}>C{p.cancha}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
+                      <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, marginBottom: 4 }}>TABLA DE POSICIONES</div>
+                      <table style={{ width: "100%", fontSize: 9, color: C.ink, borderCollapse: "collapse" }}>
+                        <thead>
+                          <tr style={{ color: C.sub, textAlign: "center" }}>
+                            <th style={{ textAlign: "left", fontWeight: 600 }}>Equipo</th>
+                            <th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tabla.map((t, ti) => (
+                            <tr key={t.equipo} style={{ textAlign: "center", background: ti < (jornada.ganadores || 1) ? "#EAF6EE" : "transparent" }}>
+                              <td style={{ textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 90, fontWeight: ti < (jornada.ganadores || 1) ? 700 : 400 }}>{t.equipo}</td>
+                              <td>{t.pj}</td><td>{t.g}</td><td>{t.e}</td><td>{t.p}</td><td>{t.gf}</td><td>{t.gc}</td><td>{t.dg}</td><td style={{ fontWeight: 800 }}>{t.pts}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EquipoRow({ equipo, estado, onToggleBajo, onResultado, ramaColor }) {
+  const bajo = estado?.bajo;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 6, background: bajo ? "#FBEAEA" : "#FAFAFB", opacity: bajo ? 0.75 : 1 }}>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flex: 1, minWidth: 0 }}>
+        <input type="checkbox" checked={!!bajo} onChange={(e) => onToggleBajo(e.target.checked)} />
+        <span style={{ fontSize: 12, color: bajo ? C.rojo : C.ink, textDecoration: bajo ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {equipo}
+        </span>
+      </label>
+      {bajo && <Badge color="#fff" bg={C.rojo}>BAJÓ</Badge>}
+      <ResultadoInput value={estado?.resultado} onChange={onResultado} />
+    </div>
+  );
+}
+
+function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado }) {
+  const [abierto, setAbierto] = useState(false);
+  const [nuevoEquipo, setNuevoEquipo] = useState("");
+
+  const equiposCompletos = [...jornada.equipos, ...(extras || [])];
+  const nBajas = equiposCompletos.filter((_, i) => estados[jornada.id + "-" + i]?.bajo).length;
+  const equiposActivos = equiposCompletos.filter((_, i) => !estados[jornada.id + "-" + i]?.bajo);
+
+  const config = cruces?.config || { numZonas: 1, numCanchas: parseCanchas(jornada.sede) };
+  const sorteo = cruces?.sorteo || { bolsa: null, orden: [] };
+
+  const agregarEquipo = () => {
+    if (!nuevoEquipo.trim()) return;
+    setExtras([...(extras || []), nuevoEquipo.trim()]);
+    setNuevoEquipo("");
+  };
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+      <div onClick={() => !jornada.pendiente && setAbierto((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: jornada.pendiente ? "default" : "pointer", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ background: ramaColor, color: "#fff", borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 52 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>{jornada.fecha.split("-")[0]}</div>
+            <div style={{ fontSize: 9, fontWeight: 600, opacity: 0.85 }}>{["","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"][parseInt(jornada.fecha.split("-")[1])]}</div>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{jornada.categoria}</span>
+              <Badge color={C.primario} bg={C.primarioClaro}>{jornada.instancia}</Badge>
+              {jornada.grupo && <Badge color={C.sub} bg="#EEF0F3">Grupo {jornada.grupo}</Badge>}
+              {nBajas > 0 && <Badge color="#fff" bg={C.rojo}>{nBajas} baja{nBajas > 1 ? "s" : ""}</Badge>}
+            </div>
+            <div style={{ fontSize: 11, color: C.sub }}>{jornada.sede} · {jornada.horario}{jornada.ganadores ? ` · clasifican ${jornada.ganadores}` : ""}</div>
+          </div>
+        </div>
+        {!jornada.pendiente && (
+          <div style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+            {equiposCompletos.length} equipos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span>
+          </div>
+        )}
+      </div>
+
+      {jornada.pendiente && (
+        <div style={{ padding: "0 14px 14px", fontSize: 12, color: C.sub, fontStyle: "italic" }}>
+          A definir — se completa con las clasificadas de la fase zonal.
+        </div>
+      )}
+
+      {abierto && !jornada.pendiente && (
+        <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
+          {equiposCompletos.map((eq, i) => {
+            const key = jornada.id + "-" + i;
+            return (
+              <EquipoRow
+                key={key}
+                equipo={eq}
+                estado={estados[key]}
+                ramaColor={ramaColor}
+                onToggleBajo={(v) => setEstado(key, { ...estados[key], bajo: v })}
+                onResultado={(v) => setEstado(key, { ...estados[key], resultado: v })}
+              />
+            );
+          })}
+
+          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <input
+              value={nuevoEquipo}
+              onChange={(e) => setNuevoEquipo(e.target.value)}
+              placeholder="Agregar institución a esta jornada…"
+              style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, color: C.ink }}
+            />
+            <button onClick={agregarEquipo} disabled={!nuevoEquipo.trim()} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: nuevoEquipo.trim() ? "pointer" : "not-allowed", opacity: nuevoEquipo.trim() ? 1 : 0.5 }}>＋ Agregar</button>
+          </div>
+
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Armar cruces (sorteo) y resultados</div>
+            <div style={{ fontSize: 11, color: C.sub, marginBottom: 6 }}>Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, GF, GC, DG, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>
+            <CrucesPanel
+              jornada={jornada}
+              equiposActivos={equiposActivos}
+              config={config}
+              setConfig={(c) => setCruces({ config: c, sorteo })}
+              sorteo={sorteo}
+              setSorteo={(s) => setCruces({ config, sorteo: s })}
+              resultados={resultados || {}}
+              setResultado={(key, val) => setResultado({ ...(resultados || {}), [key]: val })}
+              C={C}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PanelCordobeses() {
+  const [rama, setRama] = useState("femenino");
+  const [busqueda, setBusqueda] = useState("");
+  const [estados, setEstados] = useState({});
+  const [extras, setExtras] = useState({});
+  const [cruces, setCruces] = useState({});
+  const [resultados, setResultados] = useState({});
+
+  const setEstado = (key, val) => setEstados((prev) => ({ ...prev, [key]: val }));
+
+  const jornadas = DATOS_CORDOBESES[rama];
+  const ramaColor = rama === "masculino" ? C.doradoLogo : C.rojoLogo;
+
+  const filtradas = busqueda.trim()
+    ? jornadas.filter((j) => j.equipos.some((e) => e.toLowerCase().includes(busqueda.toLowerCase())) || j.categoria.toLowerCase().includes(busqueda.toLowerCase()))
+    : jornadas;
+
+  const totalEquipos = jornadas.reduce((s, j) => s + j.equipos.length, 0);
+  const totalBajas = Object.values(estados).filter((e) => e?.bajo).length;
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100%", fontFamily: "'Inter', Arial, sans-serif", padding: 20, borderRadius: 12 }}>
+      <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <img src="https://placehold.co/160x80/102a43/ffffff?text=CORDOBESES" alt="Cordobeses Juegan" style={{ height: 54, width: "auto" }} />
+        <div>
+          <div style={{ fontSize: 11, color: C.sub, fontWeight: 700, letterSpacing: 0.6 }}>ESQUEMA DE COMPETENCIA 2026</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, fontFamily: "Georgia, serif" }}>Fútbol — Fixture y seguimiento de equipos</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {[{ k: "femenino", label: "Femenino" }, { k: "masculino", label: "Masculino" }].map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setRama(t.k)}
+              style={{ fontSize: 13, padding: "8px 18px", borderRadius: 8, border: "none", background: rama === t.k ? (t.k === "masculino" ? C.doradoLogo : C.rojoLogo) : C.card, color: rama === t.k ? "#fff" : C.ink, fontWeight: 700, cursor: "pointer", boxShadow: rama === t.k ? "none" : `inset 0 0 0 1px ${C.border}` }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar institución o categoría…"
+          style={{ fontSize: 12, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, color: C.ink, width: 220 }}
+        />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 18 }}>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Jornadas</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{jornadas.length}</div>
+        </div>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Instituciones anotadas</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{totalEquipos}</div>
+        </div>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Bajas cargadas</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: totalBajas ? C.rojo : C.ink }}>{totalBajas}</div>
+        </div>
+      </div>
+
+      {filtradas.length === 0 && <div style={{ fontSize: 13, color: C.sub, fontStyle: "italic" }}>No hay resultados para "{busqueda}".</div>}
+
+      {filtradas.map((j) => (
+        <JornadaCard
+          key={j.id}
+          jornada={j}
+          estados={estados}
+          setEstado={setEstado}
+          ramaColor={ramaColor}
+          ramaLabel={rama}
+          extras={extras[j.id]}
+          setExtras={(v) => setExtras((prev) => ({ ...prev, [j.id]: v }))}
+          cruces={cruces[j.id]}
+          setCruces={(v) => setCruces((prev) => ({ ...prev, [j.id]: v }))}
+          resultados={resultados[j.id]}
+          setResultado={(v) => setResultados((prev) => ({ ...prev, [j.id]: v }))}
+        />
+      ))}
+
+      <div style={{ fontSize: 11, color: C.sub, marginTop: 14, fontStyle: "italic" }}>
+        Tocá una jornada para desplegar las instituciones. Los cambios (bajas y resultados) quedan guardados mientras dure esta sesión.
+      </div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PanelCordobeses/>);</script></body></html>
