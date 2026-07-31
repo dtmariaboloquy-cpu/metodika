@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}@media(max-width:650px){.access-grid{grid-template-columns:1fr!important}}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/firebase@10.14.1/firebase-app-compat.js"></script><script src="https://unpkg.com/firebase@10.14.1/firebase-auth-compat.js"></script><script src="https://unpkg.com/firebase@10.14.1/firebase-database-compat.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
 const { useEffect, useState } = React;
 
 const C = {
@@ -396,34 +396,50 @@ function PanelCordobeses() {
   const [cruces, setCruces] = useState({});
   const [resultados, setResultados] = useState({});
   const [responsables, setResponsables] = useState({});
-  const [firebaseDb, setFirebaseDb] = useState(null);
-  const [usuario, setUsuario] = useState(null);
+  const [sesion, setSesion] = useState(null);
   const [permisos, setPermisos] = useState({});
   const [solicitudes, setSolicitudes] = useState({});
   const [pedidoAbierto, setPedidoAbierto] = useState(false);
   const [nombrePedido, setNombrePedido] = useState("");
   const [jornadaPedido, setJornadaPedido] = useState("");
   const ADMIN_UID = "__ADMIN_UID__";
-  const esCoordinadora = usuario?.uid === ADMIN_UID;
+  const esCoordinadora = sesion?.uid === ADMIN_UID;
+  const API_KEY = "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k";
+  const DB_URL = "https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
+
+  const peticionDb = async (ruta, metodo = "GET", valor) => {
+    if (!sesion?.token) return null;
+    const r = await fetch(`${DB_URL}/${ruta}.json?auth=${sesion.token}`, { method: metodo, headers: { "Content-Type": "application/json" }, body: valor === undefined ? undefined : JSON.stringify(valor) });
+    if (!r.ok) throw new Error("No se pudo guardar la información");
+    return metodo === "DELETE" ? null : r.json();
+  };
 
   useEffect(() => {
-    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp({
-      apiKey: "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k",
-      authDomain: "metodika-dt-multijugador.firebaseapp.com",
-      databaseURL: "https://metodika-dt-multijugador-default-rtdb.firebaseio.com",
-      projectId: "metodika-dt-multijugador",
-      appId: "1:339728781225:web:aaa90de2b08a77c5ff7eb8"
-    });
-    const db = app.database();
-    const auth = app.auth();
-    setFirebaseDb(db);
-    const salirAuth = auth.onAuthStateChanged((u) => {
-      if (u) setUsuario(u);
-      else auth.signInAnonymously();
-    });
-    const datosRef = db.ref("panelCordobeses/jornadas");
-    datosRef.on("value", (snap) => {
-      const datos = snap.val() || {};
+    let activo = true;
+    (async () => {
+      const guardada = JSON.parse(localStorage.getItem("cordobeses-sesion") || "null");
+      let data;
+      if (guardada?.refreshToken) {
+        const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(guardada.refreshToken)}` });
+        const d = await r.json();
+        if (r.ok) data = { uid: d.user_id, token: d.id_token, refreshToken: d.refresh_token };
+      }
+      if (!data) {
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
+        const d = await r.json();
+        data = { uid: d.localId, token: d.idToken, refreshToken: d.refreshToken };
+      }
+      if (activo) { localStorage.setItem("cordobeses-sesion", JSON.stringify(data)); setSesion(data); }
+    })();
+    return () => { activo = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!sesion) return;
+    let activo = true;
+    const cargar = async () => {
+      const leer = async (ruta) => { const r = await fetch(`${DB_URL}/${ruta}.json?auth=${sesion.token}`); return r.ok ? (await r.json()) : {}; };
+      const datos = await leer("panelCordobeses/jornadas") || {};
       const est = {}, ext = {}, cru = {}, res = {}, resp = {};
       Object.entries(datos).forEach(([id, d]) => {
         Object.assign(est, d.estados || {});
@@ -432,32 +448,26 @@ function PanelCordobeses() {
         res[id] = d.resultados || {};
         resp[id] = d.responsables || {};
       });
-      setEstados(est); setExtras(ext); setCruces(cru); setResultados(res); setResponsables(resp);
-    });
-    return () => { salirAuth(); datosRef.off(); };
-  }, []);
+      if (activo) {
+        setEstados(est); setExtras(ext); setCruces(cru); setResultados(res); setResponsables(resp);
+        setPermisos(await leer(`panelPermisos/${sesion.uid}`) || {});
+        if (sesion.uid === ADMIN_UID) setSolicitudes(await leer("panelSolicitudes") || {});
+      }
+    };
+    cargar(); const timer = setInterval(cargar, 5000);
+    return () => { activo = false; clearInterval(timer); };
+  }, [sesion, ADMIN_UID]);
 
-  useEffect(() => {
-    if (!firebaseDb || !usuario) return;
-    const permisoRef = firebaseDb.ref(`panelPermisos/${usuario.uid}`);
-    permisoRef.on("value", (s) => setPermisos(s.val() || {}));
-    let solicitudesRef = null;
-    if (esCoordinadora) {
-      solicitudesRef = firebaseDb.ref("panelSolicitudes");
-      solicitudesRef.on("value", (s) => setSolicitudes(s.val() || {}));
-    }
-    return () => { permisoRef.off(); if (solicitudesRef) solicitudesRef.off(); };
-  }, [firebaseDb, usuario, esCoordinadora]);
-
-  const guardarJornada = (id, campo, valor) => firebaseDb?.ref(`panelCordobeses/jornadas/${id}/${campo}`).set(valor);
-  const solicitarAcceso = () => {
-    if (!firebaseDb || !usuario || !nombrePedido.trim() || !jornadaPedido) return;
-    firebaseDb.ref(`panelSolicitudes/${usuario.uid}`).set({ nombre: nombrePedido.trim(), jornadaId: jornadaPedido, creado: Date.now() });
+  const guardarJornada = (id, campo, valor) => peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+  const solicitarAcceso = async () => {
+    if (!sesion || !nombrePedido.trim() || !jornadaPedido) return;
+    await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), jornadaId: jornadaPedido, creado: Date.now() });
     setPedidoAbierto(false);
   };
-  const aprobarSolicitud = (uid, jornadaId) => {
-    firebaseDb.ref(`panelPermisos/${uid}/${jornadaId}`).set(true);
-    firebaseDb.ref(`panelSolicitudes/${uid}`).remove();
+  const aprobarSolicitud = async (uid, jornadaId) => {
+    await peticionDb(`panelPermisos/${uid}/${jornadaId}`, "PUT", true);
+    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
+    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
   };
 
   const jornadas = DATOS_CORDOBESES[rama];
