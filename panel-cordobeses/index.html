@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
-const { useEffect, useState } = React;
+const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F4F5F7",
@@ -404,6 +404,7 @@ function PanelCordobeses() {
   const [emailPedido, setEmailPedido] = useState("");
   const [jornadaPedido, setJornadaPedido] = useState("");
   const [adminExtra, setAdminExtra] = useState(false);
+  const ultimaCopia = useRef({});
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
   const esCoordinadora = sesion?.uid === ADMIN_UID || adminExtra;
   const API_KEY = "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k";
@@ -462,7 +463,24 @@ function PanelCordobeses() {
     return () => { activo = false; clearInterval(timer); };
   }, [sesion, ADMIN_UID]);
 
-  const guardarJornada = (id, campo, valor) => peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+  const guardarJornada = async (id, campo, valor) => {
+    const ahora = Date.now();
+    if (!ultimaCopia.current[id] || ahora - ultimaCopia.current[id] > 120000) {
+      const actual = await peticionDb(`panelCordobeses/jornadas/${id}`);
+      if (actual) await peticionDb(`panelHistorial/${id}/${ahora}`, "PUT", { ...actual, guardadoEn: ahora });
+      ultimaCopia.current[id] = ahora;
+    }
+    return peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+  };
+  const descargarRespaldo = async () => {
+    const jornadasGuardadas = await peticionDb("panelCordobeses/jornadas") || {};
+    const contenido = JSON.stringify({ generadoEn: new Date().toISOString(), jornadas: jornadasGuardadas }, null, 2);
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(new Blob([contenido], { type: "application/json" }));
+    enlace.download = `respaldo-cordobeses-${new Date().toISOString().slice(0, 10)}.json`;
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+  };
   const solicitarAcceso = async () => {
     if (!sesion || !nombrePedido.trim() || !emailPedido.trim() || !jornadaPedido) return;
     await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), email: emailPedido.trim().toLowerCase(), jornadaId: jornadaPedido, creado: Date.now() });
@@ -505,7 +523,7 @@ function PanelCordobeses() {
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinadora" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
             <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
           </div>
-          {!esCoordinadora && <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
+          {esCoordinadora ? <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button> : <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
         </div>
         {pedidoAbierto && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
