@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}@media(max-width:650px){.access-grid{grid-template-columns:1fr!important}}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
 const { useEffect, useState } = React;
 
 const C = {
@@ -246,23 +246,23 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   );
 }
 
-function EquipoRow({ equipo, estado, onToggleBajo, onResultado, ramaColor }) {
+function EquipoRow({ equipo, estado, onToggleBajo, onResultado, ramaColor, editable }) {
   const bajo = estado?.bajo;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 6, background: bajo ? "#FBEAEA" : "#FAFAFB", opacity: bajo ? 0.75 : 1 }}>
       <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flex: 1, minWidth: 0 }}>
-        <input type="checkbox" checked={!!bajo} onChange={(e) => onToggleBajo(e.target.checked)} />
+        <input type="checkbox" checked={!!bajo} disabled={!editable} onChange={(e) => onToggleBajo(e.target.checked)} />
         <span style={{ fontSize: 12, color: bajo ? C.rojo : C.ink, textDecoration: bajo ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {equipo}
         </span>
       </label>
       {bajo && <Badge color="#fff" bg={C.rojo}>BAJÓ</Badge>}
-      <ResultadoInput value={estado?.resultado} onChange={onResultado} />
+      <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.8 }}><ResultadoInput value={estado?.resultado} onChange={onResultado} /></div>
     </div>
   );
 }
 
-function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado, responsables, setResponsables }) {
+function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado, responsables, setResponsables, editable }) {
   const [abierto, setAbierto] = useState(false);
   const [responsableAbierto, setResponsableAbierto] = useState(false);
   const [nuevoEquipo, setNuevoEquipo] = useState("");
@@ -303,7 +303,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
             onClick={(e) => { e.stopPropagation(); setResponsableAbierto((v) => !v); }}
             style={{ fontSize: 11, padding: "7px 11px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: responsables?.nombre ? ramaColor : "#fff", color: responsables?.nombre ? "#fff" : ramaColor, fontWeight: 700, cursor: "pointer" }}
           >
-            👤 Responsable de sede
+            👤 {editable ? "Responsable de sede" : "Ver responsable"}
           </button>
           {!jornada.pendiente && <span>{equiposCompletos.length} equipos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>}
         </div>
@@ -315,19 +315,21 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           <input
             value={responsables?.nombre || ""}
             onChange={(e) => setResponsables({ ...(responsables || {}), nombre: e.target.value })}
+            disabled={!editable}
             placeholder="Nombre de la responsable de sede"
             style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, marginBottom: 7, color: C.ink }}
           />
           <textarea
             value={responsables?.staff || ""}
             onChange={(e) => setResponsables({ ...(responsables || {}), staff: e.target.value })}
+            disabled={!editable}
             placeholder={'Staff a cargo (escribí un nombre por línea)'}
             rows={4}
             style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, resize: "vertical", color: C.ink }}
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap" }}>
             <span style={{ fontSize: 10, color: C.sub }}>Los datos quedan asociados únicamente a esta fecha.</span>
-            <button onClick={() => setResponsableAbierto(false)} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+            <button onClick={() => setResponsableAbierto(false)} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>{editable ? "Guardar" : "Cerrar"}</button>
           </div>
         </div>
       )}
@@ -348,13 +350,14 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
                 equipo={eq}
                 estado={estados[key]}
                 ramaColor={ramaColor}
+                editable={editable}
                 onToggleBajo={(v) => setEstado(key, { ...estados[key], bajo: v })}
                 onResultado={(v) => setEstado(key, { ...estados[key], resultado: v })}
               />
             );
           })}
 
-          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+          {editable && <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
             <input
               value={nuevoEquipo}
               onChange={(e) => setNuevoEquipo(e.target.value)}
@@ -362,12 +365,12 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, color: C.ink }}
             />
             <button onClick={agregarEquipo} disabled={!nuevoEquipo.trim()} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: nuevoEquipo.trim() ? "pointer" : "not-allowed", opacity: nuevoEquipo.trim() ? 1 : 0.5 }}>＋ Agregar</button>
-          </div>
+          </div>}
 
           <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Armar cruces (sorteo) y resultados</div>
             <div style={{ fontSize: 11, color: C.sub, marginBottom: 6 }}>Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, GF, GC, DG, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>
-            <CrucesPanel
+            <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.88 }}><CrucesPanel
               jornada={jornada}
               equiposActivos={equiposActivos}
               config={config}
@@ -377,7 +380,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               resultados={resultados || {}}
               setResultado={(key, val) => setResultado({ ...(resultados || {}), [key]: val })}
               C={C}
-            />
+            /></div>
           </div>
         </div>
       )}
@@ -392,16 +395,70 @@ function PanelCordobeses() {
   const [extras, setExtras] = useState({});
   const [cruces, setCruces] = useState({});
   const [resultados, setResultados] = useState({});
-  const [responsables, setResponsables] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("cordobeses-responsables") || "{}"); }
-    catch { return {}; }
-  });
+  const [responsables, setResponsables] = useState({});
+  const [firebaseDb, setFirebaseDb] = useState(null);
+  const [usuario, setUsuario] = useState(null);
+  const [permisos, setPermisos] = useState({});
+  const [solicitudes, setSolicitudes] = useState({});
+  const [pedidoAbierto, setPedidoAbierto] = useState(false);
+  const [nombrePedido, setNombrePedido] = useState("");
+  const [jornadaPedido, setJornadaPedido] = useState("");
+  const ADMIN_UID = "__ADMIN_UID__";
+  const esCoordinadora = usuario?.uid === ADMIN_UID;
 
   useEffect(() => {
-    localStorage.setItem("cordobeses-responsables", JSON.stringify(responsables));
-  }, [responsables]);
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp({
+      apiKey: "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k",
+      authDomain: "metodika-dt-multijugador.firebaseapp.com",
+      databaseURL: "https://metodika-dt-multijugador-default-rtdb.firebaseio.com",
+      projectId: "metodika-dt-multijugador",
+      appId: "1:339728781225:web:aaa90de2b08a77c5ff7eb8"
+    });
+    const db = app.database();
+    const auth = app.auth();
+    setFirebaseDb(db);
+    const salirAuth = auth.onAuthStateChanged((u) => {
+      if (u) setUsuario(u);
+      else auth.signInAnonymously();
+    });
+    const datosRef = db.ref("panelCordobeses/jornadas");
+    datosRef.on("value", (snap) => {
+      const datos = snap.val() || {};
+      const est = {}, ext = {}, cru = {}, res = {}, resp = {};
+      Object.entries(datos).forEach(([id, d]) => {
+        Object.assign(est, d.estados || {});
+        ext[id] = d.extras || [];
+        cru[id] = d.cruces || {};
+        res[id] = d.resultados || {};
+        resp[id] = d.responsables || {};
+      });
+      setEstados(est); setExtras(ext); setCruces(cru); setResultados(res); setResponsables(resp);
+    });
+    return () => { salirAuth(); datosRef.off(); };
+  }, []);
 
-  const setEstado = (key, val) => setEstados((prev) => ({ ...prev, [key]: val }));
+  useEffect(() => {
+    if (!firebaseDb || !usuario) return;
+    const permisoRef = firebaseDb.ref(`panelPermisos/${usuario.uid}`);
+    permisoRef.on("value", (s) => setPermisos(s.val() || {}));
+    let solicitudesRef = null;
+    if (esCoordinadora) {
+      solicitudesRef = firebaseDb.ref("panelSolicitudes");
+      solicitudesRef.on("value", (s) => setSolicitudes(s.val() || {}));
+    }
+    return () => { permisoRef.off(); if (solicitudesRef) solicitudesRef.off(); };
+  }, [firebaseDb, usuario, esCoordinadora]);
+
+  const guardarJornada = (id, campo, valor) => firebaseDb?.ref(`panelCordobeses/jornadas/${id}/${campo}`).set(valor);
+  const solicitarAcceso = () => {
+    if (!firebaseDb || !usuario || !nombrePedido.trim() || !jornadaPedido) return;
+    firebaseDb.ref(`panelSolicitudes/${usuario.uid}`).set({ nombre: nombrePedido.trim(), jornadaId: jornadaPedido, creado: Date.now() });
+    setPedidoAbierto(false);
+  };
+  const aprobarSolicitud = (uid, jornadaId) => {
+    firebaseDb.ref(`panelPermisos/${uid}/${jornadaId}`).set(true);
+    firebaseDb.ref(`panelSolicitudes/${uid}`).remove();
+  };
 
   const jornadas = DATOS_CORDOBESES[rama];
   const ramaColor = rama === "masculino" ? C.doradoLogo : C.rojoLogo;
@@ -421,6 +478,32 @@ function PanelCordobeses() {
           <div style={{ fontSize: 11, color: C.sub, fontWeight: 700, letterSpacing: 0.6 }}>ESQUEMA DE COMPETENCIA 2026</div>
           <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, fontFamily: "Georgia, serif" }}>Fútbol — Fixture y seguimiento de equipos</div>
         </div>
+      </div>
+
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinadora" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
+            <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
+          </div>
+          {!esCoordinadora && <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
+        </div>
+        {pedidoAbierto && (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(150px,1fr) minmax(180px,2fr) auto", gap: 7, marginTop: 9 }}>
+            <input value={nombrePedido} onChange={(e) => setNombrePedido(e.target.value)} placeholder="Tu nombre y apellido" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <select value={jornadaPedido} onChange={(e) => setJornadaPedido(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+              <option value="">Elegí la jornada</option>
+              {[...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].map((j) => <option key={j.id} value={j.id}>{j.fecha} · {j.categoria} · {j.grupo || j.instancia}</option>)}
+            </select>
+            <button onClick={solicitarAcceso} disabled={!nombrePedido.trim() || !jornadaPedido} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11 }}>Enviar solicitud</button>
+          </div>
+        )}
+        {esCoordinadora && Object.entries(solicitudes).length > 0 && (
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Solicitudes pendientes</div>
+            {Object.entries(solicitudes).map(([uid, s]) => <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11 }}><span><strong>{s.nombre}</strong> · {s.jornadaId}</span><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar</button></div>)}
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
@@ -465,17 +548,18 @@ function PanelCordobeses() {
           key={j.id}
           jornada={j}
           estados={estados}
-          setEstado={setEstado}
+          setEstado={(key, v) => guardarJornada(j.id, `estados/${key}`, v)}
           ramaColor={ramaColor}
           ramaLabel={rama}
           extras={extras[j.id]}
-          setExtras={(v) => setExtras((prev) => ({ ...prev, [j.id]: v }))}
+          setExtras={(v) => guardarJornada(j.id, "extras", v)}
           cruces={cruces[j.id]}
-          setCruces={(v) => setCruces((prev) => ({ ...prev, [j.id]: v }))}
+          setCruces={(v) => guardarJornada(j.id, "cruces", v)}
           resultados={resultados[j.id]}
-          setResultado={(v) => setResultados((prev) => ({ ...prev, [j.id]: v }))}
+          setResultado={(v) => guardarJornada(j.id, "resultados", v)}
           responsables={responsables[j.id]}
-          setResponsables={(v) => setResponsables((prev) => ({ ...prev, [j.id]: v }))}
+          setResponsables={(v) => guardarJornada(j.id, "responsables", v)}
+          editable={esCoordinadora || permisos[j.id] === true}
         />
       ))}
 
