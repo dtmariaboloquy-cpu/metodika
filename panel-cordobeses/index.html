@@ -632,17 +632,17 @@ function PanelCordobeses() {
           key={j.id}
           jornada={j}
           estados={estados}
-          setEstado={(key, v) => guardarJornada(j.id, `estados/${key}`, v)}
+          setEstado={(key, v) => { setEstados((prev) => ({ ...prev, [key]: v })); guardarJornada(j.id, `estados/${key}`, v); }}
           ramaColor={ramaColor}
           ramaLabel={rama}
           extras={extras[j.id]}
-          setExtras={(v) => guardarJornada(j.id, "extras", v)}
+          setExtras={(v) => { setExtras((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "extras", v); }}
           cruces={cruces[j.id]}
-          setCruces={(v) => guardarJornada(j.id, "cruces", v)}
+          setCruces={(v) => { setCruces((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "cruces", v); }}
           resultados={resultados[j.id]}
-          setResultado={(v) => guardarJornada(j.id, "resultados", v)}
+          setResultado={(v) => { setResultados((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "resultados", v); }}
           responsables={responsables[j.id]}
-          setResponsables={(v) => guardarJornada(j.id, "responsables", v)}
+          setResponsables={(v) => { setResponsables((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "responsables", v); }}
           editable={esCoordinadora || permisos[j.id] === true}
         />
       ))}
