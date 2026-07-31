@@ -1,5 +1,4 @@
 <!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
-const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F4F5F7",
@@ -398,6 +397,9 @@ function PanelCordobeses() {
   const [cruces, setCruces] = useState({});
   const [resultados, setResultados] = useState({});
   const [responsables, setResponsables] = useState({});
+  const [puedeDeshacer, setPuedeDeshacer] = useState(false);
+  const [deshaciendo, setDeshaciendo] = useState(false);
+  const historialLocal = useRef([]);
   const [sesion, setSesion] = useState(null);
   const [permisos, setPermisos] = useState({});
   const [solicitudes, setSolicitudes] = useState({});
@@ -466,13 +468,37 @@ function PanelCordobeses() {
   }, [sesion, ADMIN_UID]);
 
   const guardarJornada = async (id, campo, valor) => {
+    const rutaCampo = `panelCordobeses/jornadas/${id}/${campo}`;
+    const valorAnterior = await peticionDb(rutaCampo);
+    historialLocal.current.push({ id, campo, valorAnterior: valorAnterior ?? null });
+    if (historialLocal.current.length > 20) historialLocal.current.shift();
+    setPuedeDeshacer(true);
     const ahora = Date.now();
     if (!ultimaCopia.current[id] || ahora - ultimaCopia.current[id] > 120000) {
       const actual = await peticionDb(`panelCordobeses/jornadas/${id}`);
       if (actual) await peticionDb(`panelHistorial/${id}/${ahora}`, "PUT", { ...actual, guardadoEn: ahora });
       ultimaCopia.current[id] = ahora;
     }
-    return peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+    return peticionDb(rutaCampo, "PUT", valor);
+  };
+  const deshacerUltimoCambio = async () => {
+    if (deshaciendo || !historialLocal.current.length) return;
+    setDeshaciendo(true);
+    const ultimo = historialLocal.current.pop();
+    const { id, campo, valorAnterior } = ultimo;
+    const ruta = `panelCordobeses/jornadas/${id}/${campo}`;
+    await peticionDb(ruta, valorAnterior === null ? "DELETE" : "PUT", valorAnterior === null ? undefined : valorAnterior);
+
+    if (campo.startsWith("estados/")) {
+      const key = campo.slice("estados/".length);
+      setEstados((prev) => { const n = { ...prev }; if (valorAnterior === null) delete n[key]; else n[key] = valorAnterior; return n; });
+    } else if (campo === "extras") setExtras((prev) => ({ ...prev, [id]: valorAnterior || [] }));
+    else if (campo === "cruces") setCruces((prev) => ({ ...prev, [id]: valorAnterior || {} }));
+    else if (campo === "resultados") setResultados((prev) => ({ ...prev, [id]: valorAnterior || {} }));
+    else if (campo === "responsables") setResponsables((prev) => ({ ...prev, [id]: valorAnterior || {} }));
+
+    setPuedeDeshacer(historialLocal.current.length > 0);
+    setDeshaciendo(false);
   };
   const descargarRespaldo = async () => {
     const jornadasGuardadas = await peticionDb("panelCordobeses/jornadas") || {};
@@ -569,7 +595,10 @@ function PanelCordobeses() {
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinadora" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
             <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
           </div>
-          {esCoordinadora ? <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button> : <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            {(esCoordinadora || Object.keys(permisos).length > 0) && <button onClick={deshacerUltimoCambio} disabled={!puedeDeshacer || deshaciendo} title="Revierte el último cambio realizado desde este dispositivo" style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.primario}`, background: puedeDeshacer ? "#fff" : C.bg, color: puedeDeshacer ? C.primario : C.sub, fontWeight: 700, cursor: puedeDeshacer ? "pointer" : "not-allowed", opacity: puedeDeshacer ? 1 : 0.65 }}>{deshaciendo ? "Deshaciendo…" : "↶ Deshacer último cambio"}</button>}
+            {esCoordinadora ? <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button> : <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
+          </div>
         </div>
         {pedidoAbierto && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
