@@ -1,5 +1,5 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
-const { useState } = React;
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
+const { useEffect, useState } = React;
 
 const C = {
   bg: "#F4F5F7",
@@ -262,8 +262,9 @@ function EquipoRow({ equipo, estado, onToggleBajo, onResultado, ramaColor }) {
   );
 }
 
-function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado }) {
+function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado, responsables, setResponsables }) {
   const [abierto, setAbierto] = useState(false);
+  const [responsableAbierto, setResponsableAbierto] = useState(false);
   const [nuevoEquipo, setNuevoEquipo] = useState("");
 
   const equiposCompletos = [...jornada.equipos, ...(extras || [])];
@@ -297,12 +298,39 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
             <div style={{ fontSize: 11, color: C.sub }}>{jornada.sede} · {jornada.horario}{jornada.ganadores ? ` · clasifican ${jornada.ganadores}` : ""}</div>
           </div>
         </div>
-        {!jornada.pendiente && (
-          <div style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
-            {equiposCompletos.length} equipos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span>
-          </div>
-        )}
+        <div style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setResponsableAbierto((v) => !v); }}
+            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: responsables?.nombre ? ramaColor : "#fff", color: responsables?.nombre ? "#fff" : ramaColor, fontWeight: 700, cursor: "pointer" }}
+          >
+            👤 Responsable de sede
+          </button>
+          {!jornada.pendiente && <span>{equiposCompletos.length} equipos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>}
+        </div>
       </div>
+
+      {responsableAbierto && (
+        <div style={{ margin: "0 14px 12px", padding: 12, background: C.primarioClaro, border: `1px solid ${C.border}`, borderRadius: 9 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 8 }}>Equipo responsable de esta jornada</div>
+          <input
+            value={responsables?.nombre || ""}
+            onChange={(e) => setResponsables({ ...(responsables || {}), nombre: e.target.value })}
+            placeholder="Nombre de la responsable de sede"
+            style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, marginBottom: 7, color: C.ink }}
+          />
+          <textarea
+            value={responsables?.staff || ""}
+            onChange={(e) => setResponsables({ ...(responsables || {}), staff: e.target.value })}
+            placeholder={'Staff a cargo (escribí un nombre por línea)'}
+            rows={4}
+            style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, resize: "vertical", color: C.ink }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10, color: C.sub }}>Los datos quedan asociados únicamente a esta fecha.</span>
+            <button onClick={() => setResponsableAbierto(false)} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+          </div>
+        </div>
+      )}
 
       {jornada.pendiente && (
         <div style={{ padding: "0 14px 14px", fontSize: 12, color: C.sub, fontStyle: "italic" }}>
@@ -364,6 +392,14 @@ function PanelCordobeses() {
   const [extras, setExtras] = useState({});
   const [cruces, setCruces] = useState({});
   const [resultados, setResultados] = useState({});
+  const [responsables, setResponsables] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("cordobeses-responsables") || "{}"); }
+    catch { return {}; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cordobeses-responsables", JSON.stringify(responsables));
+  }, [responsables]);
 
   const setEstado = (key, val) => setEstados((prev) => ({ ...prev, [key]: val }));
 
@@ -438,6 +474,8 @@ function PanelCordobeses() {
           setCruces={(v) => setCruces((prev) => ({ ...prev, [j.id]: v }))}
           resultados={resultados[j.id]}
           setResultado={(v) => setResultados((prev) => ({ ...prev, [j.id]: v }))}
+          responsables={responsables[j.id]}
+          setResponsables={(v) => setResponsables((prev) => ({ ...prev, [j.id]: v }))}
         />
       ))}
 
@@ -448,9 +486,4 @@ function PanelCordobeses() {
   );
 }
 
-
 ReactDOM.createRoot(document.getElementById("root")).render(<PanelCordobeses/>);</script><script>eval(Babel.transform(document.getElementById("app-code").textContent,{presets:[["env",{modules:false}],["react",{runtime:"classic"}]]}).code);</script></body></html>
-
-
-
-
