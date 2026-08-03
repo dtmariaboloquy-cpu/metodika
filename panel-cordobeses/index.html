@@ -493,6 +493,12 @@ function PanelCordobeses() {
     await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
     setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
   };
+  const aprobarAccesoTotal = async (uid) => {
+    await peticionDb(`panelPermisos/${uid}/_todas`, "PUT", true);
+    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
+    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
+  };
+
   const aprobarAdministrador = async (uid) => {
     await peticionDb(`panelAdministradores/${uid}`, "PUT", true);
     await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
@@ -572,8 +578,8 @@ function PanelCordobeses() {
       <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinadora" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
-            <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinadora" : permisos._todas === true ? "Acceso a todas las fechas" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
+            <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : permisos._todas === true ? "Podés modificar todas las jornadas, sin administrar permisos." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
           </div>
           {esCoordinadora ? <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button> : <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
         </div>
@@ -591,7 +597,7 @@ function PanelCordobeses() {
         {esCoordinadora && Object.entries(solicitudes).length > 0 && (
           <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Solicitudes pendientes</div>
-            {Object.entries(solicitudes).map(([uid, s]) => { const puedeSerAdmin = ["cbajuega@gmail.com", "dtmariaboloquy@gmail.com"].includes(s.email); return <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}><span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span><span style={{ display: "flex", gap: 5 }}><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar jornada</button><button onClick={() => aprobarAdministrador(uid)} disabled={!puedeSerAdmin} style={{ border: "none", background: puedeSerAdmin ? C.primario : C.sub, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: puedeSerAdmin ? 1 : 0.45 }}>Hacer administrador</button></span></div>; })}
+            {Object.entries(solicitudes).map(([uid, s]) => { const puedeSerAdmin = ["cbajuega@gmail.com", "dtmariaboloquy@gmail.com"].includes(s.email); return <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}><span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span><span style={{ display: "flex", gap: 5 }}><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar jornada</button><button onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Acceso a todas las fechas</button><button onClick={() => aprobarAdministrador(uid)} disabled={!puedeSerAdmin} style={{ border: "none", background: puedeSerAdmin ? C.primario : C.sub, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: puedeSerAdmin ? 1 : 0.45 }}>Hacer administrador</button></span></div>; })}
           </div>
         )}
       </div>
@@ -649,7 +655,7 @@ function PanelCordobeses() {
           setResultado={(v) => { setResultados((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "resultados", v); }}
           responsables={responsables[j.id]}
           setResponsables={(v) => { setResponsables((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "responsables", v); }}
-          editable={esCoordinadora || permisos[j.id] === true}
+          editable={esCoordinadora || permisos._todas === true || permisos[j.id] === true}
         />
       ))}
 
