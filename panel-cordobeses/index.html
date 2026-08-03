@@ -305,7 +305,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           >
             👤 {editable ? "Responsable de sede" : "Ver responsable"}
           </button>
-          {!jornada.pendiente && <span>{equiposCompletos.length} equipos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>}
+          {!jornada.pendiente && <span>{equiposActivos.length} equipos activos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>}
         </div>
       </div>
 
@@ -506,8 +506,14 @@ function PanelCordobeses() {
     ? jornadas.filter((j) => j.equipos.some((e) => e.toLowerCase().includes(busqueda.toLowerCase())) || j.categoria.toLowerCase().includes(busqueda.toLowerCase()))
     : jornadas;
 
-  const totalEquipos = jornadas.reduce((s, j) => s + j.equipos.length, 0);
-  const totalBajas = Object.values(estados).filter((e) => e?.bajo).length;
+  const totalEquipos = jornadas.reduce((s, j) => {
+    const equiposCompletos = [...j.equipos, ...(extras[j.id] || [])];
+    return s + equiposCompletos.filter((_, i) => !estados[j.id + "-" + i]?.bajo).length;
+  }, 0);
+  const totalBajas = jornadas.reduce((s, j) => {
+    const equiposCompletos = [...j.equipos, ...(extras[j.id] || [])];
+    return s + equiposCompletos.filter((_, i) => estados[j.id + "-" + i]?.bajo).length;
+  }, 0);
 
   return (
     <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: "'Inter', Arial, sans-serif", padding: 20, borderRadius: 12 }}>
@@ -616,7 +622,7 @@ function PanelCordobeses() {
           <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{jornadas.length}</div>
         </div>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
-          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Instituciones anotadas</div>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Equipos activos</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{totalEquipos}</div>
         </div>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
