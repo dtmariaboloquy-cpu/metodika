@@ -305,7 +305,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               e.stopPropagation();
               if (!responsableAbierto) setResponsableBorrador({ nombre: responsables?.nombre || "", staff: responsables?.staff || "" });
               setResponsableAbierto((v) => !v);
-            }
+            }}
             style={{ fontSize: 11, padding: "7px 11px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: responsables?.nombre ? ramaColor : "#fff", color: responsables?.nombre ? "#fff" : ramaColor, fontWeight: 700, cursor: "pointer" }}
           >
             👤 {editable ? "Responsable de sede" : "Ver responsable"}
