@@ -265,6 +265,7 @@ function EquipoRow({ equipo, estado, onToggleBajo, onResultado, ramaColor, edita
 function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado, responsables, setResponsables, editable }) {
   const [abierto, setAbierto] = useState(false);
   const [responsableAbierto, setResponsableAbierto] = useState(false);
+  const [responsableBorrador, setResponsableBorrador] = useState({ nombre: "", staff: "" });
   const [nuevoEquipo, setNuevoEquipo] = useState("");
 
   const equiposCompletos = [...jornada.equipos, ...(extras || [])];
@@ -300,7 +301,11 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
         </div>
         <div style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <button
-            onClick={(e) => { e.stopPropagation(); setResponsableAbierto((v) => !v); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!responsableAbierto) setResponsableBorrador({ nombre: responsables?.nombre || "", staff: responsables?.staff || "" });
+              setResponsableAbierto((v) => !v);
+            }
             style={{ fontSize: 11, padding: "7px 11px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: responsables?.nombre ? ramaColor : "#fff", color: responsables?.nombre ? "#fff" : ramaColor, fontWeight: 700, cursor: "pointer" }}
           >
             👤 {editable ? "Responsable de sede" : "Ver responsable"}
@@ -313,15 +318,15 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
         <div style={{ margin: "0 14px 12px", padding: 12, background: C.primarioClaro, border: `1px solid ${C.border}`, borderRadius: 9 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 8 }}>Equipo responsable de esta jornada</div>
           <input
-            value={responsables?.nombre || ""}
-            onChange={(e) => setResponsables({ ...(responsables || {}), nombre: e.target.value })}
+            value={responsableBorrador.nombre}
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, nombre: e.target.value }))
             disabled={!editable}
             placeholder="Nombre de la responsable de sede"
             style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, marginBottom: 7, color: C.ink }}
           />
           <textarea
-            value={responsables?.staff || ""}
-            onChange={(e) => setResponsables({ ...(responsables || {}), staff: e.target.value })}
+            value={responsableBorrador.staff}
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, staff: e.target.value }))
             disabled={!editable}
             placeholder={'Staff a cargo (escribí un nombre por línea)'}
             rows={4}
@@ -329,7 +334,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap" }}>
             <span style={{ fontSize: 10, color: C.sub }}>Los datos quedan asociados únicamente a esta fecha.</span>
-            <button onClick={() => setResponsableAbierto(false)} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>{editable ? "Guardar" : "Cerrar"}</button>
+            <button onClick={() => { if (editable) setResponsables(responsableBorrador); setResponsableAbierto(false); }} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>{editable ? "Guardar" : "Cerrar"}</button>
           </div>
         </div>
       )}
