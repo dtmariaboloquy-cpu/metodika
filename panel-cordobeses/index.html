@@ -78,8 +78,8 @@ function tablaPosiciones(equipos, partidos, resultados) {
 }
 
 function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSorteo, resultados, setResultado, C }) {
-  const numZonas = config?.numZonas || 1;
-  const numCanchas = config?.numCanchas || parseCanchas(jornada.sede);
+  const numZonas = Math.max(1, parseInt(config?.numZonas) || 1);
+  const numCanchas = Math.max(1, parseInt(config?.numCanchas) || parseCanchas(jornada.sede));
 
   const bolsa = sorteo?.bolsa || null;
   const orden = sorteo?.orden || [];
@@ -124,11 +124,11 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
         <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
           Zonas
-          <input type="number" min="1" value={numZonas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numZonas: Math.max(1, parseInt(e.target.value) || 1) })} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+          <input type="number" min="1" value={config?.numZonas === "" ? "" : numZonas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numZonas: e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value) || 1) })} onBlur={() => { if (config?.numZonas === "") setConfig({ ...config, numZonas: 1 }); }} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
         </label>
         <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
           Canchas disponibles
-          <input type="number" min="1" value={numCanchas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numCanchas: Math.max(1, parseInt(e.target.value) || 1) })} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+          <input type="number" min="1" value={config?.numCanchas === "" ? "" : numCanchas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numCanchas: e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value) || 1) })} onBlur={() => { if (config?.numCanchas === "") setConfig({ ...config, numCanchas: parseCanchas(jornada.sede) }); }} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
         </label>
         <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · van entrando a las zonas 1→{numZonas}→1… en el orden que salen</span>
       </div>
