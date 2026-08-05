@@ -429,6 +429,8 @@ function PanelCordobeses() {
   const [nombrePedido, setNombrePedido] = useState("");
   const [emailPedido, setEmailPedido] = useState("");
   const [jornadaPedido, setJornadaPedido] = useState("");
+  const [aprobandoUid, setAprobandoUid] = useState("");
+  const [mensajePermiso, setMensajePermiso] = useState("");
   const [adminExtra, setAdminExtra] = useState(false);
   const ultimaCopia = useRef({});
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
@@ -512,22 +514,28 @@ function PanelCordobeses() {
     await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), email: emailPedido.trim().toLowerCase(), jornadaId: jornadaPedido, creado: Date.now() });
     setPedidoAbierto(false);
   };
-  const aprobarSolicitud = async (uid, jornadaId) => {
-    await peticionDb(`panelPermisos/${uid}/${jornadaId}`, "PUT", true);
-    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
-    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
+  const confirmarPermiso = async (uid, cambios, mensaje) => {
+    if (aprobandoUid) return;
+    setAprobandoUid(uid);
+    setMensajePermiso("");
+    try {
+      await peticionDb("", "PATCH", { ...cambios, [`panelSolicitudes/${uid}`]: null });
+      const pendiente = await peticionDb(`panelSolicitudes/${uid}`);
+      if (pendiente !== null) throw new Error("La solicitud sigue pendiente");
+      setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
+      setMensajePermiso(`✓ ${mensaje}`);
+    } catch (error) {
+      setMensajePermiso("No se pudo aprobar el acceso. Volvé a tocar el botón.");
+    } finally {
+      setAprobandoUid("");
+    }
   };
-  const aprobarAccesoTotal = async (uid) => {
-    await peticionDb(`panelPermisos/${uid}/_todas`, "PUT", true);
-    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
-    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
-  };
-
-  const aprobarAdministrador = async (uid) => {
-    await peticionDb(`panelAdministradores/${uid}`, "PUT", true);
-    await peticionDb(`panelSolicitudes/${uid}`, "DELETE");
-    setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
-  };
+  const aprobarSolicitud = (uid, jornadaId) =>
+    confirmarPermiso(uid, { [`panelPermisos/${uid}/${jornadaId}`]: true }, "Jornada aprobada correctamente");
+  const aprobarAccesoTotal = (uid) =>
+    confirmarPermiso(uid, { [`panelPermisos/${uid}/_todas`]: true }, "Acceso a todas las fechas aprobado correctamente");
+  const aprobarAdministrador = (uid) =>
+    confirmarPermiso(uid, { [`panelAdministradores/${uid}`]: true }, "Coordinador/a aprobado correctamente");
 
   const jornadas = DATOS_CORDOBESES[rama];
   const ramaColor = rama === "masculino" ? C.doradoLogo : C.rojoLogo;
@@ -621,9 +629,22 @@ function PanelCordobeses() {
         {esCoordinadora && Object.entries(solicitudes).length > 0 && (
           <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Solicitudes pendientes</div>
-            {Object.entries(solicitudes).map(([uid, s]) => { return <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}><span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span><span style={{ display: "flex", gap: 5 }}><button onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Aprobar jornada</button><button onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Acceso a todas las fechas</button><button onClick={() => aprobarAdministrador(uid)} style={{ border: "none", background: C.primario, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Hacer coordinador/a</button></span></div>; })}
+            {Object.entries(solicitudes).map(([uid, s]) => {
+              const guardando = aprobandoUid === uid;
+              return (
+                <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
+                  <span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span>
+                  <span style={{ display: "flex", gap: 5 }}>
+                    <button disabled={guardando} onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Aprobar jornada"}</button>
+                    <button disabled={guardando} onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Acceso a todas las fechas"}</button>
+                    <button disabled={guardando} onClick={() => aprobarAdministrador(uid)} style={{ border: "none", background: C.primario, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Hacer coordinador/a"}</button>
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
+        {mensajePermiso && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajePermiso.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajePermiso.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajePermiso}</div>}
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
