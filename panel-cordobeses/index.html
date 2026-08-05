@@ -43,17 +43,28 @@ function parseCanchas(sede) {
   return m ? parseInt(m[1]) : 1;
 }
 
-function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas) {
+function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato) {
   const canchasPorZona = Math.max(1, Math.floor(numCanchas / numZonas));
-  const partidos = [];
-  for (let i = 0; i < equipos.length; i++) {
-    for (let j = i + 1; j < equipos.length; j++) {
-      const k = partidos.length;
-      const cancha = ((zonaIdx * canchasPorZona + k) % numCanchas) + 1;
-      partidos.push({ local: equipos[i], visitante: equipos[j], cancha, key: zonaIdx + "|" + equipos[i] + "|" + equipos[j] });
+  const cruces = [];
+
+  if (formato === "dos" && equipos.length >= 3) {
+    equipos.forEach((equipo, i) => {
+      cruces.push([equipo, equipos[(i + 1) % equipos.length]]);
+    });
+  } else {
+    for (let i = 0; i < equipos.length; i++) {
+      for (let j = i + 1; j < equipos.length; j++) {
+        cruces.push([equipos[i], equipos[j]]);
+      }
     }
   }
-  return partidos;
+
+  return cruces.map(([local, visitante], k) => ({
+    local,
+    visitante,
+    cancha: ((zonaIdx * canchasPorZona + k) % numCanchas) + 1,
+    key: zonaIdx + "|" + local + "|" + visitante,
+  }));
 }
 
 function tablaPosiciones(equipos, partidos, resultados) {
@@ -80,6 +91,7 @@ function tablaPosiciones(equipos, partidos, resultados) {
 function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSorteo, resultados, setResultado, C }) {
   const numZonas = Math.max(1, parseInt(config?.numZonas) || 1);
   const numCanchas = Math.max(1, parseInt(config?.numCanchas) || parseCanchas(jornada.sede));
+  const formato = config?.formato || "todos";
 
   const bolsa = sorteo?.bolsa || null;
   const orden = sorteo?.orden || [];
@@ -130,7 +142,14 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
           Canchas disponibles
           <input type="number" min="1" value={config?.numCanchas === "" ? "" : numCanchas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numCanchas: e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value) || 1) })} onBlur={() => { if (config?.numCanchas === "") setConfig({ ...config, numCanchas: parseCanchas(jornada.sede) }); }} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
         </label>
-        <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · van entrando a las zonas 1→{numZonas}→1… en el orden que salen</span>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Formato
+          <select value={formato} onChange={(e) => setConfig({ ...config, formato: e.target.value })} style={{ fontSize: 11, padding: "4px 7px", borderRadius: 5, border: `1px solid ${C.border}`, background: "#fff" }}>
+            <option value="todos">Todos contra todos</option>
+            <option value="dos">2 partidos por equipo</option>
+          </select>
+        </label>
+        <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · {formato === "dos" ? "cada equipo juega 2 partidos; clasifica el 1.º por tabla" : `van entrando a las zonas 1→${numZonas}→1… en el orden que salen`}</span>
       </div>
 
       {!bolsa ? (
@@ -189,7 +208,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
       {orden.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, 1fr)`, gap: 10, marginTop: 4 }}>
           {zonas.map((equipos, zi) => {
-            const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas);
+            const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
             const tabla = tablaPosiciones(equipos, partidos, resultados);
             return (
               <div key={zi} style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: 10 }}>
