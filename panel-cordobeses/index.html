@@ -319,14 +319,14 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 8 }}>Equipo responsable de esta jornada</div>
           <input
             value={responsableBorrador.nombre}
-            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, nombre: e.target.value }))
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, nombre: e.target.value }))}
             disabled={!editable}
             placeholder="Nombre de la responsable de sede"
             style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, marginBottom: 7, color: C.ink }}
           />
           <textarea
             value={responsableBorrador.staff}
-            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, staff: e.target.value }))
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, staff: e.target.value }))}
             disabled={!editable}
             placeholder={'Staff a cargo (escribí un nombre por línea)'}
             rows={4}
