@@ -56,3 +56,26 @@
 
   return { clavePartido, rondasTodosContraTodos, partidosDeZona };
 });
+
+
+(function(root){
+  if(!root||typeof root.fetch!=="function"||!root.location)return;
+  const original=root.fetch.bind(root),colas={};
+  root.fetch=function(input,options){
+    const url=typeof input==="string"?input:(input&&input.url)||"";
+    const metodo=((options&&options.method)||"GET").toUpperCase();
+    const m=url.match(/^(.*\/panelCordobeses\/jornadas\/([^/]+)\/resultados)\/([^/]+)\/(gl|gv)\.json(\?[^#]*)?$/);
+    if(metodo!=="PUT"||!m)return original(input,options);
+    const id=m[2],key=decodeURIComponent(m[3]),campo=m[4],base=m[1]+".json"+(m[5]||"");
+    const valor=options&&options.body!==undefined?JSON.parse(options.body):"";
+    const guardado=(colas[id]||Promise.resolve()).catch(()=>{}).then(async()=>{
+      const lectura=await original(base);
+      if(!lectura.ok)return lectura;
+      const resultados=(await lectura.json())||{};
+      resultados[key]={...(resultados[key]||{}),[campo]:valor};
+      return original(base,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(resultados)});
+    });
+    colas[id]=guardado;
+    return guardado;
+  };
+})(typeof globalThis!=="undefined"?globalThis:this);
