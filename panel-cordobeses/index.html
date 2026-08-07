@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
 const { useEffect, useRef, useState } = React;
 
 const C = {
@@ -44,34 +44,14 @@ function parseCanchas(sede) {
 }
 
 function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato) {
-  const canchasPorZona = Math.max(1, Math.floor(numCanchas / numZonas));
-  const cruces = [];
-
-  if (formato === "dos" && equipos.length >= 3) {
-    equipos.forEach((equipo, i) => {
-      cruces.push([equipo, equipos[(i + 1) % equipos.length]]);
-    });
-  } else {
-    for (let i = 0; i < equipos.length; i++) {
-      for (let j = i + 1; j < equipos.length; j++) {
-        cruces.push([equipos[i], equipos[j]]);
-      }
-    }
-  }
-
-  return cruces.map(([local, visitante], k) => ({
-    local,
-    visitante,
-    cancha: ((zonaIdx * canchasPorZona + k) % numCanchas) + 1,
-    key: zonaIdx + "|" + local + "|" + visitante,
-  }));
+  return FixtureCordobeses.partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato);
 }
 
 function tablaPosiciones(equipos, partidos, resultados) {
   const tabla = {};
   equipos.forEach((eq) => (tabla[eq] = { equipo: eq, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }));
   partidos.forEach((partido) => {
-    const r = resultados[partido.key];
+    const r = resultados[partido.key] || resultados[partido.legacyKey] || resultados[partido.legacyReverseKey];
     if (!r || r.gl === "" || r.gv === "" || r.gl == null || r.gv == null) return;
     const gl = parseInt(r.gl), gv = parseInt(r.gv);
     if (isNaN(gl) || isNaN(gv)) return;
@@ -223,14 +203,14 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
                     <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
                       <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, marginBottom: 4 }}>PARTIDOS Y RESULTADO</div>
                       {partidos.map((p) => {
-                        const r = resultados[p.key] || {};
+                        const r = resultados[p.key] || resultados[p.legacyKey] || resultados[p.legacyReverseKey] || {};
                         return (
                           <div key={p.key} style={{ fontSize: 10, color: C.ink, marginBottom: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                             <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.local} <span style={{ color: C.sub }}>vs</span> {p.visitante}</span>
-                            <input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, { ...r, gl: e.target.value })} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
+                            <input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, "gl", e.target.value)} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
                             <span style={{ color: C.sub }}>-</span>
-                            <input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, { ...r, gv: e.target.value })} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
-                            <span style={{ color: C.primario, fontWeight: 700, fontSize: 9, whiteSpace: "nowrap" }}>C{p.cancha}</span>
+                            <input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, "gv", e.target.value)} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center" }} />
+                            <span style={{ color: C.primario, fontWeight: 700, fontSize: 9, whiteSpace: "nowrap" }}>R{p.ronda} · C{p.cancha}</span>
                           </div>
                         );
                       })}
@@ -402,7 +382,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               sorteo={sorteo}
               setSorteo={(s) => setCruces({ config, sorteo: s })}
               resultados={resultados || {}}
-              setResultado={(key, val) => setResultado({ ...(resultados || {}), [key]: val })}
+              setResultado={(key, campo, val) => setResultado(key, campo, val)}
               C={C}
             /></div>
           </div>
@@ -433,6 +413,7 @@ function PanelCordobeses() {
   const [mensajePermiso, setMensajePermiso] = useState("");
   const [adminExtra, setAdminExtra] = useState(false);
   const ultimaCopia = useRef({});
+  const avisoGuardado = useRef(false);
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
   const esCoordinadora = sesion?.uid === ADMIN_UID || adminExtra;
   const API_KEY = "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k";
@@ -499,6 +480,17 @@ function PanelCordobeses() {
       ultimaCopia.current[id] = ahora;
     }
     return peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+  };
+  const guardarResultado = async (id, key, campo, valor) => {
+    try {
+      await guardarJornada(id, `resultados/${key}/${campo}`, valor);
+      avisoGuardado.current = false;
+    } catch (error) {
+      if (!avisoGuardado.current) {
+        avisoGuardado.current = true;
+        alert("No se pudo guardar el resultado. Revisá la conexión y volvé a intentarlo; el valor sigue visible en esta pantalla.");
+      }
+    }
   };
   const descargarRespaldo = async () => {
     const jornadasGuardadas = await peticionDb("panelCordobeses/jornadas") || {};
@@ -697,7 +689,10 @@ function PanelCordobeses() {
           cruces={cruces[j.id]}
           setCruces={(v) => { setCruces((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "cruces", v); }}
           resultados={resultados[j.id]}
-          setResultado={(v) => { setResultados((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "resultados", v); }}
+          setResultado={(key, campo, valor) => {
+            setResultados((prev) => ({ ...prev, [j.id]: { ...(prev[j.id] || {}), [key]: { ...(prev[j.id]?.[key] || {}), [campo]: valor } } }));
+            guardarResultado(j.id, key, campo, valor);
+          }}
           responsables={responsables[j.id]}
           setResponsables={(v) => { setResponsables((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "responsables", v); }}
           editable={esCoordinadora || permisos._todas === true || permisos[j.id] === true}
@@ -705,7 +700,7 @@ function PanelCordobeses() {
       ))}
 
       <div style={{ fontSize: 11, color: C.sub, marginTop: 14, fontStyle: "italic" }}>
-        Tocá una jornada para desplegar las instituciones. Los cambios (bajas y resultados) quedan guardados mientras dure esta sesión.
+        Tocá una jornada para desplegar las instituciones. Los cambios autorizados quedan guardados en el panel y se mantienen al volver a ingresar.
       </div>
     </div>
   );
