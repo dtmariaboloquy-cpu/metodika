@@ -64,7 +64,7 @@
   root.fetch=function(input,options){
     const url=typeof input==="string"?input:(input&&input.url)||"";
     const metodo=((options&&options.method)||"GET").toUpperCase();
-    const m=url.match(/^(.*\/panelCordobeses\/jornadas\/([^/]+)\/resultados)\/([^/]+)\/(gl|gv)\.json(\?[^#]*)?$/);
+    const m=url.match(/^(.*\/panelCordobeses\/jornadas\/([^/]+)\/resultados)\/([^/]+)\/(gl|gv|pl|pv)\.json(\?[^#]*)?$/);
     if(metodo!=="PUT"||!m)return original(input,options);
     const id=m[2],key=decodeURIComponent(m[3]),campo=m[4],base=m[1]+".json"+(m[5]||"");
     const valor=options&&options.body!==undefined?JSON.parse(options.body):"";
@@ -78,4 +78,57 @@
     colas[id]=guardado;
     return guardado;
   };
+})(typeof globalThis!=="undefined"?globalThis:this);
+
+
+(function(root){
+  if(!root||!root.document||typeof root.fetch!=="function")return;
+  const anterior=root.fetch.bind(root),cache={},cargando={},DB="https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
+  let auth="";
+  root.fetch=function(input,options){
+    const url=typeof input==="string"?input:(input&&input.url)||"",m=url.match(/[?&]auth=([^&]+)/);
+    if(m)auth=m[1];
+    return anterior(input,options);
+  };
+  function valor(r,c){return r&&r[c]!==undefined?r[c]:""}
+  function ganador(a,b,r){
+    if(!a||!b||valor(r,"gl")===""||valor(r,"gv")==="")return null;
+    const gl=Number(r.gl),gv=Number(r.gv); if(gl>gv)return a;if(gv>gl)return b;
+    if(valor(r,"pl")===""||valor(r,"pv")==="")return null;
+    const pl=Number(r.pl),pv=Number(r.pv);return pl===pv?null:(pl>pv?a:b);
+  }
+  function editable(input,card){for(let e=input;e&&e!==card;e=e.parentElement)if(getComputedStyle(e).pointerEvents==="none")return false;return true}
+  async function cargar(id){
+    if(!auth||cache[id]||cargando[id])return;
+    cargando[id]=true;
+    try{const r=await anterior(DB+"/panelCordobeses/jornadas/"+id+"/resultados.json?auth="+auth);if(r.ok)cache[id]=(await r.json())||{};}finally{cargando[id]=false;}
+  }
+  function guardar(id,key,campo,dato){
+    cache[id]=cache[id]||{};cache[id][key]={...(cache[id][key]||{}),[campo]:dato};
+    return anterior(DB+"/panelCordobeses/jornadas/"+id+"/resultados/"+key+"/"+campo+".json?auth="+auth,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(dato)});
+  }
+  function partido(id,key,titulo,a,b,puedeEditar){
+    const r=(cache[id]&&cache[id][key])||{},g=ganador(a,b,r),caja=document.createElement("div");
+    caja.style.cssText="background:#fff;border:1px solid #dfe3e8;border-radius:8px;padding:10px";
+    const head=document.createElement("div");head.textContent=titulo;head.style.cssText="font-size:10px;font-weight:800;color:#17365d;margin-bottom:7px";caja.appendChild(head);
+    if(!a||!b){const espera=document.createElement("div");espera.textContent="Esperando ganadores…";espera.style.cssText="font-size:11px;color:#596579;padding:5px";caja.appendChild(espera);return caja;}
+    [[a,"gl"],[b,"gv"]].forEach(([eq,campo])=>{const fila=document.createElement("div");fila.style.cssText="display:grid;grid-template-columns:1fr 38px;gap:6px;align-items:center;margin:4px 0;font-size:11px";const nombre=document.createElement("div");nombre.textContent=eq+(g===eq?" · GANADOR":"");nombre.style.cssText="font-weight:"+(g===eq?"800":"500")+";color:"+(g===eq?"#168753":"#17213a");const inp=document.createElement("input");inp.type="number";inp.min="0";inp.value=valor(r,campo);inp.disabled=!puedeEditar;inp.style.cssText="width:38px;text-align:center;border:1px solid #cfd5dd;border-radius:4px";inp.onchange=()=>guardar(id,key,campo,inp.value);fila.append(nombre,inp);caja.appendChild(fila);});
+    if(valor(r,"gl")!==""&&valor(r,"gv")!==""&&Number(r.gl)===Number(r.gv)){const pen=document.createElement("div");pen.style.cssText="display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #cfd5dd;font-size:10px;color:#596579";const txt=document.createElement("strong");txt.textContent="PENALES";pen.appendChild(txt);["pl","pv"].forEach((campo,i)=>{if(i){const guion=document.createElement("span");guion.textContent="-";pen.appendChild(guion)}const inp=document.createElement("input");inp.type="number";inp.min="0";inp.value=valor(r,campo);inp.disabled=!puedeEditar;inp.style.cssText="width:38px;text-align:center";inp.onchange=()=>guardar(id,key,campo,inp.value);pen.appendChild(inp)});caja.appendChild(pen)}
+    return caja;
+  }
+  function montar(){
+    document.querySelectorAll("[data-jornada-id]").forEach(card=>{
+      const id=card.dataset.jornadaId,rotulos=Array.from(card.querySelectorAll("div")).filter(e=>e.children.length===0&&/^ZONA \d+ \(\d+\)$/.test(e.textContent.trim()));
+      if(rotulos.length!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
+      cargar(id);
+      const zonas=rotulos.map(r=>r.parentElement),clasificados=[],completas=[];
+      zonas.forEach(z=>{const entradas=Array.from(z.querySelectorAll('input[type="number"]')),completa=entradas.length>0&&entradas.every(i=>i.value!=="");completas.push(completa);const fila=z.querySelector("tbody tr");if(fila){fila.style.background=completa?"#dff3e7":"transparent";let badge=fila.querySelector(".badge-clasifica");if(completa&&!badge){badge=document.createElement("strong");badge.className="badge-clasifica";badge.textContent=" · CLASIFICA";badge.style.color="#168753";fila.cells[0].appendChild(badge)}if(!completa&&badge)badge.remove();clasificados.push(completa?fila.cells[0].childNodes[0].textContent.trim():null)}else clasificados.push(null)});
+      const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados"),contenedor=titulo&&titulo.parentElement;if(!contenedor)return;
+      let fase=contenedor.querySelector(".fase-final-automatica");const datos=cache[id]||{},firma=JSON.stringify([clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);if(fase&&fase.dataset.firma===firma)return;if(fase)fase.remove();
+      fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";const h=document.createElement("div");h.textContent="FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
+      if(!completas.every(Boolean)){const aviso=document.createElement("div");aviso.textContent="Se habilita automáticamente cuando estén completos todos los resultados de las 4 zonas.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
+      const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card),r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[3],r1),g2=ganador(clasificados[1],clasificados[2],r2),rf=datos["fase-final"]||{},campeon=ganador(g1,g2,rf),grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";grid.append(partido(id,"fase-semi-1","SEMIFINAL 1",clasificados[0],clasificados[3],puede),partido(id,"fase-semi-2","SEMIFINAL 2",clasificados[1],clasificados[2],puede),partido(id,"fase-final","FINAL",g1,g2,puede));fase.appendChild(grid);if(campeon){const copa=document.createElement("div");copa.textContent="🏆 CAMPEÓN: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}contenedor.appendChild(fase);
+    });
+  }
+  setInterval(montar,800);setTimeout(montar,1000);
 })(typeof globalThis!=="undefined"?globalThis:this);
