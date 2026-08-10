@@ -102,7 +102,10 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
     setSorteo({ bolsa: resto, orden: [...orden, saliente] });
   };
 
-  const reiniciar = () => setSorteo({ bolsa: null, orden: [] });
+  const reiniciar = () => {
+    if (!confirm("¿Querés generar el fixture de nuevo? La distribución actual se reemplazará, pero los resultados ya guardados quedarán disponibles en el respaldo.")) return;
+    setSorteo({ bolsa: null, orden: [] });
+  };
 
   // si se agregó o bajó un equipo después de armar el sorteo, lo mandamos de nuevo a la bolsa
   const enSorteo = new Set([...(bolsa || []), ...orden]);
@@ -148,7 +151,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
             {pendientesDeBolsa.length > 0 && (
               <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin asignar</span>
             )}
-            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Volver a armar</button>
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Generar fixture de nuevo</button>
           </div>
           {pendientesDeBolsa.length > 0 && (
             <button onClick={() => setSorteo({ bolsa: pendientesDeBolsa, orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
@@ -166,7 +169,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
             {pendientesDeBolsa.length > 0 && (
               <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin meter en la bolsa</span>
             )}
-            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Reiniciar sorteo</button>
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Generar fixture de nuevo</button>
           </div>
 
           {pendientesDeBolsa.length > 0 && (
@@ -707,4 +710,3 @@ function PanelCordobeses() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<PanelCordobeses/>);</script><script>eval(Babel.transform(document.getElementById("app-code").textContent,{presets:[["env",{modules:false}],["react",{runtime:"classic"}]]}).code);</script></body></html>
-
