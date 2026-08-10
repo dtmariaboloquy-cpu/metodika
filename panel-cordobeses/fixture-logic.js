@@ -54,51 +54,7 @@
     return partidos;
   }
 
-  function institucionBase(nombre) {
-    const limpio = String(nombre || "").trim();
-    const variante = limpio.match(/^(.*)\s+([A-Z])$/);
-    const base = variante && !/\s+y$/i.test(variante[1]) ? variante[1] : limpio;
-    return base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  }
-
-  function mezclar(lista, aleatorio) {
-    const copia = lista.slice();
-    for (let i = copia.length - 1; i > 0; i--) {
-      const j = Math.floor(aleatorio() * (i + 1));
-      [copia[i], copia[j]] = [copia[j], copia[i]];
-    }
-    return copia;
-  }
-
-  function distribuirSinMismaInstitucion(equipos, numZonas, aleatorio) {
-    const zonasCantidad = Math.max(1, parseInt(numZonas) || 1);
-    const azar = typeof aleatorio === "function" ? aleatorio : Math.random;
-    const capacidades = Array.from({ length: zonasCantidad }, (_, i) => Math.floor(equipos.length / zonasCantidad) + (i < equipos.length % zonasCantidad ? 1 : 0));
-    const grupos = new Map();
-    mezclar(equipos, azar).forEach((equipo) => {
-      const base = institucionBase(equipo);
-      if (!grupos.has(base)) grupos.set(base, []);
-      grupos.get(base).push(equipo);
-    });
-    const zonas = Array.from({ length: zonasCantidad }, () => []);
-    const ordenGrupos = mezclar(Array.from(grupos.values()), azar).sort((a, b) => b.length - a.length);
-    ordenGrupos.forEach((grupo) => {
-      const usadas = new Set();
-      mezclar(grupo, azar).forEach((equipo) => {
-        const candidatas = capacidades.map((capacidad, i) => ({ i, capacidad, libres: capacidad - zonas[i].length }))
-          .filter((z) => z.libres > 0 && !usadas.has(z.i))
-          .sort((a, b) => zonas[a.i].length / a.capacidad - zonas[b.i].length / b.capacidad || azar() - 0.5);
-        const elegida = candidatas[0] || capacidades.map((capacidad, i) => ({ i, libres: capacidad - zonas[i].length })).filter((z) => z.libres > 0)[0];
-        zonas[elegida.i].push(equipo);
-        usadas.add(elegida.i);
-      });
-    });
-    const orden = [];
-    for (let fila = 0; fila < Math.max(0, ...zonas.map((z) => z.length)); fila++) zonas.forEach((zona) => { if (zona[fila]) orden.push(zona[fila]); });
-    return orden;
-  }
-
-  return { clavePartido, rondasTodosContraTodos, partidosDeZona, institucionBase, distribuirSinMismaInstitucion };
+  return { clavePartido, rondasTodosContraTodos, partidosDeZona };
 });
 
 
@@ -127,7 +83,7 @@
 
 (function(root){
   if(!root||!root.document||typeof root.fetch!=="function")return;
-  const anterior=root.fetch.bind(root),cache={},cargando={},activadas={},DB="https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
+  const anterior=root.fetch.bind(root),cache={},cargando={},DB="https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
   let auth="";
   root.fetch=function(input,options){
     const url=typeof input==="string"?input:(input&&input.url)||"",m=url.match(/[?&]auth=([^&]+)/);
@@ -163,19 +119,15 @@
   function montar(){
     document.querySelectorAll("[data-jornada-id]").forEach(card=>{
       const id=card.dataset.jornadaId,rotulos=Array.from(card.querySelectorAll("div")).filter(e=>e.children.length===0&&/^ZONA \d+ \(\d+\)$/.test(e.textContent.trim()));
-      if(rotulos.length!==2&&rotulos.length!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
+      if(rotulos.length!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
       cargar(id);
       const zonas=rotulos.map(r=>r.parentElement),clasificados=[],completas=[];
       zonas.forEach(z=>{const entradas=Array.from(z.querySelectorAll('input[type="number"]')),completa=entradas.length>0&&entradas.every(i=>i.value!=="");completas.push(completa);const fila=z.querySelector("tbody tr");if(fila){fila.style.background=completa?"#dff3e7":"transparent";let badge=fila.querySelector(".badge-clasifica");if(completa&&!badge){badge=document.createElement("strong");badge.className="badge-clasifica";badge.textContent=" · CLASIFICA";badge.style.color="#168753";fila.cells[0].appendChild(badge)}if(!completa&&badge)badge.remove();clasificados.push(completa?fila.cells[0].childNodes[0].textContent.trim():null)}else clasificados.push(null)});
       const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados"),contenedor=titulo&&titulo.parentElement;if(!contenedor)return;
-      let fase=contenedor.querySelector(".fase-final-automatica");const datos=cache[id]||{},tieneResultados=!!(datos["fase-final"]||datos["fase-semi-1"]||datos["fase-semi-2"]);if(tieneResultados)activadas[id]=true;const firma=JSON.stringify([rotulos.length,clasificados,activadas[id],datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);if(fase&&fase.dataset.firma===firma)return;if(fase)fase.remove();
-      fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";const h=document.createElement("div");h.textContent=rotulos.length===2?"FASE FINAL · FINAL":"FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
-      const listas=completas.every(Boolean);if(!activadas[id]){const boton=document.createElement("button");boton.textContent=rotulos.length===2?"Generar Final Zona 1 vs Zona 2":"Generar Semifinales y Final";boton.disabled=!listas;boton.style.cssText="padding:8px 13px;border:1px solid #17365d;border-radius:8px;background:#17365d;color:#fff;font-size:11px;font-weight:900;cursor:"+(listas?"pointer":"not-allowed")+";opacity:"+(listas?"1":".55");boton.onclick=()=>{activadas[id]=true;fase.remove();montar()};fase.appendChild(boton);if(!listas){const aviso=document.createElement("div");aviso.textContent="La opción se habilita cuando estén completos todos los resultados de las zonas.";aviso.style.cssText="font-size:11px;color:#596579;margin-top:8px";fase.appendChild(aviso)}contenedor.appendChild(fase);return;}
-      if(!listas){const aviso=document.createElement("div");aviso.textContent="Completá todos los resultados de las zonas para definir los clasificados.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
-      const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card),rf=datos["fase-final"]||{},grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";let campeon=null;
-      if(rotulos.length===2){campeon=ganador(clasificados[0],clasificados[1],rf);grid.append(partido(id,"fase-final","FINAL",clasificados[0],clasificados[1],puede));}
-      else{const r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[1],r1),g2=ganador(clasificados[2],clasificados[3],r2);campeon=ganador(g1,g2,rf);grid.append(partido(id,"fase-semi-1","SEMIFINAL 1",clasificados[0],clasificados[1],puede),partido(id,"fase-semi-2","SEMIFINAL 2",clasificados[2],clasificados[3],puede),partido(id,"fase-final","FINAL",g1,g2,puede));}
-      fase.appendChild(grid);if(campeon){const copa=document.createElement("div");copa.textContent="🏆 CAMPEÓN: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}contenedor.appendChild(fase);
+      let fase=contenedor.querySelector(".fase-final-automatica");const datos=cache[id]||{},firma=JSON.stringify([clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);if(fase&&fase.dataset.firma===firma)return;if(fase)fase.remove();
+      fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";const h=document.createElement("div");h.textContent="FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
+      if(!completas.every(Boolean)){const aviso=document.createElement("div");aviso.textContent="Se habilita automáticamente cuando estén completos todos los resultados de las 4 zonas.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
+      const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card),r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[3],r1),g2=ganador(clasificados[1],clasificados[2],r2),rf=datos["fase-final"]||{},campeon=ganador(g1,g2,rf),grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";grid.append(partido(id,"fase-semi-1","SEMIFINAL 1",clasificados[0],clasificados[3],puede),partido(id,"fase-semi-2","SEMIFINAL 2",clasificados[1],clasificados[2],puede),partido(id,"fase-final","FINAL",g1,g2,puede));fase.appendChild(grid);if(campeon){const copa=document.createElement("div");copa.textContent="🏆 CAMPEÓN: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}contenedor.appendChild(fase);
     });
   }
   setInterval(montar,800);setTimeout(montar,1000);
@@ -206,3 +158,4 @@
   function montar(){document.querySelectorAll("[data-jornada-id]").forEach(card=>{const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados");if(!titulo)return;const seccion=titulo.parentElement;if(seccion.querySelector(".boton-descargar-pdf"))return;const boton=document.createElement("button");boton.className="boton-descargar-pdf";boton.textContent="⬇ Descargar PDF de la fecha";boton.style.cssText="margin:3px 0 10px 8px;padding:8px 13px;border:1px solid #17365d;border-radius:8px;background:#fff;color:#17365d;font-size:11px;font-weight:900;cursor:pointer";boton.onclick=e=>{e.stopPropagation();generar(card,boton)};titulo.insertAdjacentElement("afterend",boton)});}
   setInterval(montar,800);setTimeout(montar,1000);
 })();
+
