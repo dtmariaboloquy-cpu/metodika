@@ -79,7 +79,11 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   orden.forEach((eq, i) => (asignacion[eq] = i % numZonas));
 
   const distribuirAutomatico = () => {
-    const mezclado = FixtureCordobeses.distribuirSinMismaInstitucion(equiposActivos, numZonas);
+    const mezclado = [...equiposActivos];
+    for (let i = mezclado.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mezclado[i], mezclado[j]] = [mezclado[j], mezclado[i]];
+    }
     setSorteo({ bolsa: [], orden: mezclado });
   };
 
