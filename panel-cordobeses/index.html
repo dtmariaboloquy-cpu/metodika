@@ -97,6 +97,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   const pendientesDeBolsa = equiposActivos.filter((e) => !enSorteo.has(e));
 
   const zonas = Array.from({ length: numZonas }, (_, zi) => orden.filter((_, i) => i % numZonas === zi));
+  const ultimoSacado = orden[orden.length - 1];
   return (
     <div style={{ background: "#F7F8FA", borderRadius: 8, padding: 12, marginTop: 8 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
