@@ -73,7 +73,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   const numCanchas = Math.max(1, parseInt(config?.numCanchas) || parseCanchas(jornada.sede));
   const formato = config?.formato || "todos";
 
-  const bolsa = sorteo?.bolsa || null;
+  const bolsa = sorteo?.bolsa ?? null;
   const orden = sorteo?.orden || [];
   const asignacion = {};
   orden.forEach((eq, i) => (asignacion[eq] = i % numZonas));
@@ -707,4 +707,3 @@ function PanelCordobeses() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<PanelCordobeses/>);</script><script>eval(Babel.transform(document.getElementById("app-code").textContent,{presets:[["env",{modules:false}],["react",{runtime:"classic"}]]}).code);</script></body></html>
-
