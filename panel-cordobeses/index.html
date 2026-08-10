@@ -78,20 +78,9 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   const asignacion = {};
   orden.forEach((eq, i) => (asignacion[eq] = i % numZonas));
 
-  const iniciarSorteo = () => {
-    const mezclado = FixtureCordobeses.distribuirSinMismaInstitucion(equiposActivos, numZonas);
-    setSorteo({ bolsa: mezclado, orden: [] });
-  };
-
   const distribuirAutomatico = () => {
     const mezclado = FixtureCordobeses.distribuirSinMismaInstitucion(equiposActivos, numZonas);
     setSorteo({ bolsa: [], orden: mezclado });
-  };
-
-  const sacarEquipo = () => {
-    if (!bolsa || bolsa.length === 0) return;
-    const [saliente, ...resto] = bolsa;
-    setSorteo({ bolsa: resto, orden: [...orden, saliente] });
   };
 
   const reiniciar = () => {
@@ -104,8 +93,6 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   const pendientesDeBolsa = equiposActivos.filter((e) => !enSorteo.has(e));
 
   const zonas = Array.from({ length: numZonas }, (_, zi) => orden.filter((_, i) => i % numZonas === zi));
-  const ultimoSacado = orden[orden.length - 1];
-
   return (
     <div style={{ background: "#F7F8FA", borderRadius: 8, padding: 12, marginTop: 8 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
@@ -129,11 +116,8 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
 
       {!bolsa ? (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
-            🎱 Sorteo en vivo, uno por uno
-          </button>
-          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
-            ⚡ Distribuir automáticamente, todo junto
+          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+            ⚡ Generar fixture automáticamente
           </button>
         </div>
       ) : bolsa.length === 0 && orden.length > 0 ? (
@@ -146,38 +130,16 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
             <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Generar fixture de nuevo</button>
           </div>
           {pendientesDeBolsa.length > 0 && (
-            <button onClick={() => setSorteo({ bolsa: pendientesDeBolsa, orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
-              Sortear los equipos nuevos
+            <button onClick={distribuirAutomatico} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
+              Regenerar incluyendo los equipos nuevos
             </button>
           )}
         </div>
       ) : (
-        <>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-            <button onClick={sacarEquipo} disabled={bolsa.length === 0} style={{ fontSize: 13, padding: "10px 20px", borderRadius: 8, border: "none", background: bolsa.length ? C.verde : "#C9CDD3", color: "#fff", fontWeight: 800, cursor: bolsa.length ? "pointer" : "default" }}>
-              🎱 Sacar el próximo equipo
-            </button>
-            <span style={{ fontSize: 12, color: C.sub }}>Quedan {bolsa.length} en la bolsa</span>
-            {pendientesDeBolsa.length > 0 && (
-              <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin meter en la bolsa</span>
-            )}
-            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Generar fixture de nuevo</button>
-          </div>
-
-          {pendientesDeBolsa.length > 0 && (
-            <button onClick={() => setSorteo({ bolsa: [...bolsa, ...pendientesDeBolsa], orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
-              Meter los nuevos en la bolsa
-            </button>
-          )}
-
-          {ultimoSacado && (
-            <div style={{ background: C.primario, color: "#fff", borderRadius: 10, padding: "14px 18px", textAlign: "center", marginBottom: 14 }}>
-              <div style={{ fontSize: 10, opacity: 0.8, letterSpacing: 1, marginBottom: 4 }}>SALIÓ</div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>{ultimoSacado}</div>
-              <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>→ Zona {((orden.length - 1) % numZonas) + 1}</div>
-            </div>
-          )}
-        </>
+        <div style={{ padding: 10, border: `1px solid ${C.amarillo}`, borderRadius: 8, background: "#FFF9EA" }}>
+          <div style={{ fontSize: 11, color: C.sub, marginBottom: 8 }}>Este sorteo manual quedó incompleto. Generá nuevamente el fixture para distribuir todos los equipos automáticamente.</div>
+          <button onClick={reiniciar} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 6, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>↺ Generar fixture de nuevo</button>
+        </div>
       )}
 
       {orden.length > 0 && (
