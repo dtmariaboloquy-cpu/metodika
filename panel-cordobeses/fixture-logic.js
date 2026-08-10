@@ -54,7 +54,51 @@
     return partidos;
   }
 
-  return { clavePartido, rondasTodosContraTodos, partidosDeZona };
+  function institucionBase(nombre) {
+    const limpio = String(nombre || "").trim();
+    const variante = limpio.match(/^(.*)\s+([A-Z])$/);
+    const base = variante && !/\s+y$/i.test(variante[1]) ? variante[1] : limpio;
+    return base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function mezclar(lista, aleatorio) {
+    const copia = lista.slice();
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(aleatorio() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+  }
+
+  function distribuirSinMismaInstitucion(equipos, numZonas, aleatorio) {
+    const zonasCantidad = Math.max(1, parseInt(numZonas) || 1);
+    const azar = typeof aleatorio === "function" ? aleatorio : Math.random;
+    const capacidades = Array.from({ length: zonasCantidad }, (_, i) => Math.floor(equipos.length / zonasCantidad) + (i < equipos.length % zonasCantidad ? 1 : 0));
+    const grupos = new Map();
+    mezclar(equipos, azar).forEach((equipo) => {
+      const base = institucionBase(equipo);
+      if (!grupos.has(base)) grupos.set(base, []);
+      grupos.get(base).push(equipo);
+    });
+    const zonas = Array.from({ length: zonasCantidad }, () => []);
+    const ordenGrupos = mezclar(Array.from(grupos.values()), azar).sort((a, b) => b.length - a.length);
+    ordenGrupos.forEach((grupo) => {
+      const usadas = new Set();
+      mezclar(grupo, azar).forEach((equipo) => {
+        const candidatas = capacidades.map((capacidad, i) => ({ i, capacidad, libres: capacidad - zonas[i].length }))
+          .filter((z) => z.libres > 0 && !usadas.has(z.i))
+          .sort((a, b) => zonas[a.i].length / a.capacidad - zonas[b.i].length / b.capacidad || azar() - 0.5);
+        const elegida = candidatas[0] || capacidades.map((capacidad, i) => ({ i, libres: capacidad - zonas[i].length })).filter((z) => z.libres > 0)[0];
+        zonas[elegida.i].push(equipo);
+        usadas.add(elegida.i);
+      });
+    });
+    const orden = [];
+    for (let fila = 0; fila < Math.max(0, ...zonas.map((z) => z.length)); fila++) zonas.forEach((zona) => { if (zona[fila]) orden.push(zona[fila]); });
+    return orden;
+  }
+
+  return { clavePartido, rondasTodosContraTodos, partidosDeZona, institucionBase, distribuirSinMismaInstitucion };
 });
 
 
