@@ -132,7 +132,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
         <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · {formato === "dos" ? "cada equipo juega 2 partidos; clasifica el 1.º por tabla" : `van entrando a las zonas 1→${numZonas}→1… en el orden que salen`}</span>
       </div>
 
-      {!bolsa ? (
+      {orden.length === 0 && !bolsa ? (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
             🎱 Sorteo en vivo, uno por uno
@@ -141,7 +141,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
             ⚡ Distribuir automáticamente, todo junto
           </button>
         </div>
-      ) : bolsa.length === 0 && orden.length > 0 ? (
+      ) : orden.length > 0 && (!bolsa || bolsa.length === 0) ? (
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
             <Badge color="#fff" bg={C.verde}>✓ Distribución lista</Badge>
