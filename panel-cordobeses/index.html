@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js?v=5657877"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:Arial,sans-serif;background:#f4f5f7}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js?v=1786406255"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">
 const { useEffect, useRef, useState } = React;
 
 const C = {
@@ -412,6 +412,16 @@ function PanelCordobeses() {
   const [aprobandoUid, setAprobandoUid] = useState("");
   const [mensajePermiso, setMensajePermiso] = useState("");
   const [adminExtra, setAdminExtra] = useState(false);
+  const [invitaciones, setInvitaciones] = useState({});
+  const [invitarAbierto, setInvitarAbierto] = useState(false);
+  const [nombreInvite, setNombreInvite] = useState("");
+  const [tipoInvite, setTipoInvite] = useState("coordinador");
+  const [jornadaInvite, setJornadaInvite] = useState("");
+  const [generandoInvite, setGenerandoInvite] = useState(false);
+  const [codigoIngreso, setCodigoIngreso] = useState("");
+  const [aplicandoCodigo, setAplicandoCodigo] = useState(false);
+  const [mensajeCodigo, setMensajeCodigo] = useState("");
+  const [codigoAbierto, setCodigoAbierto] = useState(false);
   const ultimaCopia = useRef({});
   const avisoGuardado = useRef(false);
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
@@ -465,7 +475,10 @@ function PanelCordobeses() {
         setPermisos(await leer(`panelPermisos/${sesion.uid}`) || {});
         const extra = (await leer(`panelAdministradores/${sesion.uid}`)) === true;
         setAdminExtra(extra);
-        if (sesion.uid === ADMIN_UID || extra) setSolicitudes(await leer("panelSolicitudes") || {});
+        if (sesion.uid === ADMIN_UID || extra) {
+          setSolicitudes(await leer("panelSolicitudes") || {});
+          setInvitaciones(await leer("panelInvitaciones") || {});
+        }
       }
     };
     cargar(); const timer = setInterval(cargar, 12000);
@@ -528,6 +541,76 @@ function PanelCordobeses() {
     confirmarPermiso(uid, { [`panelPermisos/${uid}/_todas`]: true }, "Acceso a todas las fechas aprobado correctamente");
   const aprobarAdministrador = (uid) =>
     confirmarPermiso(uid, { [`panelAdministradores/${uid}`]: true }, "Coordinador/a aprobado correctamente");
+
+  const generarCodigoInvitacion = () => {
+    const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let codigo = "";
+    for (let i = 0; i < 6; i++) codigo += alfabeto[Math.floor(Math.random() * alfabeto.length)];
+    return codigo;
+  };
+
+  const crearInvitacion = async () => {
+    if (!nombreInvite.trim() || generandoInvite) return;
+    if (tipoInvite === "jornada" && !jornadaInvite) return;
+    setGenerandoInvite(true);
+    try {
+      const codigo = generarCodigoInvitacion();
+      await peticionDb(`panelInvitaciones/${codigo}`, "PUT", {
+        nombre: nombreInvite.trim(),
+        tipo: tipoInvite,
+        jornadaId: tipoInvite === "jornada" ? jornadaInvite : null,
+        creado: Date.now(),
+        usado: false,
+      });
+      setInvitaciones((prev) => ({ ...prev, [codigo]: { nombre: nombreInvite.trim(), tipo: tipoInvite, jornadaId: tipoInvite === "jornada" ? jornadaInvite : null, creado: Date.now(), usado: false } }));
+      setNombreInvite("");
+      setJornadaInvite("");
+    } finally {
+      setGenerandoInvite(false);
+    }
+  };
+
+  const revocarInvitacion = async (codigo) => {
+    await peticionDb(`panelInvitaciones/${codigo}`, "DELETE");
+    setInvitaciones((prev) => { const n = { ...prev }; delete n[codigo]; return n; });
+  };
+
+  const aplicarCodigoInvitacion = async () => {
+    const codigo = codigoIngreso.trim().toUpperCase();
+    if (!codigo || !sesion || aplicandoCodigo) return;
+    setAplicandoCodigo(true);
+    setMensajeCodigo("");
+    try {
+      const invite = await peticionDb(`panelInvitaciones/${codigo}`);
+      if (!invite) {
+        setMensajeCodigo("Ese código no existe o ya fue usado.");
+        return;
+      }
+      if (invite.usado) {
+        setMensajeCodigo("Ese código ya fue utilizado.");
+        return;
+      }
+      if (invite.tipo === "coordinador") {
+        await peticionDb(`panelAdministradores/${sesion.uid}`, "PUT", true);
+        setAdminExtra(true);
+      } else if (invite.tipo === "todas") {
+        await peticionDb(`panelPermisos/${sesion.uid}/_todas`, "PUT", true);
+        setPermisos((prev) => ({ ...prev, _todas: true }));
+      } else if (invite.tipo === "jornada" && invite.jornadaId) {
+        await peticionDb(`panelPermisos/${sesion.uid}/${invite.jornadaId}`, "PUT", true);
+        setPermisos((prev) => ({ ...prev, [invite.jornadaId]: true }));
+      }
+      await peticionDb(`panelInvitaciones/${codigo}`, "PATCH", { usado: true, usadoEn: Date.now(), usadoPor: sesion.uid });
+      setInvitaciones((prev) => { const n = { ...prev }; if (n[codigo]) n[codigo] = { ...n[codigo], usado: true }; return n; });
+      setCodigoIngreso("");
+      setCodigoAbierto(false);
+      setMensajeCodigo("✓ Código aplicado. Ya tenés el nuevo acceso.");
+    } catch (error) {
+      setMensajeCodigo("No se pudo aplicar el código. Volvé a intentarlo.");
+    } finally {
+      setAplicandoCodigo(false);
+    }
+  };
 
   const jornadas = DATOS_CORDOBESES[rama];
   const ramaColor = rama === "masculino" ? C.doradoLogo : C.rojoLogo;
@@ -605,8 +688,42 @@ function PanelCordobeses() {
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinador/a" : permisos._todas === true ? "Acceso a todas las fechas" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
             <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : permisos._todas === true ? "Podés modificar todas las jornadas, sin administrar permisos." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
           </div>
-          {esCoordinadora ? <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button> : <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>}
+          <span style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            {esCoordinadora ? (
+              <>
+                <button onClick={() => setInvitarAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>+ Invitar coordinador/a</button>
+                <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button>
+              </>
+            ) : (
+              <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>
+            )}
+            <button onClick={() => setCodigoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "#fff", color: C.ink, fontWeight: 700, cursor: "pointer" }}>Tengo un código de invitación</button>
+          </span>
         </div>
+        {invitarAbierto && esCoordinadora && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
+            <input value={nombreInvite} onChange={(e) => setNombreInvite(e.target.value)} placeholder="Nombre de la persona a invitar" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <select value={tipoInvite} onChange={(e) => setTipoInvite(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+              <option value="coordinador">Coordinador/a (acceso total)</option>
+              <option value="todas">Acceso a todas las fechas, sin administrar</option>
+              <option value="jornada">Solo una jornada</option>
+            </select>
+            {tipoInvite === "jornada" && (
+              <select value={jornadaInvite} onChange={(e) => setJornadaInvite(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+                <option value="">Elegí la jornada</option>
+                {[...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].map((j) => <option key={j.id} value={j.id}>{j.fecha} · {j.categoria} · {j.grupo || j.instancia}</option>)}
+              </select>
+            )}
+            <button onClick={crearInvitacion} disabled={!nombreInvite.trim() || (tipoInvite === "jornada" && !jornadaInvite) || generandoInvite} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11, opacity: generandoInvite ? 0.6 : 1 }}>{generandoInvite ? "Generando…" : "Generar código"}</button>
+          </div>
+        )}
+        {codigoAbierto && (
+          <div style={{ display: "flex", gap: 7, marginTop: 9, flexWrap: "wrap" }}>
+            <input value={codigoIngreso} onChange={(e) => setCodigoIngreso(e.target.value.toUpperCase())} placeholder="Código de invitación (ej: AB12CD)" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12, textTransform: "uppercase", flex: 1, minWidth: 170 }} />
+            <button onClick={aplicarCodigoInvitacion} disabled={!codigoIngreso.trim() || aplicandoCodigo} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, fontSize: 11, opacity: aplicandoCodigo ? 0.6 : 1 }}>{aplicandoCodigo ? "Aplicando…" : "Aplicar código"}</button>
+          </div>
+        )}
+        {mensajeCodigo && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajeCodigo.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajeCodigo.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajeCodigo}</div>}
         {pedidoAbierto && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
             <input value={nombrePedido} onChange={(e) => setNombrePedido(e.target.value)} placeholder="Tu nombre y apellido" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
@@ -637,6 +754,20 @@ function PanelCordobeses() {
           </div>
         )}
         {mensajePermiso && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajePermiso.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajePermiso.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajePermiso}</div>}
+        {esCoordinadora && Object.entries(invitaciones).filter(([, i]) => !i.usado).length > 0 && (
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Códigos de invitación activos</div>
+            {Object.entries(invitaciones).filter(([, i]) => !i.usado).map(([codigo, i]) => (
+              <div key={codigo} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
+                <span>
+                  <strong style={{ fontFamily: "monospace", fontSize: 13, background: C.primarioClaro, padding: "2px 7px", borderRadius: 5 }}>{codigo}</strong>
+                  {" "}· {i.nombre} · {i.tipo === "coordinador" ? "Coordinador/a" : i.tipo === "todas" ? "Todas las fechas" : `Jornada ${i.jornadaId}`}
+                </span>
+                <button onClick={() => revocarInvitacion(codigo)} style={{ border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Revocar</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
