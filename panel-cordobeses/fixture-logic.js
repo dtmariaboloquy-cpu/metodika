@@ -119,15 +119,35 @@
   function montar(){
     document.querySelectorAll("[data-jornada-id]").forEach(card=>{
       const id=card.dataset.jornadaId,rotulos=Array.from(card.querySelectorAll("div")).filter(e=>e.children.length===0&&/^ZONA \d+ \(\d+\)$/.test(e.textContent.trim()));
-      if(rotulos.length!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
+      const numZonas=rotulos.length;
+      if(numZonas!==2&&numZonas!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
       cargar(id);
       const zonas=rotulos.map(r=>r.parentElement),clasificados=[],completas=[];
       zonas.forEach(z=>{const entradas=Array.from(z.querySelectorAll('input[type="number"]')),completa=entradas.length>0&&entradas.every(i=>i.value!=="");completas.push(completa);const fila=z.querySelector("tbody tr");if(fila){fila.style.background=completa?"#dff3e7":"transparent";let badge=fila.querySelector(".badge-clasifica");if(completa&&!badge){badge=document.createElement("strong");badge.className="badge-clasifica";badge.textContent=" · CLASIFICA";badge.style.color="#168753";fila.cells[0].appendChild(badge)}if(!completa&&badge)badge.remove();clasificados.push(completa?fila.cells[0].childNodes[0].textContent.trim():null)}else clasificados.push(null)});
       const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados"),contenedor=titulo&&titulo.parentElement;if(!contenedor)return;
-      let fase=contenedor.querySelector(".fase-final-automatica");const datos=cache[id]||{},firma=JSON.stringify([clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);if(fase&&fase.dataset.firma===firma)return;if(fase)fase.remove();
-      fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";const h=document.createElement("div");h.textContent="FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
-      if(!completas.every(Boolean)){const aviso=document.createElement("div");aviso.textContent="Se habilita automáticamente cuando estén completos todos los resultados de las 4 zonas.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
-      const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card),r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[3],r1),g2=ganador(clasificados[1],clasificados[2],r2),rf=datos["fase-final"]||{},campeon=ganador(g1,g2,rf),grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";grid.append(partido(id,"fase-semi-1","SEMIFINAL 1",clasificados[0],clasificados[3],puede),partido(id,"fase-semi-2","SEMIFINAL 2",clasificados[1],clasificados[2],puede),partido(id,"fase-final","FINAL",g1,g2,puede));fase.appendChild(grid);if(campeon){const copa=document.createElement("div");copa.textContent="🏆 CAMPEÓN: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}contenedor.appendChild(fase);
+      const datos=cache[id]||{};
+      let fase=contenedor.querySelector(".fase-final-automatica");
+      const firma=JSON.stringify([numZonas,clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);
+      if(fase&&fase.dataset.firma===firma)return;
+      if(fase)fase.remove();
+      fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";
+      const h=document.createElement("div");h.textContent=numZonas===2?"FASE FINAL · FINAL":"FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
+      if(!completas.every(Boolean)){const aviso=document.createElement("div");aviso.textContent="Se habilita automáticamente cuando estén completos todos los resultados de las "+numZonas+" zonas.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
+      const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card);
+      const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";
+      let campeon=null;
+      if(numZonas===2){
+        const rf=datos["fase-final"]||{};
+        campeon=ganador(clasificados[0],clasificados[1],rf);
+        grid.append(partido(id,"fase-final","FINAL · ZONA 1 vs ZONA 2",clasificados[0],clasificados[1],puede));
+      } else {
+        const r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[1],r1),g2=ganador(clasificados[2],clasificados[3],r2),rf=datos["fase-final"]||{};
+        campeon=ganador(g1,g2,rf);
+        grid.append(partido(id,"fase-semi-1","SEMIFINAL 1 · ZONA 1 vs ZONA 2",clasificados[0],clasificados[1],puede),partido(id,"fase-semi-2","SEMIFINAL 2 · ZONA 3 vs ZONA 4",clasificados[2],clasificados[3],puede),partido(id,"fase-final","FINAL",g1,g2,puede));
+      }
+      fase.appendChild(grid);
+      if(campeon){const copa=document.createElement("div");copa.textContent="🏆 GANADOR: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}
+      contenedor.appendChild(fase);
     });
   }
   setInterval(montar,800);setTimeout(montar,1000);
@@ -158,4 +178,3 @@
   function montar(){document.querySelectorAll("[data-jornada-id]").forEach(card=>{const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados");if(!titulo)return;const seccion=titulo.parentElement;if(seccion.querySelector(".boton-descargar-pdf"))return;const boton=document.createElement("button");boton.className="boton-descargar-pdf";boton.textContent="⬇ Descargar PDF de la fecha";boton.style.cssText="margin:3px 0 10px 8px;padding:8px 13px;border:1px solid #17365d;border-radius:8px;background:#fff;color:#17365d;font-size:11px;font-weight:900;cursor:pointer";boton.onclick=e=>{e.stopPropagation();generar(card,boton)};titulo.insertAdjacentElement("afterend",boton)});}
   setInterval(montar,800);setTimeout(montar,1000);
 })();
-
