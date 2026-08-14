@@ -54,7 +54,80 @@
     return partidos;
   }
 
-  return { clavePartido, rondasTodosContraTodos, partidosDeZona };
+  // Nombre "base" del colegio: le saca la letra final de variante (" A", " B", " C"...)
+  // salvo que sea un equipo combinado tipo "Colegio X A y B" (ahí se deja como está).
+  function institucionBase(nombre) {
+    const limpio = String(nombre || "").trim();
+    const variante = limpio.match(/^(.*)\s+([A-Za-z])$/);
+    const base = variante && !/\s+y$/i.test(variante[1]) ? variante[1] : limpio;
+    return base.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function mezclar(lista, aleatorio) {
+    const copia = lista.slice();
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(aleatorio() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+  }
+
+  // Arma el orden de sorteo de forma que, al repartir por posición (i % numZonas),
+  // los equipos del mismo colegio queden en zonas distintas siempre que sea posible.
+  function distribuirSinMismaInstitucion(equipos, numZonas, aleatorio) {
+    const azar = typeof aleatorio === "function" ? aleatorio : Math.random;
+    const lista = Array.isArray(equipos) ? equipos.filter(Boolean) : [];
+    const zonasCantidad = Math.max(1, parseInt(numZonas) || 1);
+    const total = lista.length;
+    if (total === 0) return [];
+
+    // Los primeros (total % zonasCantidad) zonas reciben un equipo extra: son las
+    // zonas "grandes". Este orden decreciente es clave para que después, al
+    // intercalar por fila, la posición i quede siempre en la zona i % zonasCantidad.
+    const capacidad = Array.from({ length: zonasCantidad }, (_, i) =>
+      Math.floor(total / zonasCantidad) + (i < total % zonasCantidad ? 1 : 0)
+    );
+
+    const gruposMapa = new Map();
+    mezclar(lista, azar).forEach((equipo) => {
+      const base = institucionBase(equipo);
+      if (!gruposMapa.has(base)) gruposMapa.set(base, []);
+      gruposMapa.get(base).push(equipo);
+    });
+    // Los colegios con más equipos se ubican primero: son los que más chocan si
+    // se dejan para el final, cuando ya quedan pocas zonas con lugar.
+    const grupos = mezclar(Array.from(gruposMapa.values()), azar).sort((a, b) => b.length - a.length);
+
+    const zonas = Array.from({ length: zonasCantidad }, () => []);
+    grupos.forEach((grupo) => {
+      const usadas = new Set();
+      mezclar(grupo, azar).forEach((equipo) => {
+        const candidatas = (evitarUsadas) => zonas
+          .map((z, i) => ({ i, ocupacion: capacidad[i] ? z.length / capacidad[i] : 1, libre: z.length < capacidad[i] }))
+          .filter((z) => z.libre && (!evitarUsadas || !usadas.has(z.i)));
+        let opciones = candidatas(true);
+        // Si el colegio ya tiene un equipo en cada zona con lugar, se reinicia:
+        // el resto de sus equipos también intenta repartirse lo más parejo posible.
+        if (opciones.length === 0) { usadas.clear(); opciones = candidatas(false); }
+        if (opciones.length === 0) opciones = zonas.map((z, i) => ({ i, ocupacion: z.length }));
+        opciones.sort((a, b) => a.ocupacion - b.ocupacion || a.i - b.i);
+        const zi = opciones[0].i;
+        zonas[zi].push(equipo);
+        usadas.add(zi);
+      });
+    });
+
+    const filas = capacidad.reduce((max, c) => Math.max(max, c), 0);
+    const orden = [];
+    for (let fila = 0; fila < filas; fila++) {
+      for (let zi = 0; zi < zonasCantidad; zi++) {
+        if (zonas[zi][fila] !== undefined) orden.push(zonas[zi][fila]);
+      }
+    }
+    return orden;
+  }
+
+  return { clavePartido, rondasTodosContraTodos, partidosDeZona, institucionBase, distribuirSinMismaInstitucion, mezclar };
 });
 
 
