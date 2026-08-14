@@ -189,30 +189,61 @@
     if(valor(r,"gl")!==""&&valor(r,"gv")!==""&&Number(r.gl)===Number(r.gv)){const pen=document.createElement("div");pen.style.cssText="display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #cfd5dd;font-size:10px;color:#596579";const txt=document.createElement("strong");txt.textContent="PENALES";pen.appendChild(txt);["pl","pv"].forEach((campo,i)=>{if(i){const guion=document.createElement("span");guion.textContent="-";pen.appendChild(guion)}const inp=document.createElement("input");inp.type="number";inp.min="0";inp.value=valor(r,campo);inp.disabled=!puedeEditar;inp.style.cssText="width:38px;text-align:center";inp.onchange=()=>guardar(id,key,campo,inp.value);pen.appendChild(inp)});caja.appendChild(pen)}
     return caja;
   }
+  function equipoStats(fila){
+    if(!fila)return null;
+    const c=fila.cells;
+    return{nombre:c[0].childNodes[0].textContent.trim(),pts:Number(c[8].textContent)||0,dg:Number(c[7].textContent)||0,gf:Number(c[5].textContent)||0};
+  }
+  function construirRankingSegundos(ordenados){
+    const caja=document.createElement("div");
+    caja.style.cssText="background:#fff;border:1px solid #dfe3e8;border-radius:8px;padding:10px;grid-column:1/-1";
+    const head=document.createElement("div");head.textContent="RANKING DE PERDEDORES DE FINAL DE ZONA · define al 4º";head.style.cssText="font-size:10px;font-weight:800;color:#17365d;margin-bottom:7px";caja.appendChild(head);
+    ordenados.forEach((o,i)=>{
+      const fila=document.createElement("div");
+      fila.style.cssText="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin:4px 0;padding:4px 0;"+(i<2?"font-weight:800;color:#168753":"color:#8792a2;text-decoration:line-through");
+      const izq=document.createElement("span");izq.textContent=(i+1)+"º · "+o.equipo+" (ZONA "+(o.zona+1)+")"+(i<2?" · avanza al cruce":" · queda eliminado");
+      const der=document.createElement("span");der.textContent=o.stats.pts+"pts · DG "+o.stats.dg+" · "+o.stats.gf+"GF";
+      fila.append(izq,der);caja.appendChild(fila);
+    });
+    return caja;
+  }
   function montar(){
     document.querySelectorAll("[data-jornada-id]").forEach(card=>{
       const id=card.dataset.jornadaId,rotulos=Array.from(card.querySelectorAll("div")).filter(e=>e.children.length===0&&/^ZONA \d+ \(\d+\)$/.test(e.textContent.trim()));
       const numZonas=rotulos.length;
-      if(numZonas!==2&&numZonas!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
+      if(numZonas!==2&&numZonas!==3&&numZonas!==4){const vieja=card.querySelector(".fase-final-automatica");if(vieja)vieja.remove();return;}
       cargar(id);
-      const zonas=rotulos.map(r=>r.parentElement),clasificados=[],completas=[];
-      zonas.forEach(z=>{const entradas=Array.from(z.querySelectorAll('input[type="number"]')),completa=entradas.length>0&&entradas.every(i=>i.value!=="");completas.push(completa);const fila=z.querySelector("tbody tr");if(fila){fila.style.background=completa?"#dff3e7":"transparent";let badge=fila.querySelector(".badge-clasifica");if(completa&&!badge){badge=document.createElement("strong");badge.className="badge-clasifica";badge.textContent=" · CLASIFICA";badge.style.color="#168753";fila.cells[0].appendChild(badge)}if(!completa&&badge)badge.remove();clasificados.push(completa?fila.cells[0].childNodes[0].textContent.trim():null)}else clasificados.push(null)});
+      const zonas=rotulos.map(r=>r.parentElement),clasificados=[],completas=[],filasZona=[];
+      zonas.forEach(z=>{const entradas=Array.from(z.querySelectorAll('input[type="number"]')),completa=entradas.length>0&&entradas.every(i=>i.value!=="");completas.push(completa);const filas=Array.from(z.querySelectorAll("tbody tr"));filasZona.push(filas);const fila=filas[0];if(fila){fila.style.background=completa?"#dff3e7":"transparent";let badge=fila.querySelector(".badge-clasifica");if(completa&&!badge){badge=document.createElement("strong");badge.className="badge-clasifica";badge.textContent=" · CLASIFICA";badge.style.color="#168753";fila.cells[0].appendChild(badge)}if(!completa&&badge)badge.remove();clasificados.push(completa?fila.cells[0].childNodes[0].textContent.trim():null)}else clasificados.push(null)});
       const titulo=Array.from(card.querySelectorAll("div")).find(e=>e.children.length===0&&e.textContent.trim()==="Armar cruces (sorteo) y resultados"),contenedor=titulo&&titulo.parentElement;if(!contenedor)return;
       const datos=cache[id]||{};
       let fase=contenedor.querySelector(".fase-final-automatica");
-      const firma=JSON.stringify([numZonas,clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"]]);
+      const firma=JSON.stringify([numZonas,clasificados,datos["fase-semi-1"],datos["fase-semi-2"],datos["fase-final"],datos["fase-zona-final-1"],datos["fase-zona-final-2"],datos["fase-zona-final-3"],datos["fase-repechaje"]]);
       if(fase&&fase.dataset.firma===firma)return;
       if(fase)fase.remove();
       fase=document.createElement("div");fase.className="fase-final-automatica";fase.dataset.firma=firma;fase.style.cssText="margin-top:14px;padding:12px;background:#f7f8fa;border:1px solid #dfe3e8;border-radius:9px";
-      const h=document.createElement("div");h.textContent=numZonas===2?"FASE FINAL · FINAL":"FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
+      const h=document.createElement("div");h.textContent=numZonas===2?"FASE FINAL · FINAL":numZonas===3?"FASE FINAL · FINALES DE ZONA Y CRUCE POR EL 4º":"FASE FINAL · SEMIFINALES Y FINAL";h.style.cssText="font-size:12px;font-weight:900;color:#17365d;margin-bottom:10px";fase.appendChild(h);
       if(!completas.every(Boolean)){const aviso=document.createElement("div");aviso.textContent="Se habilita automáticamente cuando estén completos todos los resultados de las "+numZonas+" zonas.";aviso.style.cssText="font-size:11px;color:#596579";fase.appendChild(aviso);contenedor.appendChild(fase);return;}
       const baseInput=zonas[0].querySelector('input[type="number"]'),puede=baseInput&&editable(baseInput,card);
       const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px";
-      let campeon=null;
+      let campeon=null,clasificadosFinales=null;
       if(numZonas===2){
         const rf=datos["fase-final"]||{};
         campeon=ganador(clasificados[0],clasificados[1],rf);
         grid.append(partido(id,"fase-final","FINAL · ZONA 1 vs ZONA 2",clasificados[0],clasificados[1],puede));
+      } else if(numZonas===3){
+        const segundos=filasZona.map(filas=>filas[1]?filas[1].cells[0].childNodes[0].textContent.trim():null);
+        const finales=[0,1,2].map(zi=>{const rf=datos["fase-zona-final-"+(zi+1)]||{};return{zona:zi,primero:clasificados[zi],segundo:segundos[zi],ganador:ganador(clasificados[zi],segundos[zi],rf)}});
+        finales.forEach(f=>grid.append(partido(id,"fase-zona-final-"+(f.zona+1),"FINAL ZONA "+(f.zona+1)+" · 1º vs 2º",f.primero,f.segundo,puede)));
+        if(finales.every(f=>f.ganador)){
+          const perdedores=finales.map(f=>{const perdioElPrimero=f.ganador===f.segundo;const stats=equipoStats(filasZona[f.zona][perdioElPrimero?0:1]);return{zona:f.zona,equipo:perdioElPrimero?f.primero:f.segundo,stats:stats||{pts:0,dg:0,gf:0}}});
+          const ordenados=perdedores.slice().sort((a,b)=>b.stats.pts-a.stats.pts||b.stats.dg-a.stats.dg||b.stats.gf-a.stats.gf);
+          grid.append(construirRankingSegundos(ordenados));
+          const [mejor1,mejor2]=ordenados,rr=datos["fase-repechaje"]||{};
+          grid.append(partido(id,"fase-repechaje","CRUCE POR EL 4º · Mejores perdedores de zona",mejor1.equipo,mejor2.equipo,puede));
+          const cuarto=ganador(mejor1.equipo,mejor2.equipo,rr);
+          if(cuarto)clasificadosFinales=[finales[0].ganador,finales[1].ganador,finales[2].ganador,cuarto];
+        }
       } else {
         const r1=datos["fase-semi-1"]||{},r2=datos["fase-semi-2"]||{},g1=ganador(clasificados[0],clasificados[1],r1),g2=ganador(clasificados[2],clasificados[3],r2),rf=datos["fase-final"]||{};
         campeon=ganador(g1,g2,rf);
@@ -220,6 +251,7 @@
       }
       fase.appendChild(grid);
       if(campeon){const copa=document.createElement("div");copa.textContent="🏆 GANADOR: "+campeon;copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}
+      else if(clasificadosFinales){const copa=document.createElement("div");copa.textContent="🏆 CLASIFICADOS: "+clasificadosFinales.join(" · ");copa.style.cssText="margin-top:10px;padding:12px;background:#168753;color:#fff;border-radius:8px;text-align:center;font-weight:900";fase.appendChild(copa)}
       contenedor.appendChild(fase);
     });
   }
