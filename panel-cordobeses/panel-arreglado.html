@@ -178,7 +178,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
       )}
 
       {orden.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, 1fr)`, gap: 10, marginTop: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, minmax(240px, 1fr))`, gap: 10, marginTop: 4, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 6 }}>
           {zonas.map((equipos, zi) => {
             const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
             const tabla = tablaPosiciones(equipos, partidos, resultados);
