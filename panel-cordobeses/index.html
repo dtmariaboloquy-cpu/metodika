@@ -94,7 +94,16 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
     setSorteo({ bolsa: resto, orden: [...orden, saliente] });
   };
 
-  const reiniciar = () => setSorteo({ bolsa: null, orden: [] });
+  const hayResultadosCargados = Object.values(resultados || {}).some(
+    (r) => r && ((r.gl !== undefined && r.gl !== "") || (r.gv !== undefined && r.gv !== ""))
+  );
+  const reiniciar = () => {
+    const aviso = hayResultadosCargados
+      ? "⚠️ Ya hay resultados cargados en esta jornada. Si volvés a armar el sorteo, esos resultados van a seguir guardados pero es probable que ya no se puedan ver asociados a los partidos nuevos. Esta acción no se puede deshacer fácilmente.\n\n¿Seguro que querés volver a armar el sorteo?"
+      : "¿Seguro que querés volver a armar el sorteo? Se va a borrar la distribución en zonas actual.";
+    if (!window.confirm(aviso)) return;
+    setSorteo({ bolsa: null, orden: [] });
+  };
 
   // si se agregó o bajó un equipo después de armar el sorteo, lo mandamos de nuevo a la bolsa
   const enSorteo = new Set([...(bolsa || []), ...orden]);
