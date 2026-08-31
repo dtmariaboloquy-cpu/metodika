@@ -267,14 +267,15 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
   const sorteo = cruces?.sorteo || { bolsa: null, orden: [] };
 
   const agregarEquipo = () => {
-    if (!nuevoEquipo.trim()) return;
-    setExtras([...(extras || []), nuevoEquipo.trim()]);
+    const nombres = nuevoEquipo.split(/\r?\n/).map((n) => n.trim()).filter(Boolean);
+    if (nombres.length === 0) return;
+    setExtras([...(extras || []), ...nombres]);
     setNuevoEquipo("");
   };
 
   return (
     <div data-jornada-id={jornada.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
-      <div onClick={() => !jornada.pendiente && setAbierto((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: jornada.pendiente ? "default" : "pointer", flexWrap: "wrap", gap: 8 }}>
+      <div onClick={() => setAbierto((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: "pointer", flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ background: ramaColor, color: "#fff", borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 52 }}>
             <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>{jornada.fecha.split("-")[0]}</div>
@@ -301,7 +302,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           >
             👤 {editable ? "Responsable de sede" : "Ver responsable"}
           </button>
-          {!jornada.pendiente && <span>{equiposActivos.length} equipos activos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>}
+          <span>{equiposActivos.length} equipos activos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>
         </div>
       </div>
 
@@ -330,13 +331,13 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
         </div>
       )}
 
-      {jornada.pendiente && (
+      {jornada.pendiente && equiposCompletos.length === 0 && (
         <div style={{ padding: "0 14px 14px", fontSize: 12, color: C.sub, fontStyle: "italic" }}>
-          A definir — se completa con las clasificadas de la fase zonal.
+          A definir — se completa con las clasificadas de la fase zonal.{editable ? " Abrí la jornada para cargar los colegios ganadores apenas los tengas." : ""}
         </div>
       )}
 
-      {abierto && !jornada.pendiente && (
+      {abierto && (
         <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
           {equiposCompletos.map((eq, i) => {
             const key = jornada.id + "-" + i;
@@ -353,12 +354,14 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
             );
           })}
 
-          {editable && <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-            <input
+          {editable && <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "flex-start" }}>
+            <textarea
               value={nuevoEquipo}
               onChange={(e) => setNuevoEquipo(e.target.value)}
-              placeholder="Agregar institución a esta jornada…"
-              style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, color: C.ink }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); agregarEquipo(); } }}
+              placeholder="Agregar institución a esta jornada… (podés pegar varias, una por línea)"
+              rows={1}
+              style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, color: C.ink, resize: "vertical", minHeight: 28, fontFamily: "inherit" }}
             />
             <button onClick={agregarEquipo} disabled={!nuevoEquipo.trim()} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: nuevoEquipo.trim() ? "pointer" : "not-allowed", opacity: nuevoEquipo.trim() ? 1 : 0.5 }}>＋ Agregar</button>
           </div>}
