@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js?v=20260904-zonas-editables"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js?v=20260904-intro-splash"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F3F5F9",
@@ -575,7 +575,38 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
   );
 }
 
+function IntroCordobeses({ onEntrar }) {
+  useEffect(() => {
+    const t = setTimeout(onEntrar, 2200);
+    return () => clearTimeout(t);
+  }, [onEntrar]);
+  return (
+    <div
+      onClick={onEntrar}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999, cursor: "pointer",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        background: `linear-gradient(150deg, #0A1E3B 0%, ${C.primario} 55%, #1F4D82 100%)`,
+        color: "#fff", textAlign: "center", padding: 24, fontFamily: C.fuente,
+      }}
+    >
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, opacity: 0.55, pointerEvents: "none",
+        background: `linear-gradient(115deg, transparent 58%, ${C.rojoLogo} 58% 66%, transparent 66% 71%, ${C.doradoLogo} 71% 79%, transparent 79% 84%, ${C.verde} 84% 92%, transparent 92%)`,
+      }} />
+      <div style={{ position: "relative", fontSize: 64, marginBottom: 10, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))" }}>⚽</div>
+      <div style={{ position: "relative", fontSize: 15, letterSpacing: 3, fontWeight: 700, color: "#BFD4EC", marginBottom: 6 }}>FÚTBOL</div>
+      <div style={{ position: "relative", fontSize: 42, fontWeight: 800, lineHeight: 1.15 }}>
+        <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo }}>Juegan</span>
+      </div>
+      <div style={{ position: "relative", fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 4, letterSpacing: 1 }}>2026</div>
+      <div style={{ position: "relative", fontSize: 12, color: "#BFD4EC", marginTop: 28 }}>Tocá la pantalla para entrar…</div>
+    </div>
+  );
+}
+
 function PanelCordobeses() {
+  const [intro, setIntro] = useState(true);
   const [rama, setRama] = useState("femenino");
   const [reglamentoAbierto, setReglamentoAbierto] = useState(false);
   const [reglamentoRama, setReglamentoRama] = useState("femenino");
@@ -813,6 +844,8 @@ function PanelCordobeses() {
     const equiposCompletos = [...j.equipos, ...(extras[j.id] || [])];
     return s + equiposCompletos.filter((_, i) => estados[j.id + "-" + i]?.bajo).length;
   }, 0);
+
+  if (intro) return <IntroCordobeses onEntrar={() => setIntro(false)} />;
 
   return (
     <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20, borderRadius: 12 }}>
