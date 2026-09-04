@@ -665,9 +665,29 @@ function IntroCordobeses({ onEntrar }) {
   );
 }
 
+// Si se entra desde el link/QR de "vista para profes" (?vista=profes&jornada=xxx),
+// hay que arrancar directo en el panel (sin la intro) y con la pestaña (rama) correcta
+// ya seleccionada, para que la jornada pedida esté en pantalla desde el primer instante.
+function jornadaPedidaPorUrl() {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get("vista") !== "profes") return null;
+    const id = params.get("jornada");
+    if (!id) return null;
+    const todas = [...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino];
+    return todas.find((j) => j.id === id) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function PanelCordobeses() {
-  const [intro, setIntro] = useState(true);
-  const [rama, setRama] = useState("femenino");
+  const [intro, setIntro] = useState(() => !jornadaPedidaPorUrl());
+  const [rama, setRama] = useState(() => {
+    const j = jornadaPedidaPorUrl();
+    if (!j) return "femenino";
+    return j.instancia === "PROVINCIAL" ? "provinciales" : j.rama;
+  });
   const [reglamentoAbierto, setReglamentoAbierto] = useState(false);
   const [reglamentoRama, setReglamentoRama] = useState("femenino");
   const [busqueda, setBusqueda] = useState("");
