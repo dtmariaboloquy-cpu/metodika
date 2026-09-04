@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="fixture-logic.js?v=20260904-intro-splash"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic.js?v=20260904-qr"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F3F5F9",
@@ -409,6 +409,9 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
   const [responsableAbierto, setResponsableAbierto] = useState(false);
   const [responsableBorrador, setResponsableBorrador] = useState({ nombre: "", staff: "" });
   const [nuevoEquipo, setNuevoEquipo] = useState("");
+  const [qrAbierto, setQrAbierto] = useState(false);
+  const [qrImagen, setQrImagen] = useState("");
+  const [qrCopiado, setQrCopiado] = useState(false);
 
   const equiposCompletos = [...jornada.equipos, ...(extras || [])];
   const nBajas = equiposCompletos.filter((_, i) => estados[jornada.id + "-" + i]?.bajo).length;
@@ -454,6 +457,35 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
     if (idx === -1) return;
     const key = jornada.id + "-" + idx;
     setEstado(key, { ...estados[key], bajo: true });
+  };
+
+  // Link de solo lectura para esta jornada: abre directo la "Vista para profes"
+  // (sin botones ni campos editables) apuntando a esta fecha.
+  const urlProfes = typeof location !== "undefined"
+    ? `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}`
+    : "";
+
+  const abrirQr = () => {
+    setQrAbierto(true);
+    setQrCopiado(false);
+    try {
+      const qr = qrcode(0, "M");
+      qr.addData(urlProfes);
+      qr.make();
+      setQrImagen(qr.createDataURL(8, 8));
+    } catch (e) {
+      setQrImagen("");
+    }
+  };
+
+  const copiarEnlaceProfes = async () => {
+    try {
+      await navigator.clipboard.writeText(urlProfes);
+      setQrCopiado(true);
+      setTimeout(() => setQrCopiado(false), 2500);
+    } catch (e) {
+      // si el navegador no deja copiar solo, el link ya está seleccionable a mano
+    }
   };
 
   return (
@@ -554,7 +586,14 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
           </div>}
 
           <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Armar cruces (sorteo) y resultados</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>Armar cruces (sorteo) y resultados</div>
+              {(sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
+                <button onClick={abrirQr} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: "#fff", color: ramaColor, fontWeight: 700, cursor: "pointer" }}>
+                  📱 Código QR para profes
+                </button>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: C.sub, marginBottom: 6 }}>Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, GF, GC, DG, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>
             <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.88 }}><CrucesPanel
               jornada={jornada}
@@ -569,6 +608,27 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               C={C}
             /></div>
           </div>
+
+          {qrAbierto && (
+            <div onClick={() => setQrAbierto(false)} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(10,20,40,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ width: "min(340px,100%)", background: "#fff", borderRadius: 14, padding: 20, textAlign: "center", boxShadow: "0 16px 45px rgba(0,0,0,0.3)" }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.primario, marginBottom: 4 }}>📱 Código QR para profes</div>
+                <div style={{ fontSize: 11, color: C.sub, marginBottom: 14 }}>Solo lectura: quien lo escanea ve los cruces, resultados y la tabla de esta fecha, sin poder modificar nada.</div>
+                {qrImagen ? (
+                  <img src={qrImagen} alt="Código QR" style={{ width: 220, height: 220, imageRendering: "pixelated" }} />
+                ) : (
+                  <div style={{ fontSize: 11, color: C.sub, padding: 30 }}>Generando código…</div>
+                )}
+                <div style={{ marginTop: 14, fontSize: 10, color: C.sub, wordBreak: "break-all", background: "#F7F8FA", border: `1px solid ${C.border}`, borderRadius: 7, padding: "8px 10px" }}>{urlProfes}</div>
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={copiarEnlaceProfes} style={{ flex: 1, fontSize: 11, padding: "9px 10px", borderRadius: 7, border: `1px solid ${C.primario}`, background: qrCopiado ? C.verde : "#fff", color: qrCopiado ? "#fff" : C.primario, fontWeight: 700, cursor: "pointer" }}>
+                    {qrCopiado ? "✓ Enlace copiado" : "Copiar enlace"}
+                  </button>
+                  <button onClick={() => setQrAbierto(false)} style={{ fontSize: 11, padding: "9px 14px", borderRadius: 7, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, fontWeight: 700, cursor: "pointer" }}>Cerrar</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
