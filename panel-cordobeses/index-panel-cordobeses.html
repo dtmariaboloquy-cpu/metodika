@@ -1,0 +1,1243 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic.js?v=20260904-qr"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
+
+const C = {
+  bg: "#F3F5F9",
+  card: "#FFFFFF",
+  border: "#E2E5EA",
+  ink: "#1B2333",
+  sub: "#6B7280",
+  primario: "#17365D",
+  primarioClaro: "#E9F0F9",
+  rojoLogo: "#D42D3F",
+  rojoLogoClaro: "#FCEAEC",
+  doradoLogo: "#C9973B",
+  doradoLogoClaro: "#FBF3E3",
+  azul: "#2F6FB0",
+  azulClaro: "#E7F1FB",
+  verde: "#1D8A4E",
+  verdeClaro: "#E8F6EE",
+  rojo: "#C0392B",
+  amarillo: "#B7791F",
+  provincial: "#7A3FA0",
+  provincialClaro: "#F2E9F7",
+  fuente: "'Baloo 2', 'Nunito', 'Inter', Arial, sans-serif",
+};
+
+const DATOS_CORDOBESES_RAW = {"masculino": [{"fecha": "06-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["Centro de Ed. Activa John Dewey", "Fasta Sto Domingo de Guzmán", "IPEM 206 Fernando Fader A", "IPEM 206 Fernando Fader B", "I.P.E.M. N° 155 Juan Jose Paso", "IPEM 20 Rodolfo Walsh"], "id": "m1"}, {"fecha": "10-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["IPEM N° 202 Dr. Luis F. Leloir A", "IPEM N° 202 Dr. Luis F. Leloir B", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "IPET 404", "IPEM Nº 7 \"Prof. Carlos Segreti\""], "id": "m2"}, {"fecha": "12-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-4", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 123", "Instituto Dalmacio Vélez Sarsfield A", "Instituto Dalmacio Vélez Sarsfield B", "Ipem 195 Ttte Pedro Ignacio Bean A", "Ipem 195 Ttte Pedro Ignacio Bean B", "Ipem 311 Pablo Gaitán A", "Ipem 311 Pablo Gaitán B", "San Patricio", "IPEM N 167 José Manuel Estrada", "IPET 64 Malvinas Argentinas", "IPEM 176 Granadero José Márquez", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "IPET N° 416", "IPET 312 Dalmacio Vélez Sarsfield", "IPEM 207 Eduardo Requena", "Ipem 400 Primero de Mayo", "Fasta Villa Eucarística", "IPEM 114 Arturo Jauretche"], "id": "m3"}, {"fecha": "14-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["E.S.C.M.B A", "E.S.C.M.B B", "Escuela San Jerónimo", "IPEM 360 Edgard Toledo", "Ins. Sec. General San Martín", "IPET 383 Nikola Tesla", "Colegio Adolfo Bioy Casares", "Instituto San Carlos", "IPEM N° 433 Manuel Sadosky", "Instituto Técnico Renault", "IPET N° 251 Guarnición Aérea Cba.", "I.P.E.M. N° 138 Jerónimo Luis Cabrera", "IPET N° 247 Ing. Carlos A. Cassaffousth A", "IPET N° 247 Ing. Carlos A. Cassaffousth B", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural"], "id": "m4"}, {"fecha": "18-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "1-2", "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 375 Leonor Marzano", "Instituto Educativo Alta Córdoba", "IPET 57 Comodoro Martín Rivadavia", "IPEM 169 Rafael M. Escuti", "Liceo Militar General Paz A", "Liceo Militar General Paz B", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM N° 358 Alejandro Papalini", "Instituto Técnico Héctor Valdivielso", "IPET N 351 Augusto Chammas"], "id": "m5"}, {"fecha": "19-08", "categoria": "SUB 16", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["Instituto Privado San Isidro", "IPEM N° 296 Amancio Williams", "IPEMYT 149 Dr. Alejandro Carbó", "IPETYMT 149 Alejandro Carbó P.I.T", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B", "IPEM y T José Campellone", "IPEM 115 Sarmiento"], "id": "m6"}, {"fecha": "19-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "8-3", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["E.S.C.M.B A", "IPEM 360 Edgard Toledo", "IPET 383 Nikola Tesla", "Colegio Adolfo Bioy Casares", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural", "Instituto Privado San Isidro", "Instituto Nuestra Señora del Huerto", "IPEMYT 149 Dr. Alejandro Carbó", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B"], "id": "m7"}, {"fecha": "20-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "1-2", "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 375 Leonor Marzano", "Instituto Educativo Alta Córdoba", "IPEM 169 Rafael M. Escuti", "Liceo Militar General Paz", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM 338 Dr. Salvador Mazza", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas"], "id": "m8"}, {"fecha": "21-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "1-1", "sede": "Club Banco Córdoba (2 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["Fasta Sto Domingo de Guzmán", "I.P.E.M. N° 155 Juan Jose Paso", "IPEM 20 Rodolfo Walsh", "IPEM N° 202 Dr. Luis F. Leloir A", "IPEM N° 202 Dr. Luis F. Leloir B", "IPEM Nº 7 \"Prof. Carlos Segreti\"", "IPET 404", "Castelfranco"], "id": "m9"}, {"fecha": "28-08", "categoria": "SUB 14", "instancia": "ZONAL", "grupo": "8-4", "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": ["IPEM 123", "IPET 312 Dalmacio Vélez Sarsfield", "IPET 64 Malvinas Argentinas", "IPEM 176 Granadero José Márquez", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Ipet 77 Gdor. Santiago del Castillo A y B", "San Patricio", "IPEM 207 Eduardo Requena", "Instituto Dalmacio Vélez Sarsfield", "Fasta Villa Eucarística", "IPEM 114 Arturo Jauretche"], "id": "m10"}, {"fecha": "02-09", "categoria": "SUB 16", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m11"}, {"fecha": "02-09", "categoria": "SUB 14", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Complejo Rulo González Fragueiro 4600", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m12"}, {"fecha": "08-09", "categoria": "SUB 16", "instancia": "REGIONAL SUR", "grupo": null, "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m13"}, {"fecha": "08-09", "categoria": "SUB 14", "instancia": "REGIONAL SUR", "grupo": null, "sede": "UTN (4 canchas)", "horario": "8:00 a 14:00hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "m14"}], "femenino": [{"fecha": "11-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "1-1", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["Institución Escuti", "I.P.E.M. N° 155 Juan José Paso", "IPEM 20 Rodolfo Walsh", "IPEM N° 202 \"Dr. Luis F. Leloir\"", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "IPET 404", "Instituto Santa Ana"], "id": "f1"}, {"fecha": "11-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "1-2", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["Liceo Militar General Paz", "IPEM 373 María Elena Walsh", "IPET 22 Juan Filloy", "IPEM 338 Dr. Salvador Mazza", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas", "IPEM 21 Alfonsina Storni"], "id": "f2"}, {"fecha": "13-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "1-1", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 1, "equipos": ["Institución Escuti", "I.P.E.M. N° 155 Juan José Paso", "IPEM N° 202 \"Dr. Luis F. Leloir\"", "IPET 377 Jorge Alberto Sabato", "IPEM 43 Hipólito Yrigoyen", "Instituto Santa Ana"], "id": "f3"}, {"fecha": "13-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "1-2", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["IPET 57 Comodoro Martín Rivadavia", "IPET 22 Juan Filloy", "IPEM N° 358 Alejandro Papalini", "IPET N 351 Augusto Chammas", "Instituto Técnico Héctor Valdivielso"], "id": "f4"}, {"fecha": "21-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "8-3", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["E.S.C.M.B", "IPEM 360 Edgard Toledo", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo Rural", "Instituto Privado San Isidro", "IPEMYT 149 Dr. Alejandro Carbó", "Col. Sec. William C. Morris"], "id": "f5"}, {"fecha": "24-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "8-3", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 4, "equipos": ["E.S.C.M.B A", "E.S.C.M.B B", "E.S.C.M.B C", "Escuela San Jerónimo", "IPEM 360 Edgard Toledo", "Inst. Sec. General San Martín A", "Inst. Sec. General San Martín B", "Instituto San Carlos", "IPEM N° 433 Manuel Sadosky", "I.P.E.M. N° 138 Jerónimo L. Cabrera", "Instituto San Luis Gonzaga", "Ctro. Integral Ed. M.E.D.E.A.", "IPEM 346 Rep. Argentina Anexo", "Instituto Privado San Isidro", "IPEM N° 296 Amancio Williams", "Col. Sec. William C. Morris A", "Col. Sec. William C. Morris B", "Colegio Adolfo Bioy Casares"], "id": "f6"}, {"fecha": "25-08", "categoria": "SUB 15", "instancia": "ZONAL", "grupo": "8-4", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 3, "equipos": ["IPEM 123", "IPEMyT 310 Puerto Argentino", "IPET 312 Dalmacio Vélez Sarsfield A", "IPET 312 Dalmacio Vélez Sarsfield B", "IPET 64 Malvinas Argentinas", "IPEM 176 Gdero. José Márquez A", "IPEM 176 Gdero. José Márquez B", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Ipet 77 Gdor. Santiago del Castillo", "Inst. Parroq. Cristo Redentor", "Colegio 25 de Mayo", "IPEM 207 Eduardo Requena", "Fasta Villa Eucarística", "Colegio Adolfo Bioy Casares"], "id": "f7"}, {"fecha": "26-08", "categoria": "SUB 18", "instancia": "ZONAL", "grupo": "8-4", "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": 2, "equipos": ["IPEM 123", "IPET 312 Dalmacio Vélez Sarsfield A", "IPET 312 Dalmacio Vélez Sarsfield B", "IPEMyT 310 Puerto Argentino", "IPET 64 Malvinas Argentinas", "IPEM 309 Prof. Carlos Fuentealba", "Ipem 181 Brig. Cornelio Saavedra", "Instituto San Patricio", "Colegio 25 de Mayo", "IPEM 207 Eduardo Requena", "Esc. N. Dr. Agustín Garzón Agulla", "IPEM 176 Granadero José Márquez"], "id": "f8"}, {"fecha": "03-09", "categoria": "SUB 15", "instancia": "REGIONAL SUR", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f9"}, {"fecha": "03-09", "categoria": "SUB 18", "instancia": "REGIONAL SUR", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f10"}, {"fecha": "14-09", "categoria": "SUB 15", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f11"}, {"fecha": "14-09", "categoria": "SUB 18", "instancia": "REGIONAL NORTE", "grupo": null, "sede": "Estadio Kempes", "horario": "8 a 14hs", "ganadores": null, "equipos": [], "pendiente": true, "id": "f12"}]};
+
+// Instancia PROVINCIAL de fútbol (según Instructivo general de procedimientos 2026 · Cordobeses Juegan):
+// arranca vacía, se completa a mano con las/los clasificadas/os de cada regional.
+const PROVINCIALES_FUTBOL = {
+  masculino: [
+    { fecha: "05-10", categoria: "SUB 16", instancia: "PROVINCIAL", grupo: null, sede: "Polideportivo Embalse (Río Tercero)", horario: "5 y 6 de octubre · Alojamiento: Hotel 7", ganadores: 1, equipos: [], pendiente: true, id: "m-prov-sub16" },
+    { fecha: "19-10", categoria: "SUB 14", instancia: "PROVINCIAL", grupo: null, sede: "Polideportivo Embalse (Río Tercero)", horario: "19 y 20 de octubre · Alojamiento: Hotel 2", ganadores: 1, equipos: [], pendiente: true, id: "m-prov-sub14" },
+  ],
+  femenino: [
+    { fecha: "07-10", categoria: "SUB 18", instancia: "PROVINCIAL", grupo: null, sede: "Polideportivo Embalse (Río Tercero)", horario: "7 y 8 de octubre · Alojamiento: Hotel 7 (regiones 4,5,6 y 7) / Hotel 2 (regiones 1,2,3 y 8)", ganadores: 1, equipos: [], pendiente: true, id: "f-prov-sub18" },
+    { fecha: "21-10", categoria: "SUB 15", instancia: "PROVINCIAL", grupo: null, sede: "Polideportivo Embalse (Río Tercero)", horario: "21 y 22 de octubre · Alojamiento: Hotel 2 (regiones 4,5,6 y 7) / Hotel 7 (regiones 1,2,3 y 8)", ganadores: 1, equipos: [], pendiente: true, id: "f-prov-sub15" },
+  ],
+};
+
+function conRama(lista, rama) {
+  return lista.map((j) => ({ ...j, rama }));
+}
+
+const DATOS_CORDOBESES = {
+  masculino: conRama([...DATOS_CORDOBESES_RAW.masculino, ...PROVINCIALES_FUTBOL.masculino], "masculino"),
+  femenino: conRama([...DATOS_CORDOBESES_RAW.femenino, ...PROVINCIALES_FUTBOL.femenino], "femenino"),
+};
+
+
+function Badge({ children, color, bg }) {
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, color: color, background: bg, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap" }}>
+      {children}
+    </span>
+  );
+}
+
+function ResultadoInput({ value, onChange }) {
+  return (
+    <input
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Resultado / posición"
+      style={{ fontSize: 11, padding: "4px 8px", borderRadius: 5, border: `1px solid ${C.border}`, color: C.ink, width: 150 }}
+    />
+  );
+}
+
+function parseCanchas(sede) {
+  const m = (sede || "").match(/(\d+)\s*cancha/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato) {
+  return FixtureCordobeses.partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato);
+}
+
+function tablaPosiciones(equipos, partidos, resultados, ordenManual) {
+  const tabla = {};
+  equipos.forEach((eq) => (tabla[eq] = { equipo: eq, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }));
+  partidos.forEach((partido) => {
+    const r = resultados[partido.key] || resultados[partido.legacyKey] || resultados[partido.legacyReverseKey];
+    if (!r || r.gl === "" || r.gv === "" || r.gl == null || r.gv == null) return;
+    const gl = parseInt(r.gl), gv = parseInt(r.gv);
+    if (isNaN(gl) || isNaN(gv)) return;
+    const L = tabla[partido.local], V = tabla[partido.visitante];
+    L.pj++; V.pj++;
+    L.gf += gl; L.gc += gv;
+    V.gf += gv; V.gc += gl;
+    if (gl > gv) { L.g++; V.p++; }
+    else if (gl < gv) { V.g++; L.p++; }
+    else { L.e++; V.e++; }
+  });
+  const ordenadaAutomatica = Object.values(tabla)
+    .map((t) => ({ ...t, dg: t.gf - t.gc, pts: t.g * 3 + t.e }))
+    .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+  // Clasificación manual: si se marcaron equipos a mano, van primero (en ese orden) y
+  // el resto de la tabla sigue calculándose y ordenándose automáticamente por resultados.
+  if (ordenManual && ordenManual.length) {
+    const enManual = new Set(ordenManual);
+    const primero = ordenManual.map((nombre) => ordenadaAutomatica.find((t) => t.equipo === nombre)).filter(Boolean);
+    const resto = ordenadaAutomatica.filter((t) => !enManual.has(t.equipo));
+    return [...primero, ...resto];
+  }
+  return ordenadaAutomatica;
+}
+
+function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSorteo, resultados, setResultado, onDarDeBaja, C, soloLectura = false }) {
+  const numZonas = Math.max(1, parseInt(config?.numZonas) || 1);
+  const numCanchas = Math.max(1, parseInt(config?.numCanchas) || parseCanchas(jornada.sede));
+  const formato = config?.formato || "todos";
+
+  const bolsa = sorteo?.bolsa || null;
+  const orden = sorteo?.orden || [];
+  const asignacion = {};
+  orden.forEach((eq, i) => (asignacion[eq] = i % numZonas));
+  const manual = sorteo?.manual || {};
+
+  // Zonas "de verdad": si ya se editaron a mano (agregar/mover/dar de baja dentro de una
+  // zona), esa es la fuente de la verdad; si no, se calculan como siempre a partir del
+  // orden de sorteo (reparto 1→N→1). Editar una zona nunca toca a las demás.
+  const zonasAuto = Array.from({ length: numZonas }, (_, zi) => orden.filter((_, i) => i % numZonas === zi));
+  const zonasManual = sorteo?.zonas || null;
+  const zonas = zonasManual || zonasAuto;
+
+  const actualizarZonas = (nuevasZonas, extra) => {
+    setSorteo({ ...sorteo, zonas: nuevasZonas, ...(extra || {}) });
+  };
+
+  const agregarAZona = (zi, equipo) => {
+    if (!equipo) return;
+    const base = zonasManual || zonasAuto;
+    if (base.some((z) => z.includes(equipo))) return;
+    actualizarZonas(base.map((z, i) => (i === zi ? [...z, equipo] : z.slice())));
+  };
+
+  const moverDeZona = (equipo, ziOrigen, ziDestino) => {
+    if (ziOrigen === ziDestino || ziDestino === "") return;
+    const destino = parseInt(ziDestino);
+    const base = zonasManual || zonasAuto;
+    actualizarZonas(base.map((z, i) => {
+      if (i === ziOrigen) return z.filter((e) => e !== equipo);
+      if (i === destino) return [...z, equipo];
+      return z.slice();
+    }));
+  };
+
+  const darDeBajaDeZona = (equipo, zi) => {
+    if (!window.confirm(`¿Dar de baja a "${equipo}" de la ZONA ${zi + 1}?\n\nSe saca solo de esta zona; las demás zonas no se modifican, y los partidos/resultados ya cargados entre las demás instituciones se mantienen.`)) return;
+    const base = zonasManual || zonasAuto;
+    const nuevasZonas = base.map((z, i) => (i === zi ? z.filter((e) => e !== equipo) : z.slice()));
+    const nuevoManual = manual[zi]?.includes(equipo) ? { ...manual, [zi]: manual[zi].filter((e) => e !== equipo) } : manual;
+    actualizarZonas(nuevasZonas, { manual: nuevoManual });
+    if (onDarDeBaja) onDarDeBaja(equipo);
+  };
+
+  const toggleClasificadoManual = (zi, equipo) => {
+    const actuales = manual[zi] || [];
+    const nuevos = actuales.includes(equipo) ? actuales.filter((e) => e !== equipo) : [...actuales, equipo];
+    setSorteo({ ...sorteo, manual: { ...manual, [zi]: nuevos } });
+  };
+
+  const restablecerAutomatico = (zi) => {
+    const m = { ...manual };
+    delete m[zi];
+    setSorteo({ ...sorteo, manual: m });
+  };
+
+  const iniciarSorteo = () => {
+    const mezclado = FixtureCordobeses.distribuirSinMismaInstitucion(equiposActivos, numZonas);
+    setSorteo({ bolsa: mezclado, orden: [] });
+  };
+
+  const distribuirAutomatico = () => {
+    const mezclado = FixtureCordobeses.distribuirSinMismaInstitucion(equiposActivos, numZonas);
+    setSorteo({ bolsa: [], orden: mezclado });
+  };
+
+  const sacarEquipo = () => {
+    if (!bolsa || bolsa.length === 0) return;
+    const [saliente, ...resto] = bolsa;
+    setSorteo({ bolsa: resto, orden: [...orden, saliente] });
+  };
+
+  const hayResultadosCargados = Object.values(resultados || {}).some(
+    (r) => r && ((r.gl !== undefined && r.gl !== "") || (r.gv !== undefined && r.gv !== ""))
+  );
+  const reiniciar = () => {
+    const aviso = hayResultadosCargados
+      ? "⚠️ Ya hay resultados cargados en esta jornada. Si volvés a armar el sorteo, esos resultados van a seguir guardados pero es probable que ya no se puedan ver asociados a los partidos nuevos. Esta acción no se puede deshacer fácilmente.\n\n¿Seguro que querés volver a armar el sorteo?"
+      : "¿Seguro que querés volver a armar el sorteo? Se va a borrar la distribución en zonas actual.";
+    if (!window.confirm(aviso)) return;
+    setSorteo({ bolsa: null, orden: [] });
+  };
+
+  // si se agregó o bajó un equipo después de armar el sorteo, lo mandamos de nuevo a la bolsa
+  // (o queda disponible para sumarlo a mano a una zona puntual con el selector de abajo)
+  const enSorteo = new Set([...(bolsa || []), ...zonas.flat()]);
+  const pendientesDeBolsa = equiposActivos.filter((e) => !enSorteo.has(e));
+
+  const ultimoSacado = orden[orden.length - 1];
+
+  return (
+    <div style={{ background: "#F7F8FA", borderRadius: 8, padding: 12, marginTop: 8 }}>
+      {!soloLectura && <>
+      <div className="solo-coordinador" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Zonas
+          <input type="number" min="1" value={config?.numZonas === "" ? "" : numZonas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numZonas: e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value) || 1) })} onBlur={() => { if (config?.numZonas === "") setConfig({ ...config, numZonas: 1 }); }} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+        </label>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Canchas disponibles
+          <input type="number" min="1" value={config?.numCanchas === "" ? "" : numCanchas} onFocus={(e) => e.target.select()} onChange={(e) => setConfig({ ...config, numCanchas: e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value) || 1) })} onBlur={() => { if (config?.numCanchas === "") setConfig({ ...config, numCanchas: parseCanchas(jornada.sede) }); }} style={{ width: 46, fontSize: 12, padding: "3px 6px", borderRadius: 5, border: `1px solid ${C.border}` }} />
+        </label>
+        <label style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
+          Formato
+          <select value={formato} onChange={(e) => setConfig({ ...config, formato: e.target.value })} style={{ fontSize: 11, padding: "4px 7px", borderRadius: 5, border: `1px solid ${C.border}`, background: "#fff" }}>
+            <option value="todos">Todos contra todos</option>
+            <option value="dos">2 partidos por equipo</option>
+          </select>
+        </label>
+        <span style={{ fontSize: 11, color: C.sub }}>{equiposActivos.length} equipos activos · {formato === "dos" ? "cada equipo juega 2 partidos; clasifica el 1.º por tabla" : `van entrando a las zonas 1→${numZonas}→1… en el orden que salen`}</span>
+      </div>
+
+      {!bolsa ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+            🎱 Sorteo en vivo, uno por uno
+          </button>
+          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
+            ⚡ Distribuir automáticamente, todo junto
+          </button>
+        </div>
+      ) : bolsa.length === 0 && orden.length > 0 ? (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <Badge color="#fff" bg={C.verde}>✓ Distribución lista</Badge>
+            {pendientesDeBolsa.length > 0 && (
+              <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin asignar</span>
+            )}
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Volver a armar</button>
+          </div>
+          {pendientesDeBolsa.length > 0 && (
+            <button onClick={() => setSorteo({ bolsa: pendientesDeBolsa, orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
+              Sortear los equipos nuevos
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <button onClick={sacarEquipo} disabled={bolsa.length === 0} style={{ fontSize: 13, padding: "10px 20px", borderRadius: 8, border: "none", background: bolsa.length ? C.verde : "#C9CDD3", color: "#fff", fontWeight: 800, cursor: bolsa.length ? "pointer" : "default" }}>
+              🎱 Sacar el próximo equipo
+            </button>
+            <span style={{ fontSize: 12, color: C.sub }}>Quedan {bolsa.length} en la bolsa</span>
+            {pendientesDeBolsa.length > 0 && (
+              <span style={{ fontSize: 11, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin meter en la bolsa</span>
+            )}
+            <button onClick={reiniciar} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Reiniciar sorteo</button>
+          </div>
+
+          {pendientesDeBolsa.length > 0 && (
+            <button onClick={() => setSorteo({ bolsa: [...bolsa, ...pendientesDeBolsa], orden })} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
+              Meter los nuevos en la bolsa
+            </button>
+          )}
+
+          {ultimoSacado && (
+            <div style={{ background: C.primario, color: "#fff", borderRadius: 10, padding: "14px 18px", textAlign: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 10, opacity: 0.8, letterSpacing: 1, marginBottom: 4 }}>SALIÓ</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{ultimoSacado}</div>
+              <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>→ Zona {((orden.length - 1) % numZonas) + 1}</div>
+            </div>
+          )}
+        </>
+      )}
+      </>}
+
+      {soloLectura && !zonas.some((z) => z.length > 0) && (
+        <div style={{ fontSize: 12, color: C.sub, fontStyle: "italic" }}>Todavía no se armó el fixture de esta fecha.</div>
+      )}
+
+      {zonas.some((z) => z.length > 0) && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, minmax(260px, 1fr))`, gap: 10, marginTop: 4, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 6 }}>
+          {zonas.map((equipos, zi) => {
+            const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
+            const tabla = tablaPosiciones(equipos, partidos, resultados, manual[zi]);
+            const clasificacionManualActiva = manual[zi] && manual[zi].length > 0;
+            const otrasZonas = zonas.map((_, i) => i).filter((i) => i !== zi);
+            return (
+              <div key={zi} style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: C.primario }}>ZONA {zi + 1} ({equipos.length})</div>
+                  {clasificacionManualActiva && <Badge color="#fff" bg={C.provincial}>✋ Clasificación manual</Badge>}
+                </div>
+                {equipos.map((eq, i) => (
+                  <div key={eq} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: eq === ultimoSacado ? C.verde : C.ink, fontWeight: eq === ultimoSacado ? 700 : 400, marginBottom: 3 }}>
+                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i + 1}. {eq}</span>
+                    {!soloLectura && numZonas > 1 && (
+                      <select
+                        className="solo-coordinador"
+                        defaultValue=""
+                        onChange={(e) => { moverDeZona(eq, zi, e.target.value); e.target.value = ""; }}
+                        title={`Mover "${eq}" a otra zona`}
+                        style={{ fontSize: 9, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, color: C.sub, background: "#fff" }}
+                      >
+                        <option value="">⇄ Mover…</option>
+                        {otrasZonas.map((i) => <option key={i} value={i}>a Zona {i + 1}</option>)}
+                      </select>
+                    )}
+                    {!soloLectura && (
+                      <button
+                        onClick={() => darDeBajaDeZona(eq, zi)}
+                        title={`Dar de baja a "${eq}" de esta zona`}
+                        style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+                      >
+                        Dar de baja
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {!soloLectura && (
+                  <select
+                    className="solo-coordinador"
+                    defaultValue=""
+                    onChange={(e) => { agregarAZona(zi, e.target.value); e.target.value = ""; }}
+                    disabled={pendientesDeBolsa.length === 0}
+                    style={{ width: "100%", marginTop: 6, fontSize: 10, padding: "5px 6px", borderRadius: 5, border: `1px dashed ${C.border}`, color: C.sub, background: "#fff" }}
+                  >
+                    <option value="">{pendientesDeBolsa.length ? "+ Agregar colegio a esta zona…" : "Sin colegios pendientes de asignar"}</option>
+                    {pendientesDeBolsa.map((eq) => <option key={eq} value={eq}>{eq}</option>)}
+                  </select>
+                )}
+
+                {equipos.length >= 2 && (
+                  <>
+                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
+                      <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, marginBottom: 4 }}>PARTIDOS Y RESULTADO</div>
+                      {partidos.map((p) => {
+                        const r = resultados[p.key] || resultados[p.legacyKey] || resultados[p.legacyReverseKey] || {};
+                        return (
+                          <div key={p.key} style={{ fontSize: 10, color: C.ink, marginBottom: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.local} <span style={{ color: C.sub }}>vs</span> {p.visitante}</span>
+                            <input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, "gl", e.target.value)} readOnly={soloLectura} disabled={soloLectura} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center", color: C.ink, opacity: 1, background: soloLectura ? "#F7F8FA" : "#fff" }} />
+                            <span style={{ color: C.sub }}>-</span>
+                            <input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, "gv", e.target.value)} readOnly={soloLectura} disabled={soloLectura} style={{ width: 28, fontSize: 10, padding: "2px 3px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center", color: C.ink, opacity: 1, background: soloLectura ? "#F7F8FA" : "#fff" }} />
+                            <span style={{ color: C.primario, fontWeight: 700, fontSize: 9, whiteSpace: "nowrap" }}>R{p.ronda} · C{p.cancha}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 4 }}>
+                        <div style={{ fontSize: 9, color: C.sub, fontWeight: 700 }}>TABLA DE POSICIONES</div>
+                        {!soloLectura && clasificacionManualActiva && (
+                          <button onClick={() => restablecerAutomatico(zi)} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Automático</button>
+                        )}
+                      </div>
+                      <table style={{ width: "100%", fontSize: 9, color: C.ink, borderCollapse: "collapse" }}>
+                        <thead>
+                          <tr style={{ color: C.sub, textAlign: "center" }}>
+                            <th style={{ textAlign: "left", fontWeight: 600 }}>Equipo</th>
+                            <th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th>{!soloLectura && <th></th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tabla.map((t, ti) => {
+                            const clasifica = ti < (jornada.ganadores || 1);
+                            const esManual = manual[zi]?.includes(t.equipo);
+                            return (
+                              <tr key={t.equipo} style={{ textAlign: "center", background: clasifica ? (esManual ? C.provincialClaro : "#EAF6EE") : "transparent" }}>
+                                <td style={{ textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 90, fontWeight: clasifica ? 700 : 400 }}>{t.equipo}</td>
+                                <td>{t.pj}</td><td>{t.g}</td><td>{t.e}</td><td>{t.p}</td><td>{t.gf}</td><td>{t.gc}</td><td>{t.dg}</td><td style={{ fontWeight: 800 }}>{t.pts}</td>
+                                {!soloLectura && (
+                                  <td>
+                                    <button
+                                      onClick={() => toggleClasificadoManual(zi, t.equipo)}
+                                      title={esManual ? "Quitar clasificación manual" : "Marcar como clasificado a mano"}
+                                      style={{ fontSize: 9, padding: "1px 4px", borderRadius: 4, border: `1px solid ${esManual ? C.provincial : C.border}`, background: esManual ? C.provincial : "#fff", color: esManual ? "#fff" : C.sub, cursor: "pointer" }}
+                                    >✋</button>
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      {!soloLectura && <div style={{ fontSize: 9, color: C.sub, marginTop: 4 }}>✋ marca/saca la clasificación manual de ese equipo. No reemplaza el cálculo automático por resultados: es una opción aparte, para los casos puntuales que lo necesiten.</div>}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EquipoRow({ equipo, estado, onDarDeBaja, onReactivar, onResultado, ramaColor, editable }) {
+  const bajo = estado?.bajo;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 6, background: bajo ? "#FBEAEA" : "#FAFAFB", opacity: bajo ? 0.75 : 1 }}>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: bajo ? C.rojo : C.ink, textDecoration: bajo ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {equipo}
+      </span>
+      {bajo && <Badge color="#fff" bg={C.rojo}>BAJÓ</Badge>}
+      {editable && (bajo ? (
+        <button onClick={onReactivar} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.verde}`, background: "#fff", color: C.verde, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>↺ Reactivar</button>
+      ) : (
+        <button onClick={onDarDeBaja} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>Dar de baja</button>
+      ))}
+      <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.8 }}><ResultadoInput value={estado?.resultado} onChange={onResultado} /></div>
+    </div>
+  );
+}
+
+function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras, setExtras, cruces, setCruces, resultados, setResultado, responsables, setResponsables, editable }) {
+  const [abierto, setAbierto] = useState(false);
+  const [responsableAbierto, setResponsableAbierto] = useState(false);
+  const [responsableBorrador, setResponsableBorrador] = useState({ nombre: "", staff: "" });
+  const [nuevoEquipo, setNuevoEquipo] = useState("");
+  const [qrAbierto, setQrAbierto] = useState(false);
+  const [qrImagen, setQrImagen] = useState("");
+  const [qrCopiado, setQrCopiado] = useState(false);
+  const [qrToken, setQrToken] = useState(null);
+
+  const equiposCompletos = [...jornada.equipos, ...(extras || [])];
+  const nBajas = equiposCompletos.filter((_, i) => estados[jornada.id + "-" + i]?.bajo).length;
+  const equiposActivos = equiposCompletos.filter((_, i) => !estados[jornada.id + "-" + i]?.bajo);
+
+  const config = cruces?.config || { numZonas: 1, numCanchas: parseCanchas(jornada.sede) };
+  const sorteo = cruces?.sorteo || { bolsa: null, orden: [] };
+
+  const agregarEquipo = () => {
+    const nombres = nuevoEquipo.split(/\r?\n/).map((n) => n.trim()).filter(Boolean);
+    if (nombres.length === 0) return;
+    setExtras([...(extras || []), ...nombres]);
+    setNuevoEquipo("");
+  };
+
+  // Saca a un equipo de cualquier zona ya armada (si la tiene) sin tocar las demás zonas.
+  const sacarDeSuZona = (equipo) => {
+    if (!sorteo || (!sorteo.zonas && !(sorteo.orden || []).length)) return;
+    const numZonas = Math.max(1, parseInt(config?.numZonas) || 1);
+    const zonasAuto = Array.from({ length: numZonas }, (_, zi) => (sorteo.orden || []).filter((_, i) => i % numZonas === zi));
+    const zonasBase = sorteo.zonas || zonasAuto;
+    if (zonasBase.every((z) => !z.includes(equipo))) return;
+    setCruces({ config, sorteo: { ...sorteo, zonas: zonasBase.map((z) => z.filter((e) => e !== equipo)) } });
+  };
+
+  // "Dar de baja" desde la lista general: confirma, marca la baja y la saca de su zona si ya estaba sorteada.
+  const darDeBaja = (equipo, index) => {
+    if (!window.confirm(`¿Dar de baja a "${equipo}" de esta jornada?\n\nQueda marcada/o como baja y, si ya estaba en una zona armada, se la/lo saca solo de esa zona (las demás zonas no se tocan). Podés reactivarla/o cuando quieras.`)) return;
+    const key = jornada.id + "-" + index;
+    setEstado(key, { ...estados[key], bajo: true });
+    sacarDeSuZona(equipo);
+  };
+
+  const reactivar = (index) => {
+    const key = jornada.id + "-" + index;
+    setEstado(key, { ...estados[key], bajo: false });
+  };
+
+  // La usa CrucesPanel cuando ya dio de baja a alguien puertas adentro de una zona:
+  // solo sincroniza la marca general, sin pedir una segunda confirmación.
+  const darDeBajaPorNombre = (equipo) => {
+    const idx = equiposCompletos.indexOf(equipo);
+    if (idx === -1) return;
+    const key = jornada.id + "-" + idx;
+    setEstado(key, { ...estados[key], bajo: true });
+  };
+
+  // Link de solo lectura para esta jornada: abre directo la "Vista para profes"
+  // (sin botones ni campos editables) apuntando a esta fecha. Se le suma un
+  // "_v" que cambia cada vez que se genera el QR de nuevo: así, si alguien ya
+  // había escaneado un link de esta misma fecha antes, el celular no reutiliza
+  // una versión vieja guardada en la caché del navegador -- lo vuelve a pedir
+  // entero, fresco, cada vez.
+  const urlProfes = typeof location !== "undefined"
+    ? `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}${qrToken ? `&_v=${qrToken}` : ""}`
+    : "";
+
+  const abrirQr = () => {
+    const token = Date.now().toString(36);
+    setQrToken(token);
+    setQrAbierto(true);
+    setQrCopiado(false);
+    try {
+      const url = `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}&_v=${token}`;
+      const qr = qrcode(0, "M");
+      qr.addData(url);
+      qr.make();
+      setQrImagen(qr.createDataURL(8, 8));
+    } catch (e) {
+      setQrImagen("");
+    }
+  };
+
+  const copiarEnlaceProfes = async () => {
+    try {
+      await navigator.clipboard.writeText(urlProfes);
+      setQrCopiado(true);
+      setTimeout(() => setQrCopiado(false), 2500);
+    } catch (e) {
+      // si el navegador no deja copiar solo, el link ya está seleccionable a mano
+    }
+  };
+
+  return (
+    <div data-jornada-id={jornada.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+      <div onClick={() => setAbierto((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: "pointer", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ background: ramaColor, color: "#fff", borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 52 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>{jornada.fecha.split("-")[0]}</div>
+            <div style={{ fontSize: 9, fontWeight: 600, opacity: 0.85 }}>{["","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"][parseInt(jornada.fecha.split("-")[1])]}</div>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{jornada.categoria}</span>
+              <Badge
+                color={jornada.instancia === "PROVINCIAL" ? "#fff" : jornada.instancia?.startsWith("REGIONAL") ? "#fff" : C.primario}
+                bg={jornada.instancia === "PROVINCIAL" ? C.provincial : jornada.instancia?.startsWith("REGIONAL") ? C.doradoLogo : C.primarioClaro}
+              >{jornada.instancia === "PROVINCIAL" ? "🏆 PROVINCIAL" : jornada.instancia}</Badge>
+              {jornada.grupo && <Badge color={C.sub} bg="#EEF0F3">Grupo {jornada.grupo}</Badge>}
+              {nBajas > 0 && <Badge color="#fff" bg={C.rojo}>{nBajas} baja{nBajas > 1 ? "s" : ""}</Badge>}
+            </div>
+            <div style={{ fontSize: 11, color: C.sub }}>{jornada.sede} · {jornada.horario}{jornada.ganadores ? ` · clasifican ${jornada.ganadores}` : ""}</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: C.sub, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!responsableAbierto) setResponsableBorrador({ nombre: responsables?.nombre || "", staff: responsables?.staff || "" });
+              setResponsableAbierto((v) => !v);
+            }}
+            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: responsables?.nombre ? ramaColor : "#fff", color: responsables?.nombre ? "#fff" : ramaColor, fontWeight: 700, cursor: "pointer" }}
+          >
+            👤 {editable ? "Responsable de sede" : "Ver responsable"}
+          </button>
+          <span>{equiposActivos.length} equipos activos <span style={{ fontSize: 14 }}>{abierto ? "▲" : "▼"}</span></span>
+        </div>
+      </div>
+
+      {responsableAbierto && (
+        <div style={{ margin: "0 14px 12px", padding: 12, background: C.primarioClaro, border: `1px solid ${C.border}`, borderRadius: 9 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 8 }}>Equipo responsable de esta jornada</div>
+          <input
+            value={responsableBorrador.nombre}
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, nombre: e.target.value }))}
+            disabled={!editable}
+            placeholder="Nombre de la responsable de sede"
+            style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, marginBottom: 7, color: C.ink }}
+          />
+          <textarea
+            value={responsableBorrador.staff}
+            onChange={(e) => setResponsableBorrador((prev) => ({ ...prev, staff: e.target.value }))}
+            disabled={!editable}
+            placeholder={'Staff a cargo (escribí un nombre por línea)'}
+            rows={4}
+            style={{ width: "100%", fontSize: 12, padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.border}`, resize: "vertical", color: C.ink }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10, color: C.sub }}>Los datos quedan asociados únicamente a esta fecha.</span>
+            <button onClick={() => { if (editable) setResponsables(responsableBorrador); setResponsableAbierto(false); }} style={{ fontSize: 11, padding: "7px 14px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>{editable ? "Guardar" : "Cerrar"}</button>
+          </div>
+        </div>
+      )}
+
+      {jornada.pendiente && equiposCompletos.length === 0 && (
+        <div style={{ padding: "0 14px 14px", fontSize: 12, color: C.sub, fontStyle: "italic" }}>
+          A definir — se completa con las clasificadas de la fase zonal.{editable ? " Abrí la jornada para cargar los colegios ganadores apenas los tengas." : ""}
+        </div>
+      )}
+
+      {abierto && (
+        <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
+          {equiposCompletos.map((eq, i) => {
+            const key = jornada.id + "-" + i;
+            return (
+              <EquipoRow
+                key={key}
+                equipo={eq}
+                estado={estados[key]}
+                ramaColor={ramaColor}
+                editable={editable}
+                onDarDeBaja={() => darDeBaja(eq, i)}
+                onReactivar={() => reactivar(i)}
+                onResultado={(v) => setEstado(key, { ...estados[key], resultado: v })}
+              />
+            );
+          })}
+
+          {editable && <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "flex-start" }}>
+            <textarea
+              value={nuevoEquipo}
+              onChange={(e) => setNuevoEquipo(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); agregarEquipo(); } }}
+              placeholder="Agregar institución a esta jornada… (podés pegar varias, una por línea)"
+              rows={1}
+              style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, color: C.ink, resize: "vertical", minHeight: 28, fontFamily: "inherit" }}
+            />
+            <button onClick={agregarEquipo} disabled={!nuevoEquipo.trim()} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 6, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: nuevoEquipo.trim() ? "pointer" : "not-allowed", opacity: nuevoEquipo.trim() ? 1 : 0.5 }}>＋ Agregar</button>
+          </div>}
+
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 10, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            {/* IMPORTANTE: "Armar cruces (sorteo) y resultados" tiene que seguir siendo hijo DIRECTO
+                de este mismo div (el que también contiene la descripción y el CrucesPanel), porque
+                el script de "vista para profes" busca ese texto exacto y clona TODO su padre para
+                armar la vista de solo lectura. Si se lo envuelve en un div nuevo (por ejemplo para
+                ponerle el botón de QR al lado), esa vista deja de mostrar el fixture. Por eso el
+                botón de QR se agrega acá como hermano, no como envoltorio. */}
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Armar cruces (sorteo) y resultados</div>
+            {(sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
+              <button onClick={abrirQr} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: "#fff", color: ramaColor, fontWeight: 700, cursor: "pointer" }}>
+                📱 Código QR para profes
+              </button>
+            )}
+            <div style={{ fontSize: 11, color: C.sub, marginBottom: 6, flexBasis: "100%" }}>Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, GF, GC, DG, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>
+            <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.88, flexBasis: "100%" }}><CrucesPanel
+              jornada={jornada}
+              equiposActivos={equiposActivos}
+              config={config}
+              setConfig={(c) => setCruces({ config: c, sorteo })}
+              sorteo={sorteo}
+              setSorteo={(s) => setCruces({ config, sorteo: s })}
+              resultados={resultados || {}}
+              setResultado={(key, campo, val) => setResultado(key, campo, val)}
+              onDarDeBaja={darDeBajaPorNombre}
+              C={C}
+            /></div>
+          </div>
+
+          {qrAbierto && (
+            <div onClick={() => setQrAbierto(false)} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(10,20,40,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ width: "min(340px,100%)", background: "#fff", borderRadius: 14, padding: 20, textAlign: "center", boxShadow: "0 16px 45px rgba(0,0,0,0.3)" }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.primario, marginBottom: 4 }}>📱 Código QR para profes</div>
+                <div style={{ fontSize: 11, color: C.sub, marginBottom: 14 }}>Solo lectura: quien lo escanea ve los cruces, resultados y la tabla de esta fecha, sin poder modificar nada.</div>
+                {qrImagen ? (
+                  <img src={qrImagen} alt="Código QR" style={{ width: 220, height: 220, imageRendering: "pixelated" }} />
+                ) : (
+                  <div style={{ fontSize: 11, color: C.sub, padding: 30 }}>Generando código…</div>
+                )}
+                <div style={{ marginTop: 14, fontSize: 10, color: C.sub, wordBreak: "break-all", background: "#F7F8FA", border: `1px solid ${C.border}`, borderRadius: 7, padding: "8px 10px" }}>{urlProfes}</div>
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={copiarEnlaceProfes} style={{ flex: 1, fontSize: 11, padding: "9px 10px", borderRadius: 7, border: `1px solid ${C.primario}`, background: qrCopiado ? C.verde : "#fff", color: qrCopiado ? "#fff" : C.primario, fontWeight: 700, cursor: "pointer" }}>
+                    {qrCopiado ? "✓ Enlace copiado" : "Copiar enlace"}
+                  </button>
+                  <button onClick={() => setQrAbierto(false)} style={{ fontSize: 11, padding: "9px 14px", borderRadius: 7, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, fontWeight: 700, cursor: "pointer" }}>Cerrar</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IntroCordobeses({ onEntrar }) {
+  useEffect(() => {
+    const t = setTimeout(onEntrar, 2200);
+    return () => clearTimeout(t);
+  }, [onEntrar]);
+  return (
+    <div
+      onClick={onEntrar}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999, cursor: "pointer",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        background: `linear-gradient(150deg, #0A1E3B 0%, ${C.primario} 55%, #1F4D82 100%)`,
+        color: "#fff", textAlign: "center", padding: 24, fontFamily: C.fuente,
+      }}
+    >
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, opacity: 0.55, pointerEvents: "none",
+        background: `linear-gradient(115deg, transparent 58%, ${C.rojoLogo} 58% 66%, transparent 66% 71%, ${C.doradoLogo} 71% 79%, transparent 79% 84%, ${C.verde} 84% 92%, transparent 92%)`,
+      }} />
+      <div style={{ position: "relative", fontSize: 64, marginBottom: 10, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))" }}>⚽</div>
+      <div style={{ position: "relative", fontSize: 15, letterSpacing: 3, fontWeight: 700, color: "#BFD4EC", marginBottom: 6 }}>FÚTBOL</div>
+      <div style={{ position: "relative", fontSize: 42, fontWeight: 800, lineHeight: 1.15 }}>
+        <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo }}>Juegan</span>
+      </div>
+      <div style={{ position: "relative", fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 4, letterSpacing: 1 }}>2026</div>
+      <div style={{ position: "relative", fontSize: 12, color: "#BFD4EC", marginTop: 28 }}>Tocá la pantalla para entrar…</div>
+    </div>
+  );
+}
+
+// Si se entra desde el link/QR de "vista para profes" (?vista=profes&jornada=xxx),
+// hay que arrancar directo en el panel (sin la intro) y con la pestaña (rama) correcta
+// ya seleccionada, para que la jornada pedida esté en pantalla desde el primer instante.
+function jornadaPedidaPorUrl() {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get("vista") !== "profes") return null;
+    const id = params.get("jornada");
+    if (!id) return null;
+    const todas = [...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino];
+    return todas.find((j) => j.id === id) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Vista mínima y 100% de solo lectura para cuando un profe entra directo por el
+// link/QR de una jornada puntual. A propósito NO reutiliza JornadaCard (que trae
+// el textarea de "agregar institución", los botones de dar de baja, el QR, etc.):
+// acá se arma directo con CrucesPanel en modo soloLectura, así ese profe nunca
+// llega a tener montado ni un solo control de edición del panel de la coordinadora,
+// sin importar la velocidad del celular ni ningún timing de scripts.
+function VistaProfeDirecta({ jornada, estados, extras, cruces, resultados }) {
+  const extrasJornada = extras[jornada.id] || [];
+  const equiposCompletos = [...jornada.equipos, ...extrasJornada];
+  const equiposActivos = equiposCompletos.filter((_, i) => !estados[jornada.id + "-" + i]?.bajo);
+  const datosCruces = cruces[jornada.id] || {};
+  const config = datosCruces.config || { numZonas: 1, numCanchas: parseCanchas(jornada.sede) };
+  const sorteo = datosCruces.sorteo || { bolsa: null, orden: [] };
+  const resultadosJornada = resultados[jornada.id] || {};
+  const noop = () => {};
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20 }}>
+      <div style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", position: "relative", background: `linear-gradient(120deg, ${C.primario}, #1F4D82)`, color: "#fff", padding: "20px 22px" }}>
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, opacity: 0.35, pointerEvents: "none",
+          background: `linear-gradient(115deg, transparent 70%, ${C.rojoLogo} 70% 76%, transparent 76% 80%, ${C.doradoLogo} 80% 86%, transparent 86% 91%, ${C.verde} 91% 96%, transparent 96%)`,
+        }} />
+        <div style={{ position: "relative", fontSize: 15, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>⚽</span> <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo }}>Juegan</span>
+        </div>
+        <div style={{ position: "relative", fontSize: 12, letterSpacing: 2, opacity: 0.85, fontWeight: 700, marginTop: 10 }}>VISTA PARA PROFES · SOLO LECTURA</div>
+        <div style={{ position: "relative", fontSize: 22, fontWeight: 800, marginTop: 6 }}>{jornada.categoria} · {jornada.grupo || jornada.instancia}</div>
+        <div style={{ position: "relative", fontSize: 13, opacity: 0.9, marginTop: 4 }}>{jornada.fecha} · {jornada.sede} · {jornada.horario}</div>
+      </div>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
+        <CrucesPanel
+          jornada={jornada}
+          equiposActivos={equiposActivos}
+          config={config}
+          setConfig={noop}
+          sorteo={sorteo}
+          setSorteo={noop}
+          resultados={resultadosJornada}
+          setResultado={noop}
+          onDarDeBaja={noop}
+          soloLectura={true}
+          C={C}
+        />
+      </div>
+      <div style={{ fontSize: 11, color: C.sub, textAlign: "center", marginTop: 14 }}>Esta vista se actualiza sola cada pocos segundos. No hace falta tocar nada.</div>
+    </div>
+  );
+}
+
+function PanelCordobeses() {
+  // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
+  // también cuando se entra por el link/QR de un profe: primero el inicio,
+  // y recién después (al tocar o al pasar unos segundos) aparece el fixture.
+  const [intro, setIntro] = useState(true);
+  const [rama, setRama] = useState(() => {
+    const j = jornadaPedidaPorUrl();
+    if (!j) return "femenino";
+    return j.instancia === "PROVINCIAL" ? "provinciales" : j.rama;
+  });
+  const [reglamentoAbierto, setReglamentoAbierto] = useState(false);
+  const [reglamentoRama, setReglamentoRama] = useState("femenino");
+  const [busqueda, setBusqueda] = useState("");
+  const [estados, setEstados] = useState({});
+  const [extras, setExtras] = useState({});
+  const [cruces, setCruces] = useState({});
+  const [resultados, setResultados] = useState({});
+  const [responsables, setResponsables] = useState({});
+  const [sesion, setSesion] = useState(null);
+  const [permisos, setPermisos] = useState({});
+  const [solicitudes, setSolicitudes] = useState({});
+  const [pedidoAbierto, setPedidoAbierto] = useState(false);
+  const [nombrePedido, setNombrePedido] = useState("");
+  const [emailPedido, setEmailPedido] = useState("");
+  const [jornadaPedido, setJornadaPedido] = useState("");
+  const [aprobandoUid, setAprobandoUid] = useState("");
+  const [mensajePermiso, setMensajePermiso] = useState("");
+  const [adminExtra, setAdminExtra] = useState(false);
+  const [invitaciones, setInvitaciones] = useState({});
+  const [invitarAbierto, setInvitarAbierto] = useState(false);
+  const [nombreInvite, setNombreInvite] = useState("");
+  const [tipoInvite, setTipoInvite] = useState("coordinador");
+  const [jornadaInvite, setJornadaInvite] = useState("");
+  const [generandoInvite, setGenerandoInvite] = useState(false);
+  const [codigoIngreso, setCodigoIngreso] = useState("");
+  const [aplicandoCodigo, setAplicandoCodigo] = useState(false);
+  const [mensajeCodigo, setMensajeCodigo] = useState("");
+  const [codigoAbierto, setCodigoAbierto] = useState(false);
+  const ultimaCopia = useRef({});
+  const avisoGuardado = useRef(false);
+  const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
+  const esCoordinadora = sesion?.uid === ADMIN_UID || adminExtra;
+  const API_KEY = "AIzaSyB_7C8mLCWNENa9By6uxarMDYLjOPU8M9k";
+  const DB_URL = "https://metodika-dt-multijugador-default-rtdb.firebaseio.com";
+
+  const peticionDb = async (ruta, metodo = "GET", valor) => {
+    if (!sesion?.token) return null;
+    const r = await fetch(`${DB_URL}/${ruta}.json?auth=${sesion.token}`, { method: metodo, headers: { "Content-Type": "application/json" }, body: valor === undefined ? undefined : JSON.stringify(valor) });
+    if (!r.ok) throw new Error("No se pudo guardar la información");
+    return metodo === "DELETE" ? null : r.json();
+  };
+
+  useEffect(() => {
+    let activo = true;
+    (async () => {
+      const guardada = JSON.parse(localStorage.getItem("cordobeses-sesion") || "null");
+      let data;
+      if (guardada?.refreshToken) {
+        const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(guardada.refreshToken)}` });
+        const d = await r.json();
+        if (r.ok) data = { uid: d.user_id, token: d.id_token, refreshToken: d.refresh_token };
+      }
+      if (!data) {
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
+        const d = await r.json();
+        data = { uid: d.localId, token: d.idToken, refreshToken: d.refreshToken };
+      }
+      if (activo) { localStorage.setItem("cordobeses-sesion", JSON.stringify(data)); setSesion(data); }
+    })();
+    return () => { activo = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!sesion) return;
+    let activo = true;
+    const cargar = async () => {
+      const leer = async (ruta) => { const r = await fetch(`${DB_URL}/${ruta}.json?auth=${sesion.token}`); return r.ok ? (await r.json()) : {}; };
+      const datos = await leer("panelCordobeses/jornadas") || {};
+      const est = {}, ext = {}, cru = {}, res = {}, resp = {};
+      Object.entries(datos).forEach(([id, d]) => {
+        Object.assign(est, d.estados || {});
+        ext[id] = d.extras || [];
+        cru[id] = d.cruces || {};
+        res[id] = d.resultados || {};
+        resp[id] = d.responsables || {};
+      });
+      if (activo) {
+        setEstados(est); setExtras(ext); setCruces(cru); setResultados(res); setResponsables(resp);
+        setPermisos(await leer(`panelPermisos/${sesion.uid}`) || {});
+        const extra = (await leer(`panelAdministradores/${sesion.uid}`)) === true;
+        setAdminExtra(extra);
+        if (sesion.uid === ADMIN_UID || extra) {
+          setSolicitudes(await leer("panelSolicitudes") || {});
+          setInvitaciones(await leer("panelInvitaciones") || {});
+        }
+      }
+    };
+    cargar(); const timer = setInterval(cargar, 12000);
+    return () => { activo = false; clearInterval(timer); };
+  }, [sesion, ADMIN_UID]);
+
+  const guardarJornada = async (id, campo, valor) => {
+    const ahora = Date.now();
+    if (!ultimaCopia.current[id] || ahora - ultimaCopia.current[id] > 120000) {
+      const actual = await peticionDb(`panelCordobeses/jornadas/${id}`);
+      if (actual) await peticionDb(`panelHistorial/${id}/${ahora}`, "PUT", { ...actual, guardadoEn: ahora });
+      ultimaCopia.current[id] = ahora;
+    }
+    return peticionDb(`panelCordobeses/jornadas/${id}/${campo}`, "PUT", valor);
+  };
+  const guardarResultado = async (id, key, campo, valor) => {
+    try {
+      await guardarJornada(id, `resultados/${key}/${campo}`, valor);
+      avisoGuardado.current = false;
+    } catch (error) {
+      if (!avisoGuardado.current) {
+        avisoGuardado.current = true;
+        alert("No se pudo guardar el resultado. Revisá la conexión y volvé a intentarlo; el valor sigue visible en esta pantalla.");
+      }
+    }
+  };
+  const descargarRespaldo = async () => {
+    const jornadasGuardadas = await peticionDb("panelCordobeses/jornadas") || {};
+    const contenido = JSON.stringify({ generadoEn: new Date().toISOString(), jornadas: jornadasGuardadas }, null, 2);
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(new Blob([contenido], { type: "application/json" }));
+    enlace.download = `respaldo-cordobeses-${new Date().toISOString().slice(0, 10)}.json`;
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+  };
+  const solicitarAcceso = async () => {
+    if (!sesion || !nombrePedido.trim() || !emailPedido.trim() || !jornadaPedido) return;
+    await peticionDb(`panelSolicitudes/${sesion.uid}`, "PUT", { nombre: nombrePedido.trim(), email: emailPedido.trim().toLowerCase(), jornadaId: jornadaPedido, creado: Date.now() });
+    setPedidoAbierto(false);
+  };
+  const confirmarPermiso = async (uid, cambios, mensaje) => {
+    if (aprobandoUid) return;
+    setAprobandoUid(uid);
+    setMensajePermiso("");
+    try {
+      await peticionDb("", "PATCH", { ...cambios, [`panelSolicitudes/${uid}`]: null });
+      const pendiente = await peticionDb(`panelSolicitudes/${uid}`);
+      if (pendiente !== null) throw new Error("La solicitud sigue pendiente");
+      setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; });
+      setMensajePermiso(`✓ ${mensaje}`);
+    } catch (error) {
+      setMensajePermiso("No se pudo aprobar el acceso. Volvé a tocar el botón.");
+    } finally {
+      setAprobandoUid("");
+    }
+  };
+  const aprobarSolicitud = (uid, jornadaId) =>
+    confirmarPermiso(uid, { [`panelPermisos/${uid}/${jornadaId}`]: true }, "Jornada aprobada correctamente");
+  const aprobarAccesoTotal = (uid) =>
+    confirmarPermiso(uid, { [`panelPermisos/${uid}/_todas`]: true }, "Acceso a todas las fechas aprobado correctamente");
+  const aprobarAdministrador = (uid) =>
+    confirmarPermiso(uid, { [`panelAdministradores/${uid}`]: true }, "Coordinador/a aprobado correctamente");
+
+  const generarCodigoInvitacion = () => {
+    const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let codigo = "";
+    for (let i = 0; i < 6; i++) codigo += alfabeto[Math.floor(Math.random() * alfabeto.length)];
+    return codigo;
+  };
+
+  const crearInvitacion = async () => {
+    if (!nombreInvite.trim() || generandoInvite) return;
+    if (tipoInvite === "jornada" && !jornadaInvite) return;
+    setGenerandoInvite(true);
+    try {
+      const codigo = generarCodigoInvitacion();
+      await peticionDb(`panelInvitaciones/${codigo}`, "PUT", {
+        nombre: nombreInvite.trim(),
+        tipo: tipoInvite,
+        jornadaId: tipoInvite === "jornada" ? jornadaInvite : null,
+        creado: Date.now(),
+        usado: false,
+      });
+      setInvitaciones((prev) => ({ ...prev, [codigo]: { nombre: nombreInvite.trim(), tipo: tipoInvite, jornadaId: tipoInvite === "jornada" ? jornadaInvite : null, creado: Date.now(), usado: false } }));
+      setNombreInvite("");
+      setJornadaInvite("");
+    } finally {
+      setGenerandoInvite(false);
+    }
+  };
+
+  const revocarInvitacion = async (codigo) => {
+    await peticionDb(`panelInvitaciones/${codigo}`, "DELETE");
+    setInvitaciones((prev) => { const n = { ...prev }; delete n[codigo]; return n; });
+  };
+
+  const aplicarCodigoInvitacion = async () => {
+    const codigo = codigoIngreso.trim().toUpperCase();
+    if (!codigo || !sesion || aplicandoCodigo) return;
+    setAplicandoCodigo(true);
+    setMensajeCodigo("");
+    try {
+      const invite = await peticionDb(`panelInvitaciones/${codigo}`);
+      if (!invite) {
+        setMensajeCodigo("Ese código no existe o ya fue usado.");
+        return;
+      }
+      if (invite.usado) {
+        setMensajeCodigo("Ese código ya fue utilizado.");
+        return;
+      }
+      if (invite.tipo === "coordinador") {
+        await peticionDb(`panelAdministradores/${sesion.uid}`, "PUT", true);
+        setAdminExtra(true);
+      } else if (invite.tipo === "todas") {
+        await peticionDb(`panelPermisos/${sesion.uid}/_todas`, "PUT", true);
+        setPermisos((prev) => ({ ...prev, _todas: true }));
+      } else if (invite.tipo === "jornada" && invite.jornadaId) {
+        await peticionDb(`panelPermisos/${sesion.uid}/${invite.jornadaId}`, "PUT", true);
+        setPermisos((prev) => ({ ...prev, [invite.jornadaId]: true }));
+      }
+      await peticionDb(`panelInvitaciones/${codigo}`, "PATCH", { usado: true, usadoEn: Date.now(), usadoPor: sesion.uid });
+      setInvitaciones((prev) => { const n = { ...prev }; if (n[codigo]) n[codigo] = { ...n[codigo], usado: true }; return n; });
+      setCodigoIngreso("");
+      setCodigoAbierto(false);
+      setMensajeCodigo("✓ Código aplicado. Ya tenés el nuevo acceso.");
+    } catch (error) {
+      setMensajeCodigo("No se pudo aplicar el código. Volvé a intentarlo.");
+    } finally {
+      setAplicandoCodigo(false);
+    }
+  };
+
+  const jornadas = rama === "provinciales"
+    ? [...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].filter((j) => j.instancia === "PROVINCIAL")
+    : DATOS_CORDOBESES[rama];
+  const ramaColor = rama === "masculino" ? C.doradoLogo : rama === "provinciales" ? C.provincial : C.rojoLogo;
+  const colorDeJornada = (j) => (rama === "provinciales" ? (j.rama === "masculino" ? C.doradoLogo : C.rojoLogo) : ramaColor);
+
+  const filtradas = busqueda.trim()
+    ? jornadas.filter((j) => j.equipos.some((e) => e.toLowerCase().includes(busqueda.toLowerCase())) || j.categoria.toLowerCase().includes(busqueda.toLowerCase()))
+    : jornadas;
+
+  const totalEquipos = jornadas.reduce((s, j) => {
+    const equiposCompletos = [...j.equipos, ...(extras[j.id] || [])];
+    return s + equiposCompletos.filter((_, i) => !estados[j.id + "-" + i]?.bajo).length;
+  }, 0);
+  const totalBajas = jornadas.reduce((s, j) => {
+    const equiposCompletos = [...j.equipos, ...(extras[j.id] || [])];
+    return s + equiposCompletos.filter((_, i) => estados[j.id + "-" + i]?.bajo).length;
+  }, 0);
+
+  // Un profe que entra por el link/QR de una jornada puntual NUNCA debe llegar a
+  // tener montado el panel completo de la coordinadora (con todos sus botones y
+  // formularios de edición) -- ni un instante, sin importar timing ni velocidad
+  // del celular. Por eso, apenas termina la intro, se corta acá (antes de todo
+  // lo demás) y se muestra directamente (y únicamente) esa jornada en modo
+  // solo lectura. La intro se muestra siempre primero, también para el profe.
+  const jornadaProfe = jornadaPedidaPorUrl();
+
+  if (intro) return <IntroCordobeses onEntrar={() => setIntro(false)} />;
+
+  if (jornadaProfe) return <VistaProfeDirecta jornada={jornadaProfe} estados={estados} extras={extras} cruces={cruces} resultados={resultados} />;
+
+  return (
+    <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20, borderRadius: 12 }}>
+      <div style={{
+        marginBottom: 18, borderRadius: 16, overflow: "hidden", position: "relative",
+        background: `linear-gradient(135deg, #0E2444 0%, ${C.primario} 55%, #1F4D82 100%)`,
+        padding: "24px 26px", color: "#fff", boxShadow: "0 10px 26px rgba(15,35,70,0.28)",
+      }}>
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, opacity: 0.5, pointerEvents: "none",
+          background: `linear-gradient(115deg, transparent 62%, ${C.rojoLogo} 62% 69%, transparent 69% 74%, ${C.doradoLogo} 74% 81%, transparent 81% 86%, ${C.verde} 86% 93%, transparent 93%)`,
+        }} />
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 42, lineHeight: 1, filter: "drop-shadow(0 3px 4px rgba(0,0,0,0.25))" }}>⚽</div>
+          <div>
+            <div style={{ fontSize: 11, color: "#BFD4EC", fontWeight: 700, letterSpacing: 1.4 }}>CORDOBESES JUEGAN · TEMPORADA 2026</div>
+            <div style={{ fontSize: 26, fontWeight: 800, marginTop: 3, fontFamily: C.fuente }}>
+              Fútbol <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo, textShadow: "0 1px 0 rgba(0,0,0,0.15)" }}>Juegan</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#DCE7F5", marginTop: 4 }}>Femenino y Masculino · Fixture, zonas y seguimiento de equipos en vivo</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>Reglamento oficial de fútbol 2026</div>
+            <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>Consultá las reglas de cada modalidad o descargá el documento oficial completo.</div>
+          </div>
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            <button onClick={() => setReglamentoAbierto((v) => !v)} style={{ fontSize: 11, padding: "8px 12px", borderRadius: 7, border: `1px solid ${C.primario}`, background: reglamentoAbierto ? C.primarioClaro : "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
+              {reglamentoAbierto ? "Cerrar reglamento" : "Ver reglamento"}
+            </button>
+            <a href="./reglamento-cordobeses-2026.pdf" download style={{ fontSize: 11, padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, textDecoration: "none" }}>⬇ Descargar PDF oficial</a>
+          </div>
+        </div>
+
+        {reglamentoAbierto && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+            <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+              <button onClick={() => setReglamentoRama("femenino")} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: reglamentoRama === "femenino" ? C.rojoLogo : C.primarioClaro, color: reglamentoRama === "femenino" ? "#fff" : C.ink, fontWeight: 700, cursor: "pointer" }}>Fútbol 7 Femenino</button>
+              <button onClick={() => setReglamentoRama("masculino")} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: reglamentoRama === "masculino" ? C.doradoLogo : C.primarioClaro, color: reglamentoRama === "masculino" ? "#fff" : C.ink, fontWeight: 700, cursor: "pointer" }}>Fútbol 11 Masculino</button>
+            </div>
+
+            {reglamentoRama === "femenino" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10, fontSize: 11, lineHeight: 1.5, color: C.ink }}>
+                <div><strong>Categorías y delegación</strong><br />Sub 15: nacidas en 2011, 2012, 2013 y 2014.<br />Sub 18: nacidas en 2008, 2009 y 2010.<br />Lista: 10 jugadoras y 2 profesoras/es o delegadas/os.</div>
+                <div><strong>Formato y duración</strong><br />7 jugadoras en cancha: 1 arquera y 6 de campo.<br />2 tiempos de 20 minutos y 10 minutos de descanso.<br />En etapas previas: mínimo 2 tiempos de 15 minutos y 5 de descanso.</div>
+                <div><strong>Campo y cambios</strong><br />Campo: 35 × 50 m.<br />Arcos: entre 3 × 2 m y 4 × 2,5 m, según el campo.<br />Cambios ilimitados y las jugadoras pueden volver a ingresar.</div>
+                <div><strong>Indumentaria y sanciones</strong><br />Camisetas numeradas y canilleras obligatorias. Sin tapones de aluminio ni objetos peligrosos.<br />La expulsión implica, como mínimo, la suspensión automática del partido siguiente.</div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10, fontSize: 11, lineHeight: 1.5, color: C.ink }}>
+                <div><strong>Categorías y delegación</strong><br />Sub 14: nacidos en 2012, 2013 y 2014.<br />Sub 16: nacidos en 2010 y 2011.<br />Lista: 16 jugadores y 2 profesoras/es o delegadas/os.</div>
+                <div><strong>Duración</strong><br />2 tiempos de 30 minutos y 10 minutos de descanso.<br />En etapas departamental y regional: mínimo 2 tiempos de 20 minutos y 5 de descanso.</div>
+                <div><strong>Cambios</strong><br />Se permiten 5 sustituciones.<br />El jugador sustituido no puede volver a ingresar durante el mismo partido.</div>
+                <div><strong>Indumentaria y sanciones</strong><br />Camisetas numeradas y canilleras obligatorias. Sin tapones de aluminio ni objetos peligrosos.<br />La expulsión implica, como mínimo, la suspensión automática del partido siguiente.</div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 11, padding: "9px 10px", borderRadius: 7, background: C.primarioClaro, fontSize: 10, lineHeight: 1.45, color: C.ink }}>
+              <strong>Para ambas modalidades:</strong> el equipo que no se presenta pierde 2–0; la pérdida de puntos se registra 1–0. En la final provincial, si hay empate, se ejecutan 5 penales por equipo y luego uno por lado hasta desempatar. Este es un resumen de consulta: ante cualquier diferencia, rige el PDF oficial.
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinador/a" : permisos._todas === true ? "Acceso a todas las fechas" : Object.keys(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
+            <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : permisos._todas === true ? "Podés modificar todas las jornadas, sin administrar permisos." : Object.keys(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
+          </div>
+          <span style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            {esCoordinadora ? (
+              <>
+                <button onClick={() => setInvitarAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>+ Invitar coordinador/a</button>
+                <button onClick={descargarRespaldo} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>⬇ Descargar respaldo completo</button>
+              </>
+            ) : (
+              <button onClick={() => setPedidoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Solicitar permiso de edición</button>
+            )}
+            <button onClick={() => setCodigoAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "#fff", color: C.ink, fontWeight: 700, cursor: "pointer" }}>Tengo un código de invitación</button>
+          </span>
+        </div>
+        {invitarAbierto && esCoordinadora && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
+            <input value={nombreInvite} onChange={(e) => setNombreInvite(e.target.value)} placeholder="Nombre de la persona a invitar" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <select value={tipoInvite} onChange={(e) => setTipoInvite(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+              <option value="coordinador">Coordinador/a (acceso total)</option>
+              <option value="todas">Acceso a todas las fechas, sin administrar</option>
+              <option value="jornada">Solo una jornada</option>
+            </select>
+            {tipoInvite === "jornada" && (
+              <select value={jornadaInvite} onChange={(e) => setJornadaInvite(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+                <option value="">Elegí la jornada</option>
+                {[...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].map((j) => <option key={j.id} value={j.id}>{j.fecha} · {j.categoria} · {j.grupo || j.instancia}</option>)}
+              </select>
+            )}
+            <button onClick={crearInvitacion} disabled={!nombreInvite.trim() || (tipoInvite === "jornada" && !jornadaInvite) || generandoInvite} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11, opacity: generandoInvite ? 0.6 : 1 }}>{generandoInvite ? "Generando…" : "Generar código"}</button>
+          </div>
+        )}
+        {codigoAbierto && (
+          <div style={{ display: "flex", gap: 7, marginTop: 9, flexWrap: "wrap" }}>
+            <input value={codigoIngreso} onChange={(e) => setCodigoIngreso(e.target.value.toUpperCase())} placeholder="Código de invitación (ej: AB12CD)" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12, textTransform: "uppercase", flex: 1, minWidth: 170 }} />
+            <button onClick={aplicarCodigoInvitacion} disabled={!codigoIngreso.trim() || aplicandoCodigo} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.primario, color: "#fff", fontWeight: 700, fontSize: 11, opacity: aplicandoCodigo ? 0.6 : 1 }}>{aplicandoCodigo ? "Aplicando…" : "Aplicar código"}</button>
+          </div>
+        )}
+        {mensajeCodigo && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajeCodigo.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajeCodigo.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajeCodigo}</div>}
+        {pedidoAbierto && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 7, marginTop: 9 }}>
+            <input value={nombrePedido} onChange={(e) => setNombrePedido(e.target.value)} placeholder="Tu nombre y apellido" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <input value={emailPedido} onChange={(e) => setEmailPedido(e.target.value)} type="email" placeholder="Tu correo electrónico" style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }} />
+            <select value={jornadaPedido} onChange={(e) => setJornadaPedido(e.target.value)} style={{ padding: "8px 9px", borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12 }}>
+              <option value="">Elegí la jornada</option>
+              {[...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].map((j) => <option key={j.id} value={j.id}>{j.fecha} · {j.categoria} · {j.grupo || j.instancia}</option>)}
+            </select>
+            <button onClick={solicitarAcceso} disabled={!nombrePedido.trim() || !emailPedido.trim() || !jornadaPedido} style={{ padding: "8px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, fontSize: 11 }}>Enviar solicitud</button>
+          </div>
+        )}
+        {esCoordinadora && Object.entries(solicitudes).length > 0 && (
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Solicitudes pendientes</div>
+            {Object.entries(solicitudes).map(([uid, s]) => {
+              const guardando = aprobandoUid === uid;
+              return (
+                <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
+                  <span><strong>{s.nombre}</strong> · {s.email || "sin correo"} · {s.jornadaId}</span>
+                  <span style={{ display: "flex", gap: 5 }}>
+                    <button disabled={guardando} onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Aprobar jornada"}</button>
+                    <button disabled={guardando} onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Acceso a todas las fechas"}</button>
+                    <button disabled={guardando} onClick={() => aprobarAdministrador(uid)} style={{ border: "none", background: C.primario, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Hacer coordinador/a"}</button>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {mensajePermiso && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajePermiso.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajePermiso.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajePermiso}</div>}
+        {esCoordinadora && Object.entries(invitaciones).filter(([, i]) => !i.usado).length > 0 && (
+          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Códigos de invitación activos</div>
+            {Object.entries(invitaciones).filter(([, i]) => !i.usado).map(([codigo, i]) => (
+              <div key={codigo} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
+                <span>
+                  <strong style={{ fontFamily: "monospace", fontSize: 13, background: C.primarioClaro, padding: "2px 7px", borderRadius: 5 }}>{codigo}</strong>
+                  {" "}· {i.nombre} · {i.tipo === "coordinador" ? "Coordinador/a" : i.tipo === "todas" ? "Todas las fechas" : `Jornada ${i.jornadaId}`}
+                </span>
+                <button onClick={() => revocarInvitacion(codigo)} style={{ border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Revocar</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {[{ k: "femenino", label: "Femenino", color: C.rojoLogo }, { k: "masculino", label: "Masculino", color: C.doradoLogo }, { k: "provinciales", label: "🏆 Provinciales", color: C.provincial }].map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setRama(t.k)}
+              style={{ fontSize: 13, padding: "8px 18px", borderRadius: 8, border: "none", background: rama === t.k ? t.color : C.card, color: rama === t.k ? "#fff" : C.ink, fontWeight: 700, cursor: "pointer", boxShadow: rama === t.k ? "none" : `inset 0 0 0 1px ${C.border}` }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar institución o categoría…"
+          style={{ fontSize: 12, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, color: C.ink, width: 220 }}
+        />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 18 }}>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Jornadas</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{jornadas.length}</div>
+        </div>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Equipos activos</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>{totalEquipos}</div>
+        </div>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.sub, textTransform: "uppercase", fontWeight: 700 }}>Bajas cargadas</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: totalBajas ? C.rojo : C.ink }}>{totalBajas}</div>
+        </div>
+      </div>
+
+      {filtradas.length === 0 && <div style={{ fontSize: 13, color: C.sub, fontStyle: "italic" }}>No hay resultados para "{busqueda}".</div>}
+
+      {filtradas.map((j) => (
+        <JornadaCard
+          key={j.id}
+          jornada={j}
+          estados={estados}
+          setEstado={(key, v) => { setEstados((prev) => ({ ...prev, [key]: v })); guardarJornada(j.id, `estados/${key}`, v); }}
+          ramaColor={colorDeJornada(j)}
+          ramaLabel={rama}
+          extras={extras[j.id]}
+          setExtras={(v) => { setExtras((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "extras", v); }}
+          cruces={cruces[j.id]}
+          setCruces={(v) => { setCruces((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "cruces", v); }}
+          resultados={resultados[j.id]}
+          setResultado={(key, campo, valor) => {
+            setResultados((prev) => ({ ...prev, [j.id]: { ...(prev[j.id] || {}), [key]: { ...(prev[j.id]?.[key] || {}), [campo]: valor } } }));
+            guardarResultado(j.id, key, campo, valor);
+          }}
+          responsables={responsables[j.id]}
+          setResponsables={(v) => { setResponsables((prev) => ({ ...prev, [j.id]: v })); guardarJornada(j.id, "responsables", v); }}
+          editable={esCoordinadora || permisos._todas === true || permisos[j.id] === true}
+        />
+      ))}
+
+      <div style={{ fontSize: 11, color: C.sub, marginTop: 14, fontStyle: "italic" }}>
+        Tocá una jornada para desplegar las instituciones. Los cambios autorizados quedan guardados en el panel y se mantienen al volver a ingresar.
+      </div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PanelCordobeses/>);
+</script><script>eval(Babel.transform(document.getElementById("app-code").textContent,{presets:[["env",{modules:false}],["react",{runtime:"classic"}]]}).code);</script><script>(function(){var originalFetch=window.fetch.bind(window),history=[],working=false,auth='';function getId(url){var p=url.split('/panelCordobeses/jornadas/')[1];return p?p.split('/')[0]:''}window.fetch=async function(input,options){var url=typeof input==='string'?input:(input&&input.url)||'',method=((options&&options.method)||'GET').toUpperCase();var am=url.match(/[?&]auth=([^&]+)/);if(am)auth=am[1];var isFixture=url.indexOf('/panelCordobeses/jornadas/')!==-1&&(url.indexOf('/cruces.json')!==-1||url.indexOf('/resultados.json')!==-1);if(!working&&method==='PUT'&&isFixture){try{var before=await originalFetch(url);var previous=before.ok?await before.json():null;var response=await originalFetch(input,options);if(response.ok){history.push({id:getId(url),url:url,previous:previous});if(history.length>20)history.shift();refresh()}return response}catch(e){return originalFetch(input,options)}}return originalFetch(input,options)};function isCoordinator(){return (document.body.innerText||'').indexOf('Modo coordinador/a')!==-1}function refresh(){document.querySelectorAll('.boton-deshacer-fixture').forEach(function(b){var hasLocal=history.some(function(h){return h.id===b.dataset.id});var enabled=!working&&(hasLocal||(isCoordinator()&&auth));b.disabled=!enabled;b.style.opacity=enabled?'1':'.55';b.style.cursor=enabled?'pointer':'not-allowed';b.textContent=working?'Recuperando...':'↶ Deshacer / recuperar fixture anterior'})}async function restoreServer(id){if(!auth)return false;var r=await originalFetch('https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelHistorial/'+id+'.json?auth='+auth);if(!r.ok)return false;var data=await r.json()||{};var keys=Object.keys(data).sort(function(a,b){return Number(b)-Number(a)});var previous=null;for(var i=0;i<keys.length;i++){if(data[keys[i]]&&(data[keys[i]].cruces||data[keys[i]].resultados)){previous=data[keys[i]];break}}if(!previous){alert('Todavía no hay una versión anterior guardada para este fixture.');return false}if(!confirm('¿Querés recuperar la última versión anterior guardada de este fixture?'))return false;var base='https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelCordobeses/jornadas/'+id;await originalFetch(base+'/cruces.json?auth='+auth,{method:previous.cruces?'PUT':'DELETE',headers:{'Content-Type':'application/json'},body:previous.cruces?JSON.stringify(previous.cruces):undefined});await originalFetch(base+'/resultados.json?auth='+auth,{method:previous.resultados?'PUT':'DELETE',headers:{'Content-Type':'application/json'},body:previous.resultados?JSON.stringify(previous.resultados):undefined});alert('Fixture anterior recuperado.');location.reload();return true}async function undo(id){if(working)return;working=true;refresh();var pos=-1;for(var i=history.length-1;i>=0;i--){if(history[i].id===id){pos=i;break}}try{if(pos>=0){var item=history.splice(pos,1)[0];await originalFetch(item.url,{method:item.previous===null?'DELETE':'PUT',headers:{'Content-Type':'application/json'},body:item.previous===null?undefined:JSON.stringify(item.previous)});setTimeout(function(){location.reload()},700)}else if(isCoordinator()){await restoreServer(id)}}finally{working=false;refresh()}}async function clearFixture(id){if(working||!auth)return;if(!confirm('¿Seguro que querés borrar completamente este fixture y todos sus resultados?'))return;working=true;refresh();var base='https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelCordobeses/jornadas/'+id;try{await originalFetch(base+'/cruces.json?auth='+auth,{method:'DELETE'});await originalFetch(base+'/resultados.json?auth='+auth,{method:'DELETE'});history=history.filter(function(h){return h.id!==id});alert('Fixture borrado. Ya podés armarlo nuevamente.');location.reload()}finally{working=false;refresh()}}function mount(){document.querySelectorAll('[data-jornada-id]').forEach(function(card){var title=Array.from(card.querySelectorAll('div')).find(function(el){return el.children.length===0&&el.textContent.trim()==='Armar cruces (sorteo) y resultados'});if(!title)return;var section=title.parentElement;if(section.querySelector('.boton-deshacer-fixture'))return;var wrap=document.createElement('div');wrap.style.cssText='display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid #e1e4e8';var b=document.createElement('button');b.className='boton-deshacer-fixture';b.dataset.id=card.getAttribute('data-jornada-id');b.onclick=function(){undo(b.dataset.id)};b.title='Recupera el fixture anterior de esta jornada';b.style.cssText='font-size:11px;padding:8px 12px;border-radius:7px;border:1px solid #17365d;background:#fff;color:#17365d;font-weight:700';wrap.appendChild(b);if(isCoordinator()){var del=document.createElement('button');del.textContent='🗑 Borrar fixture';del.onclick=function(){clearFixture(b.dataset.id)};del.title='Borra el sorteo y todos los resultados de este fixture';del.style.cssText='font-size:11px;padding:8px 12px;border-radius:7px;border:1px solid #d9273e;background:#fff;color:#d9273e;font-weight:700;cursor:pointer';wrap.appendChild(del)}section.appendChild(wrap)});refresh()}setInterval(mount,700);setTimeout(mount,1000)})();</script><script>(function(){var overlay=null,selected='';var entroComoProfeDirecto=(function(){try{return new URL(location.href).searchParams.get('vista')==='profes'}catch(e){return false}})();function cards(){return Array.from(document.querySelectorAll('[data-jornada-id]'))}function label(card){var lines=(card.innerText||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);return lines.slice(0,5).join(' · ')}function findFixture(card){return Array.from(card.querySelectorAll('div')).find(function(el){return el.children.length===0&&el.textContent.trim()==='Armar cruces (sorteo) y resultados'})}function ensureOpen(card){if(!findFixture(card)&&card.firstElementChild)card.firstElementChild.click()}function render(){if(!overlay||!selected)return;var card=cards().find(function(c){return c.dataset.jornadaId===selected});var target=overlay.querySelector('#vista-profes-contenido');if(!card){target.innerHTML='<div style="padding:20px">No se encontró esta jornada.</div>';return}ensureOpen(card);setTimeout(function(){var title=findFixture(card);if(!title){target.innerHTML='<div style="padding:20px">Esta jornada todavía no tiene un fixture armado.</div>';return}var section=title.parentElement.cloneNode(true);section.querySelectorAll('button').forEach(function(b){b.remove()});section.querySelectorAll('.solo-coordinador').forEach(function(el){el.remove()});section.querySelectorAll('input,select,textarea').forEach(function(el){el.disabled=true;el.style.opacity='1';el.style.color='#17213a'});target.innerHTML='';var head=document.createElement('div');head.style.cssText='font-size:15px;font-weight:800;color:#17213a;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #dfe3e8';head.textContent=label(card);target.appendChild(head);target.appendChild(section)},250)}function closeView(){if(overlay){overlay.remove();overlay=null}var u=new URL(location.href);u.searchParams.delete('vista');u.searchParams.delete('jornada');history.replaceState({},'',u)}function openView(){if(overlay)return;overlay=document.createElement('div');overlay.id='vista-profes-overlay';overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#f4f5f7;overflow:auto;font-family:Inter,Arial,sans-serif;color:#17213a';var top=document.createElement('div');top.style.cssText='position:sticky;top:0;z-index:2;background:#17365d;color:#fff;padding:14px 18px;box-shadow:0 2px 8px #0002';top.innerHTML='<div style="max-width:1200px;margin:auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div><div style="font-size:17px;font-weight:800">⚽ Vista para profes</div><div style="font-size:11px;opacity:.85;margin-top:2px">Fixture, resultados y tabla · actualización automática</div></div>'+(entroComoProfeDirecto?'':'<button id="cerrar-vista-profes" style="border:1px solid #ffffff80;background:transparent;color:#fff;border-radius:7px;padding:7px 11px;font-weight:700;cursor:pointer">Volver al panel</button>')+'</div>';overlay.appendChild(top);var body=document.createElement('div');body.style.cssText='max-width:1200px;margin:auto;padding:16px';var select=document.createElement('select');select.id='selector-vista-profes';select.style.cssText='width:100%;padding:11px 12px;border:1px solid #cfd5dd;border-radius:8px;background:#fff;font-size:13px;margin-bottom:14px';select.innerHTML='<option value="">Elegí la fecha y categoría</option>';cards().forEach(function(card){var o=document.createElement('option');o.value=card.dataset.jornadaId;o.textContent=label(card);select.appendChild(o)});body.appendChild(select);var content=document.createElement('div');content.id='vista-profes-contenido';content.style.cssText='background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:14px;overflow-x:auto';content.innerHTML='<div style="padding:24px;text-align:center;color:#596579">Elegí una jornada para ver su fixture.</div>';body.appendChild(content);var note=document.createElement('div');note.style.cssText='font-size:11px;color:#596579;text-align:center;margin:12px';note.textContent='Vista de solo lectura. Los datos se actualizan automáticamente.';body.appendChild(note);overlay.appendChild(body);document.body.appendChild(overlay);var btnCerrarVistaProfes=top.querySelector('#cerrar-vista-profes');if(btnCerrarVistaProfes)btnCerrarVistaProfes.onclick=closeView;select.onchange=function(){selected=this.value;var u=new URL(location.href);if(selected)u.searchParams.set('jornada',selected);history.replaceState({},'',u);render()};var requested=new URL(location.href).searchParams.get('jornada');if(requested&&select.querySelector('option[value="'+requested+'"]')){select.value=requested;selected=requested;render()}}function addButton(){if(document.getElementById('abrir-vista-profes'))return;var root=document.querySelector('#root>div');if(!root)return;var b=document.createElement('button');b.id='abrir-vista-profes';b.textContent='👁 Vista para profes';b.onclick=openView;b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;border:none;border-radius:24px;padding:11px 16px;background:#17365d;color:#fff;font-size:12px;font-weight:800;box-shadow:0 4px 14px #0003;cursor:pointer';root.appendChild(b)}setInterval(function(){if(entroComoProfeDirecto)return;addButton();if(overlay&&selected)render()},10000);setTimeout(function(){if(entroComoProfeDirecto)return;addButton();if(new URL(location.href).searchParams.get('vista')==='profes')openView()},1200)})();</script></body></html>
