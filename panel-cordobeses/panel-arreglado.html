@@ -743,7 +743,10 @@ function VistaProfeDirecta({ jornada, estados, extras, cruces, resultados }) {
 }
 
 function PanelCordobeses() {
-  const [intro, setIntro] = useState(() => !jornadaPedidaPorUrl());
+  // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
+  // también cuando se entra por el link/QR de un profe: primero el inicio,
+  // y recién después (al tocar o al pasar unos segundos) aparece el fixture.
+  const [intro, setIntro] = useState(true);
   const [rama, setRama] = useState(() => {
     const j = jornadaPedidaPorUrl();
     if (!j) return "femenino";
@@ -989,12 +992,14 @@ function PanelCordobeses() {
   // Un profe que entra por el link/QR de una jornada puntual NUNCA debe llegar a
   // tener montado el panel completo de la coordinadora (con todos sus botones y
   // formularios de edición) -- ni un instante, sin importar timing ni velocidad
-  // del celular. Por eso esto corta acá, antes de todo lo demás, y muestra
-  // directamente (y únicamente) esa jornada en modo solo lectura.
+  // del celular. Por eso, apenas termina la intro, se corta acá (antes de todo
+  // lo demás) y se muestra directamente (y únicamente) esa jornada en modo
+  // solo lectura. La intro se muestra siempre primero, también para el profe.
   const jornadaProfe = jornadaPedidaPorUrl();
-  if (jornadaProfe) return <VistaProfeDirecta jornada={jornadaProfe} estados={estados} extras={extras} cruces={cruces} resultados={resultados} />;
 
   if (intro) return <IntroCordobeses onEntrar={() => setIntro(false)} />;
+
+  if (jornadaProfe) return <VistaProfeDirecta jornada={jornadaProfe} estados={estados} extras={extras} cruces={cruces} resultados={resultados} />;
 
   return (
     <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20, borderRadius: 12 }}>
