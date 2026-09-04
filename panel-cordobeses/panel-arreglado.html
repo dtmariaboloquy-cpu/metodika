@@ -426,6 +426,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
   const [qrAbierto, setQrAbierto] = useState(false);
   const [qrImagen, setQrImagen] = useState("");
   const [qrCopiado, setQrCopiado] = useState(false);
+  const [qrToken, setQrToken] = useState(null);
 
   const equiposCompletos = [...jornada.equipos, ...(extras || [])];
   const nBajas = equiposCompletos.filter((_, i) => estados[jornada.id + "-" + i]?.bajo).length;
@@ -474,17 +475,24 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
   };
 
   // Link de solo lectura para esta jornada: abre directo la "Vista para profes"
-  // (sin botones ni campos editables) apuntando a esta fecha.
+  // (sin botones ni campos editables) apuntando a esta fecha. Se le suma un
+  // "_v" que cambia cada vez que se genera el QR de nuevo: así, si alguien ya
+  // había escaneado un link de esta misma fecha antes, el celular no reutiliza
+  // una versión vieja guardada en la caché del navegador -- lo vuelve a pedir
+  // entero, fresco, cada vez.
   const urlProfes = typeof location !== "undefined"
-    ? `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}`
+    ? `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}${qrToken ? `&_v=${qrToken}` : ""}`
     : "";
 
   const abrirQr = () => {
+    const token = Date.now().toString(36);
+    setQrToken(token);
     setQrAbierto(true);
     setQrCopiado(false);
     try {
+      const url = `${location.origin}${location.pathname}?vista=profes&jornada=${encodeURIComponent(jornada.id)}&_v=${token}`;
       const qr = qrcode(0, "M");
-      qr.addData(urlProfes);
+      qr.addData(url);
       qr.make();
       setQrImagen(qr.createDataURL(8, 8));
     } catch (e) {
