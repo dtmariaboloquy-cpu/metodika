@@ -725,10 +725,17 @@ function VistaProfeDirecta({ jornada, estados, extras, cruces, resultados }) {
 
   return (
     <div style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20 }}>
-      <div style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", background: `linear-gradient(120deg, ${C.primario}, #1F4D82)`, color: "#fff", padding: "20px 22px" }}>
-        <div style={{ fontSize: 12, letterSpacing: 2, opacity: 0.85, fontWeight: 700 }}>⚽ VISTA PARA PROFES · SOLO LECTURA</div>
-        <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{jornada.categoria} · {jornada.grupo || jornada.instancia}</div>
-        <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>{jornada.fecha} · {jornada.sede} · {jornada.horario}</div>
+      <div style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", position: "relative", background: `linear-gradient(120deg, ${C.primario}, #1F4D82)`, color: "#fff", padding: "20px 22px" }}>
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, opacity: 0.35, pointerEvents: "none",
+          background: `linear-gradient(115deg, transparent 70%, ${C.rojoLogo} 70% 76%, transparent 76% 80%, ${C.doradoLogo} 80% 86%, transparent 86% 91%, ${C.verde} 91% 96%, transparent 96%)`,
+        }} />
+        <div style={{ position: "relative", fontSize: 15, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>⚽</span> <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo }}>Juegan</span>
+        </div>
+        <div style={{ position: "relative", fontSize: 12, letterSpacing: 2, opacity: 0.85, fontWeight: 700, marginTop: 10 }}>VISTA PARA PROFES · SOLO LECTURA</div>
+        <div style={{ position: "relative", fontSize: 22, fontWeight: 800, marginTop: 6 }}>{jornada.categoria} · {jornada.grupo || jornada.instancia}</div>
+        <div style={{ position: "relative", fontSize: 13, opacity: 0.9, marginTop: 4 }}>{jornada.fecha} · {jornada.sede} · {jornada.horario}</div>
       </div>
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
         <CrucesPanel
