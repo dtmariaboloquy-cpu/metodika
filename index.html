@@ -1080,6 +1080,9 @@ const PDF_THEME = {
   rowAlt: [244, 246, 250],
   border: [210, 218, 230],
   text: [30, 41, 59],
+  green: [27, 138, 90],
+  amber: [178, 128, 8],
+  red: [179, 69, 47],
 };
 function pdfHeader(doc, titulo, subtitulo){
   const w = doc.internal.pageSize.getWidth();
@@ -1123,26 +1126,51 @@ function pdfSectionTitle(doc, texto, y){
   doc.text(texto, 17, y);
   return y + 10;
 }
-// Dibuja una fila de "tarjetas" con un número grande y una etiqueta debajo —
-// para los indicadores clave del resumen (jugadoras, partidos, etc.).
-function pdfStatBoxes(doc, y, boxes){
+// Dibuja una fila (o varias, si hay más de 5) de "tarjetas" con un número
+// grande y una etiqueta debajo. Cada tarjeta puede pedir un color propio
+// para el número (b.color) — por ejemplo, goles en verde o rojas en rojo.
+function pdfStatBoxes(doc, y, boxes, opts){
+  opts = opts || {};
+  const perRow = opts.perRow || 5;
   const w = doc.internal.pageSize.getWidth();
-  const marginX = 14, gap = 4;
-  const boxW = (w - marginX*2 - gap*(boxes.length-1)) / boxes.length;
+  const marginX = 14, gap = 4, rowGap = 4;
   const boxH = 20;
-  boxes.forEach(function(b, i){
-    const x = marginX + i*(boxW+gap);
-    doc.setFillColor.apply(doc, PDF_THEME.rowAlt);
-    doc.setDrawColor.apply(doc, PDF_THEME.border);
-    doc.roundedRect(x, y, boxW, boxH, 1.5, 1.5, "FD");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-    doc.setTextColor.apply(doc, PDF_THEME.navy);
-    doc.text(String(b.valor), x + boxW/2, y + 11, {align: "center"});
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-    doc.setTextColor.apply(doc, PDF_THEME.gray);
-    doc.text(String(b.etiqueta), x + boxW/2, y + 16.5, {align: "center", maxWidth: boxW-4});
-  });
-  return y + boxH + 8;
+  let cursorY = y;
+  for(let start = 0; start < boxes.length; start += perRow){
+    const fila = boxes.slice(start, start + perRow);
+    const boxW = (w - marginX*2 - gap*(fila.length-1)) / fila.length;
+    fila.forEach(function(b, i){
+      const x = marginX + i*(boxW+gap);
+      doc.setFillColor.apply(doc, PDF_THEME.rowAlt);
+      doc.setDrawColor.apply(doc, PDF_THEME.border);
+      doc.roundedRect(x, cursorY, boxW, boxH, 1.5, 1.5, "FD");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+      doc.setTextColor.apply(doc, b.color || PDF_THEME.navy);
+      doc.text(String(b.valor), x + boxW/2, cursorY + 11, {align: "center"});
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+      doc.setTextColor.apply(doc, PDF_THEME.gray);
+      doc.text(String(b.etiqueta), x + boxW/2, cursorY + 16.5, {align: "center", maxWidth: boxW-4});
+    });
+    cursorY += boxH + rowGap;
+  }
+  return cursorY + 4;
+}
+// Barra horizontal de progreso (0-100), con el mismo criterio de color que
+// usa la vista de plantel en pantalla (verde/azul/rojo según el valor).
+function pdfBarraProgreso(doc, y, etiqueta, pct, color){
+  const marginX = 14;
+  const w = doc.internal.pageSize.getWidth() - marginX*2;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9.5);
+  doc.setTextColor.apply(doc, PDF_THEME.text);
+  doc.text(etiqueta, marginX, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(Math.round(pct) + "%", marginX + w, y, {align: "right"});
+  y += 3;
+  doc.setFillColor.apply(doc, PDF_THEME.rowAlt);
+  doc.roundedRect(marginX, y, w, 5, 2.5, 2.5, "F");
+  doc.setFillColor.apply(doc, color);
+  doc.roundedRect(marginX, y, Math.max(7, w * Math.min(100, Math.max(0, pct)) / 100), 5, 2.5, 2.5, "F");
+  return y + 13;
 }
 // Tabla simple con encabezado en color y filas alternadas, con salto de
 // página automático (repitiendo el encabezado en la página siguiente).
@@ -1182,28 +1210,63 @@ function pdfTable(doc, y, headers, rows, colWidths){
   doc.line(marginX, y, marginX + totalW, y);
   return y + 8;
 }
-// Dibuja la foto de la jugadora (si tiene) a la izquierda, y su nombre +
-// posición/edad/pierna hábil a la derecha. Si la foto falla al cargar
-// (formato raro, dato corrupto) seguimos sin ella en vez de romper el PDF.
+// Tarjeta de encabezado del perfil: foto grande con marco (o iniciales si no
+// hay foto cargada), nombre, una píldora de color con la posición, y edad +
+// pierna hábil debajo. Si la foto falla al cargar (formato raro, dato
+// corrupto) seguimos con las iniciales en vez de romper el PDF.
 function pdfFotoJugadora(doc, y, fotoDataUrl, info){
   const marginX = 14;
-  const photoSize = 26;
+  const w = doc.internal.pageSize.getWidth();
+  const photoSize = 36;
+  const cardH = photoSize + 10;
+
+  doc.setFillColor.apply(doc, PDF_THEME.accentBg);
+  doc.setDrawColor.apply(doc, PDF_THEME.border);
+  doc.roundedRect(marginX, y, w - marginX*2, cardH, 3, 3, "FD");
+
+  const photoX = marginX + 6, photoY = y + 5;
+  let fotoOk = false;
   if(fotoDataUrl){
     try{
       const m = /^data:image\/(\w+)/i.exec(fotoDataUrl);
       const formato = m ? m[1].toUpperCase().replace("JPG","JPEG") : "JPEG";
-      doc.addImage(fotoDataUrl, formato, marginX, y, photoSize, photoSize);
-    }catch(e){ fotoDataUrl = null; }
+      doc.addImage(fotoDataUrl, formato, photoX, photoY, photoSize, photoSize);
+      fotoOk = true;
+    }catch(e){ fotoOk = false; }
   }
-  const textX = marginX + (fotoDataUrl ? photoSize + 8 : 0);
-  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  if(!fotoOk){
+    doc.setFillColor.apply(doc, PDF_THEME.navy);
+    doc.roundedRect(photoX, photoY, photoSize, photoSize, 3, 3, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20);
+    doc.setTextColor.apply(doc, PDF_THEME.navyText);
+    const iniciales = String(info.nombre||"").trim().split(/\s+/).filter(Boolean).map(function(p){ return p[0]; }).slice(0,2).join("").toUpperCase();
+    doc.text(iniciales || "?", photoX + photoSize/2, photoY + photoSize/2 + 4, {align: "center"});
+  }
+  doc.setDrawColor.apply(doc, PDF_THEME.navy);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(photoX, photoY, photoSize, photoSize, 3, 3, "D");
+  doc.setLineWidth(0.2);
+
+  const textX = photoX + photoSize + 10;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(16);
   doc.setTextColor.apply(doc, PDF_THEME.navy);
-  doc.text(info.nombre, textX, y + 7);
+  doc.text(info.nombre, textX, y + 13);
+
+  if(info.posicion){
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    const pw = doc.getTextWidth(info.posicion) + 10;
+    doc.setFillColor.apply(doc, PDF_THEME.navy);
+    doc.roundedRect(textX, y + 17, pw, 7, 3.5, 3.5, "F");
+    doc.setTextColor.apply(doc, PDF_THEME.navyText);
+    doc.text(info.posicion, textX + pw/2, y + 21.8, {align: "center"});
+  }
+
   doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
   doc.setTextColor.apply(doc, PDF_THEME.gray);
-  const detalle = [info.posicion, info.edad, info.pierna].filter(Boolean).join(" · ");
-  if(detalle) doc.text(detalle, textX, y + 14);
-  return y + Math.max(photoSize, 20) + 8;
+  const detalle = [info.edad, info.pierna].filter(Boolean).join("   ·   ");
+  if(detalle) doc.text(detalle, textX, y + 33);
+
+  return y + cardH + 8;
 }
 function exportarPerfilJugadora(numero){
   const j = JUGADORAS.find(x=>x.numero===numero);
@@ -1213,6 +1276,8 @@ function exportarPerfilJugadora(numero){
   const devolucion = devolucionEl ? devolucionEl.value.trim() : "";
   const hist = j.historial || [];
   const partidosJugados = hist.filter(h=>h.minutos>0).length;
+  const conteoEstado = {titular:0, suplente:0, lesionada:0, no_convocado:0};
+  hist.forEach(h=>{ if(conteoEstado[h.status]!=null) conteoEstado[h.status]++; });
   const nombreCompleto = j.nombrePropio && j.nombrePropio!==j.apellido ? `${j.nombrePropio} ${j.apellido}` : j.apellido;
   const edad = calcularEdad(perfil.fechaNacimiento);
   const archivo = "perfil-" + (j.apellido||"jugadora").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"") + "-" + j.numero + ".pdf";
@@ -1228,11 +1293,20 @@ function exportarPerfilJugadora(numero){
 
     y = pdfStatBoxes(doc, y, [
       {valor: String(partidosJugados), etiqueta: "Partidos jugados"},
-      {valor: j.calificacion.toFixed(1), etiqueta: "Calificación"},
+      {valor: String(conteoEstado.titular), etiqueta: "Titular"},
+      {valor: String(conteoEstado.suplente), etiqueta: "Suplente"},
       {valor: String(j.minutos), etiqueta: "Minutos"},
-      {valor: String(j.goles), etiqueta: "Goles"},
-      {valor: String(j.asistencias), etiqueta: "Asistencias"},
+      {valor: j.calificacion.toFixed(1), etiqueta: "Calificación", color: j.calificacion>=7 ? PDF_THEME.green : (j.calificacion<5 ? PDF_THEME.red : undefined)},
+      {valor: String(j.goles), etiqueta: "Goles", color: PDF_THEME.green},
+      {valor: String(j.asistencias), etiqueta: "Asistencias", color: PDF_THEME.green},
+      {valor: String(j.amarillas), etiqueta: "Amarillas", color: PDF_THEME.amber},
+      {valor: String(j.rojas), etiqueta: "Rojas", color: PDF_THEME.red},
     ]);
+
+    if(typeof j.pctMin === "number"){
+      const colorMin = j.pctMin>=60 ? PDF_THEME.green : (j.pctMin>=25 ? PDF_THEME.accent : PDF_THEME.red);
+      y = pdfBarraProgreso(doc, y, "Minutos jugados sobre los posibles (convocada)", j.pctMin, colorMin);
+    }
 
     if(devolucion){
       y = pdfSectionTitle(doc, "Devolución", y);
