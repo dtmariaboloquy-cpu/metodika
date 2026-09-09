@@ -1048,6 +1048,7 @@ function guardarPDF(filename, buildFn){
     try{
       doc = new window.jspdf.jsPDF();
       buildFn(doc);
+      pdfFooter(doc);
     }catch(e){ mostrarToast("No se pudo generar el PDF."); return; }
     try{
       const blob = doc.output("blob");
@@ -1062,6 +1063,198 @@ function guardarPDF(filename, buildFn){
     }catch(e){ mostrarToast("No se pudo descargar el PDF."); }
   });
 }
+
+// ---------------------------------------------------------------------
+// Sistema visual compartido para los PDF (encabezado, pie de página,
+// título de sección y tablas con encabezado + filas alternadas), para
+// que "Exportar resumen" y los informes de Radar de Carga tengan una
+// estética prolija y consistente en vez de texto plano.
+// ---------------------------------------------------------------------
+const PDF_THEME = {
+  navy: [15, 35, 65],
+  navyText: [255, 255, 255],
+  navySub: [196, 210, 232],
+  accent: [30, 64, 175],
+  accentBg: [224, 234, 252],
+  gray: [100, 116, 139],
+  rowAlt: [244, 246, 250],
+  border: [210, 218, 230],
+  text: [30, 41, 59],
+};
+function pdfHeader(doc, titulo, subtitulo){
+  const w = doc.internal.pageSize.getWidth();
+  doc.setFillColor.apply(doc, PDF_THEME.navy);
+  doc.rect(0, 0, w, 28, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+  doc.setTextColor.apply(doc, PDF_THEME.navySub);
+  doc.text("CLUB ATLÉTICO TALLERES · RESERVA FEMENINA · AFA", 14, 9);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(15);
+  doc.setTextColor.apply(doc, PDF_THEME.navyText);
+  doc.text(titulo, 14, 20);
+  if(subtitulo){
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.setTextColor.apply(doc, PDF_THEME.navySub);
+    doc.text(subtitulo, w - 14, 20, {align: "right"});
+  }
+  return 40;
+}
+function pdfFooter(doc){
+  const pageCount = doc.internal.getNumberOfPages();
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  const fecha = new Date().toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric'});
+  for(let i=1; i<=pageCount; i++){
+    doc.setPage(i);
+    doc.setDrawColor.apply(doc, PDF_THEME.border);
+    doc.setLineWidth(0.2);
+    doc.line(14, h-14, w-14, h-14);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+    doc.setTextColor.apply(doc, PDF_THEME.gray);
+    doc.text("Metodika · Generado el " + fecha, 14, h-9);
+    doc.text("Página " + i + " de " + pageCount, w-14, h-9, {align: "right"});
+  }
+}
+function pdfSectionTitle(doc, texto, y){
+  const w = doc.internal.pageSize.getWidth();
+  doc.setFillColor.apply(doc, PDF_THEME.accentBg);
+  doc.rect(14, y-4.7, w-28, 7.2, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+  doc.setTextColor.apply(doc, PDF_THEME.accent);
+  doc.text(texto, 17, y);
+  return y + 10;
+}
+// Dibuja una fila de "tarjetas" con un número grande y una etiqueta debajo —
+// para los indicadores clave del resumen (jugadoras, partidos, etc.).
+function pdfStatBoxes(doc, y, boxes){
+  const w = doc.internal.pageSize.getWidth();
+  const marginX = 14, gap = 4;
+  const boxW = (w - marginX*2 - gap*(boxes.length-1)) / boxes.length;
+  const boxH = 20;
+  boxes.forEach(function(b, i){
+    const x = marginX + i*(boxW+gap);
+    doc.setFillColor.apply(doc, PDF_THEME.rowAlt);
+    doc.setDrawColor.apply(doc, PDF_THEME.border);
+    doc.roundedRect(x, y, boxW, boxH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.setTextColor.apply(doc, PDF_THEME.navy);
+    doc.text(String(b.valor), x + boxW/2, y + 11, {align: "center"});
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+    doc.setTextColor.apply(doc, PDF_THEME.gray);
+    doc.text(String(b.etiqueta), x + boxW/2, y + 16.5, {align: "center", maxWidth: boxW-4});
+  });
+  return y + boxH + 8;
+}
+// Tabla simple con encabezado en color y filas alternadas, con salto de
+// página automático (repitiendo el encabezado en la página siguiente).
+function pdfTable(doc, y, headers, rows, colWidths){
+  const marginX = 14;
+  const rowH = 7;
+  const pageH = doc.internal.pageSize.getHeight();
+  const totalW = colWidths.reduce(function(a,b){ return a+b; }, 0);
+  function header(yy){
+    doc.setFillColor.apply(doc, PDF_THEME.navy);
+    doc.rect(marginX, yy, totalW, rowH, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.setTextColor.apply(doc, PDF_THEME.navyText);
+    let x = marginX;
+    headers.forEach(function(h, i){ doc.text(String(h), x+2.5, yy+4.8); x += colWidths[i]; });
+    return yy + rowH;
+  }
+  y = header(y);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+  rows.forEach(function(row, ri){
+    if(y + rowH > pageH - 20){
+      doc.addPage();
+      y = header(24);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    }
+    if(ri % 2 === 1){
+      doc.setFillColor.apply(doc, PDF_THEME.rowAlt);
+      doc.rect(marginX, y, totalW, rowH, "F");
+    }
+    doc.setTextColor.apply(doc, PDF_THEME.text);
+    let x = marginX;
+    row.forEach(function(cell, i){ doc.text(String(cell), x+2.5, y+4.8); x += colWidths[i]; });
+    y += rowH;
+  });
+  doc.setDrawColor.apply(doc, PDF_THEME.border);
+  doc.setLineWidth(0.2);
+  doc.line(marginX, y, marginX + totalW, y);
+  return y + 8;
+}
+// Dibuja la foto de la jugadora (si tiene) a la izquierda, y su nombre +
+// posición/edad/pierna hábil a la derecha. Si la foto falla al cargar
+// (formato raro, dato corrupto) seguimos sin ella en vez de romper el PDF.
+function pdfFotoJugadora(doc, y, fotoDataUrl, info){
+  const marginX = 14;
+  const photoSize = 26;
+  if(fotoDataUrl){
+    try{
+      const m = /^data:image\/(\w+)/i.exec(fotoDataUrl);
+      const formato = m ? m[1].toUpperCase().replace("JPG","JPEG") : "JPEG";
+      doc.addImage(fotoDataUrl, formato, marginX, y, photoSize, photoSize);
+    }catch(e){ fotoDataUrl = null; }
+  }
+  const textX = marginX + (fotoDataUrl ? photoSize + 8 : 0);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  doc.setTextColor.apply(doc, PDF_THEME.navy);
+  doc.text(info.nombre, textX, y + 7);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+  doc.setTextColor.apply(doc, PDF_THEME.gray);
+  const detalle = [info.posicion, info.edad, info.pierna].filter(Boolean).join(" · ");
+  if(detalle) doc.text(detalle, textX, y + 14);
+  return y + Math.max(photoSize, 20) + 8;
+}
+function exportarPerfilJugadora(numero){
+  const j = JUGADORAS.find(x=>x.numero===numero);
+  if(!j) return;
+  const perfil = perfilDe(j);
+  const devolucionEl = document.getElementById("input-devolucion");
+  const devolucion = devolucionEl ? devolucionEl.value.trim() : "";
+  const hist = j.historial || [];
+  const partidosJugados = hist.filter(h=>h.minutos>0).length;
+  const nombreCompleto = j.nombrePropio && j.nombrePropio!==j.apellido ? `${j.nombrePropio} ${j.apellido}` : j.apellido;
+  const edad = calcularEdad(perfil.fechaNacimiento);
+  const archivo = "perfil-" + (j.apellido||"jugadora").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"") + "-" + j.numero + ".pdf";
+  guardarPDF(archivo, function(doc){
+    let y = pdfHeader(doc, "Perfil de Jugadora", "#" + j.numero + " · Temporada 2026");
+
+    y = pdfFotoJugadora(doc, y, perfil.foto || null, {
+      nombre: nombreCompleto,
+      posicion: NOMBRE_POS[posKey(j)] || j.posicion || "Sin posición",
+      edad: edad!=null ? edad + " años" : null,
+      pierna: perfil.piernaHabil || null,
+    });
+
+    y = pdfStatBoxes(doc, y, [
+      {valor: String(partidosJugados), etiqueta: "Partidos jugados"},
+      {valor: j.calificacion.toFixed(1), etiqueta: "Calificación"},
+      {valor: String(j.minutos), etiqueta: "Minutos"},
+      {valor: String(j.goles), etiqueta: "Goles"},
+      {valor: String(j.asistencias), etiqueta: "Asistencias"},
+    ]);
+
+    if(devolucion){
+      y = pdfSectionTitle(doc, "Devolución", y);
+      doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor.apply(doc, PDF_THEME.text);
+      const lines = doc.splitTextToSize(devolucion, 182);
+      doc.text(lines, 14, y); y += lines.length*5.5 + 8;
+    }
+
+    if(hist.length){
+      y = pdfSectionTitle(doc, "Historial de partidos", y);
+      const filas = hist.slice(0, 15).map(h => [
+        h.fecha || "—",
+        h.rival || "—",
+        NOMBRE_ESTADO[h.status] || h.status || "—",
+        h.minutos ? h.minutos + "'" : "—",
+        h.goles ? String(h.goles) : "—",
+        h.minutos > 0 ? (h.rating && h.rating.toFixed ? h.rating.toFixed(1) : String(h.rating || "—")) : "—",
+      ]);
+      pdfTable(doc, y, ["Fecha","Rival","Estado","Min","Goles","Rating"], filas, [26, 54, 34, 18, 20, 30]);
+    }
+  });
+}
 function exportarResumen(){
   const totalGoles = PARTIDOS.reduce((a,p)=>a+p.golesFavor,0);
   const totalRecibidos = PARTIDOS.reduce((a,p)=>a+p.golesContra,0);
@@ -1074,39 +1267,32 @@ function exportarResumen(){
   const goleadoras = [...JUGADORAS].filter(j=>j.goles>0).sort((a,b)=>b.goles-a.goles).slice(0,5);
   const fecha = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
   guardarPDF("metodika-resumen.pdf", function(doc){
-    let y = 18;
-    doc.setFont("helvetica","bold"); doc.setFontSize(15);
-    doc.text("Club Atletico Talleres - Reserva Femenina", 14, y); y += 7;
-    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(90);
-    doc.text(`AFA . Temporada 2026 . DT Maria Boloquy . Generado el ${fecha}`, 14, y); y += 10;
-    doc.setTextColor(20);
-    const filas = [
-      ["Jugadoras", String(JUGADORAS.length), "Partidos jugados", String(PARTIDOS.length)],
-      ["Victorias", String(victorias), "Empates", String(empates)],
-      ["Derrotas", String(derrotas), "Diferencia de gol", (diferencia>=0?"+":"")+diferencia],
-      ["Goles a favor", String(totalGoles), "Goles en contra", String(totalRecibidos)],
-    ];
-    doc.setFontSize(11);
-    filas.forEach(f=>{
-      doc.setFont("helvetica","bold"); doc.text(f[0]+":", 14, y);
-      doc.setFont("helvetica","normal"); doc.text(f[1], 62, y);
-      doc.setFont("helvetica","bold"); doc.text(f[2]+":", 100, y);
-      doc.setFont("helvetica","normal"); doc.text(f[3], 158, y);
-      y += 7;
-    });
-    doc.setFont("helvetica","bold"); doc.text("Proxima sesion:", 14, y);
+    let y = pdfHeader(doc, "Resumen General", "Temporada 2026 · DT María Boloquy");
+
+    y = pdfStatBoxes(doc, y, [
+      {valor: JUGADORAS.length, etiqueta: "Jugadoras"},
+      {valor: PARTIDOS.length, etiqueta: "Partidos jugados"},
+      {valor: victorias+"V "+empates+"E "+derrotas+"D", etiqueta: "Resultados"},
+      {valor: (diferencia>=0?"+":"")+diferencia, etiqueta: "Diferencia de gol"},
+      {valor: totalGoles+" - "+totalRecibidos, etiqueta: "Goles a favor / en contra"},
+    ]);
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor.apply(doc, PDF_THEME.text);
+    doc.text("Próxima sesión:", 14, y);
     doc.setFont("helvetica","normal");
-    doc.text(proximaSesion ? (fmtFecha(proximaSesion._fecha)+" - Sesion "+proximaSesion.header.sesion) : "-", 62, y);
+    doc.text(proximaSesion ? (fmtFecha(proximaSesion._fecha)+" — Sesión "+proximaSesion.header.sesion) : "—", 52, y);
     y += 12;
-    doc.setFont("helvetica","bold"); doc.setFontSize(12);
-    doc.text("Jugadoras destacadas (por calificacion)", 14, y); y += 7;
-    doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
-    (destacadas.length?destacadas.map(j=>`${j.apellido} - ${j.calificacion.toFixed(1)}`):["Sin datos"]).forEach(t=>{ doc.text("- "+t, 16, y); y += 6; });
+
+    y = pdfSectionTitle(doc, "Jugadoras destacadas (por calificación)", y);
+    y = pdfTable(doc, y, ["Jugadora", "Calificación"],
+      destacadas.length ? destacadas.map(j=>[j.apellido, j.calificacion.toFixed(1)]) : [["Sin datos todavía", ""]],
+      [140, 42]);
     y += 6;
-    doc.setFont("helvetica","bold"); doc.setFontSize(12);
-    doc.text("Goleadoras", 14, y); y += 7;
-    doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
-    (goleadoras.length?goleadoras.map(j=>`${j.apellido} - ${j.goles} gol${j.goles>1?'es':''}`):["Sin goles registrados"]).forEach(t=>{ doc.text("- "+t, 16, y); y += 6; });
+
+    y = pdfSectionTitle(doc, "Goleadoras", y);
+    pdfTable(doc, y, ["Jugadora", "Goles"],
+      goleadoras.length ? goleadoras.map(j=>[j.apellido, String(j.goles)]) : [["Sin goles registrados todavía", ""]],
+      [140, 42]);
   });
 }
 function abrirModulo(k){
@@ -1748,6 +1934,15 @@ function jugadoraDetalle(j){
     ${cabecera}
     <div class="grid-resumen">
       ${stats.map(([l,v])=>statCard(v,l)).join("")}
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:14px">Descargar perfil en PDF</h3>
+      <label class="muted" style="display:block;font-size:11.5px;margin-bottom:4px">Devolución / notas para la jugadora (opcional — se incluye en el PDF solo si escribís algo)</label>
+      <textarea id="input-devolucion" rows="3" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--borde);background:var(--papel);color:var(--tinta)" placeholder="Ej: viene creciendo mucho en el juego aéreo, seguir trabajando la salida en corto..."></textarea>
+      <div style="margin-top:10px">
+        <button class="backbtn" style="background:var(--verde);color:#fff;padding:9px 16px;border-radius:9px" onclick="exportarPerfilJugadora(${j.numero})"><span class="icon-inline">⬇</span> Descargar PDF del perfil</button>
+      </div>
     </div>
     ${j.amarillasAFA && j.amarillasAFA.cantidad>0 && estadoAmarillas(j.amarillasAFA.cantidad).nivel!=="normal" ? `
     <p class="muted" style="margin:-10px 0 18px;font-size:12px;color:var(--rojo)">⚠️ ${esc(estadoAmarillas(j.amarillasAFA.cantidad).texto)} — dato oficial COMET/AFA al ${esc(fmtFechaLarga(j.amarillasAFA.actualizado))}. Sanción cada ${UMBRAL_AMARILLAS} amarillas.</p>` : ""}
@@ -4089,37 +4284,36 @@ window.GpsRadar = (function(){
     if (!session) return;
     var result = analyze(session);
     guardarPDF("radar-carga-" + session.fecha + ".pdf", function(doc){
-      var y = 18;
-      doc.setFont("helvetica","bold"); doc.setFontSize(14);
-      doc.text("Radar de Carga - " + session.fecha + " - " + session.tipo, 14, y); y += 8;
+      var y = pdfHeader(doc, "Radar de Carga · " + session.fecha, session.tipo);
       var plannedScore = result.scores[session.tipo];
-      doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
-      var introLines = doc.splitTextToSize(plannedScore.matches + " de " + plannedScore.total + " indicadores coincidieron con el perfil esperado para " + session.tipo + ".", 180);
-      doc.text(introLines, 14, y); y += introLines.length*5.5 + 5;
-      doc.setFont("helvetica","bold"); doc.setFontSize(10);
-      doc.text("Indicador", 14, y); doc.text("Hoy", 95, y); doc.text("Cronica", 130, y); doc.text("Esperado", 162, y); y += 6;
-      doc.setLineWidth(0.2); doc.line(14, y-4, 196, y-4);
-      doc.setFont("helvetica","normal");
-      METRICS.forEach(function(m){
+      doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor.apply(doc, PDF_THEME.text);
+      var introLines = doc.splitTextToSize(plannedScore.matches + " de " + plannedScore.total + " indicadores coincidieron con el perfil esperado para " + session.tipo + ".", 182);
+      doc.text(introLines, 14, y); y += introLines.length*5.5 + 6;
+
+      var filas = METRICS.map(function(m){
         var chr = result.chronicByMetric[m.key];
-        if (y > 280){ doc.addPage(); y = 18; }
-        doc.text(String(m.label), 14, y);
-        doc.text(fmtN(session.teamAvg[m.key], m.decimals) + (m.unit?' '+m.unit:''), 95, y);
-        doc.text(chr.value!==null?fmtN(chr.value,m.decimals):'-', 130, y);
-        doc.text(SYMBOL[m.ref[session.tipo]].label, 162, y);
-        y += 6;
+        return [
+          String(m.label),
+          fmtN(session.teamAvg[m.key], m.decimals) + (m.unit?' '+m.unit:''),
+          chr.value!==null ? fmtN(chr.value, m.decimals) : '—',
+          SYMBOL[m.ref[session.tipo]].label,
+        ];
       });
-      y += 5;
+      y = pdfTable(doc, y, ["Indicador", "Hoy", "Crónica", "Esperado"], filas, [58, 32, 32, 60]);
+      y += 6;
+
       var diag = diagnose(session, result);
       if (diag.length){
-        if (y > 260){ doc.addPage(); y = 18; }
-        doc.setFont("helvetica","bold"); doc.setFontSize(11);
-        doc.text("Diagnostico", 14, y); y += 7;
-        doc.setFont("helvetica","normal"); doc.setFontSize(10);
+        var pageH = doc.internal.pageSize.getHeight();
+        if (y > pageH - 40){ doc.addPage(); y = 24; }
+        y = pdfSectionTitle(doc, "Diagnóstico", y);
+        doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor.apply(doc, PDF_THEME.text);
         diag.forEach(function(d){
-          var lines = doc.splitTextToSize("- " + d.text, 180);
-          if (y > 275){ doc.addPage(); y = 18; }
-          doc.text(lines, 14, y); y += lines.length*5.5 + 3;
+          var lines = doc.splitTextToSize(d.text, 176);
+          if (y > pageH - 20){ doc.addPage(); y = 24; }
+          doc.setFillColor.apply(doc, PDF_THEME.accent);
+          doc.circle(16, y-1.4, 0.9, "F");
+          doc.text(lines, 20, y); y += lines.length*5.5 + 3;
         });
       }
     });
@@ -4130,25 +4324,16 @@ window.GpsRadar = (function(){
     var st = weekStats(built.map, wk);
     var verdict = weekVerdict(built.map, wk, st.dominant);
     guardarPDF("radar-carga-semana-" + fmtDateShort(wk).replace(/\//g,"-") + ".pdf", function(doc){
-      var y = 18;
-      doc.setFont("helvetica","bold"); doc.setFontSize(14);
-      doc.text("Radar de Carga - semana del " + fmtDateShort(wk) + " al " + fmtDateShort(addDays(wk,6)), 14, y); y += 8;
-      doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+      var y = pdfHeader(doc, "Radar de Carga semanal", "Del " + fmtDateShort(wk) + " al " + fmtDateShort(addDays(wk,6)));
+      doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor.apply(doc, PDF_THEME.text);
       if (verdict){
-        var introLines = doc.splitTextToSize(verdict.score.matches + " de " + verdict.score.total + " indicadores coincidieron en el promedio semanal para " + (st.dominant||"") + ".", 180);
-        doc.text(introLines, 14, y); y += introLines.length*5.5 + 5;
+        var introLines = doc.splitTextToSize(verdict.score.matches + " de " + verdict.score.total + " indicadores coincidieron en el promedio semanal para " + (st.dominant||"") + ".", 182);
+        doc.text(introLines, 14, y); y += introLines.length*5.5 + 6;
       }
-      doc.setFont("helvetica","bold"); doc.setFontSize(10);
-      doc.text("Dia", 14, y); doc.text("Tipo", 80, y); doc.text("Distancia", 140, y); y += 6;
-      doc.setLineWidth(0.2); doc.line(14, y-4, 196, y-4);
-      doc.setFont("helvetica","normal");
-      st.days.forEach(function(d){
-        if (y > 280){ doc.addPage(); y = 18; }
-        doc.text(d.name, 14, y);
-        doc.text(d.session?String(d.session.tipo):'-', 80, y);
-        doc.text(d.load!==null?fmtN(d.load,0)+' m':'-', 140, y);
-        y += 6;
+      var filas = st.days.map(function(d){
+        return [d.name, d.session ? String(d.session.tipo) : '—', d.load!==null ? fmtN(d.load,0)+' m' : '—'];
       });
+      pdfTable(doc, y, ["Día", "Tipo de sesión", "Distancia"], filas, [50, 82, 50]);
     });
   }
 
