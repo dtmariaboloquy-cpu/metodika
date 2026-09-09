@@ -460,6 +460,22 @@ h2.section{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var
 .gps-mod .gps-diag-box ul{margin:6px 0 0;padding-left:18px}
 .gps-mod .gps-diag-box li{margin-bottom:4px}
 .gps-mod .gps-task-summary{border-left:3px solid var(--borde);padding:8px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.5;background:var(--papel2);border-radius:0 8px 8px 0}
+.gps-mod .gps-task-summary.ok{border-left-color:var(--good)}
+.gps-mod .gps-task-summary.warn{border-left-color:var(--warn)}
+.gps-mod .gps-task-summary.bad{border-left-color:var(--bad)}
+.gps-mod .gps-tarea-verdict-row{display:flex;align-items:center;gap:7px;font-weight:800;font-size:12.5px;padding:6px 10px;border-radius:8px;margin:5px 0 8px}
+.gps-mod .gps-tarea-verdict-row .ico{font-size:14px;line-height:1}
+.gps-mod .gps-tarea-verdict-row .frac{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;opacity:.85}
+.gps-mod .gps-tarea-verdict-row.ok{background:var(--good-wash);color:var(--good)}
+.gps-mod .gps-tarea-verdict-row.warn{background:var(--warn-wash);color:#8a6414}
+.gps-mod .gps-tarea-verdict-row.bad{background:var(--bad-wash);color:var(--bad)}
+.gps-mod .gps-tarea-verdict-row.info{background:var(--card);color:var(--sub);border:1px solid var(--borde)}
+.gps-mod details.gps-task-more{margin:2px 0 12px;border:1px solid var(--borde);border-radius:10px;padding:9px 12px;background:var(--card)}
+.gps-mod details.gps-task-more summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--bronce);list-style:none;user-select:none}
+.gps-mod details.gps-task-more summary::-webkit-details-marker{display:none}
+.gps-mod details.gps-task-more summary::before{content:"▸ ";display:inline-block}
+.gps-mod details.gps-task-more[open] summary::before{content:"▾ "}
+.gps-mod details.gps-task-more[open] summary{margin-bottom:2px}
 .gps-mod .gps-task-summary b{color:var(--tinta)}
 .gps-mod .gps-task-summary a{color:var(--bronce)}
 .gps-mod .gps-task-summary img{max-width:220px;border-radius:8px;margin-top:6px;display:block}
@@ -2910,6 +2926,7 @@ function renderGpsShell(){
       <div class="gps-nav">
         <button type="button" data-gview="sesion">Cargar sesión</button>
         <button type="button" data-gview="planner">Planificar tarea (sin GPS)</button>
+        <button type="button" data-gview="glosario">❓ Glosario</button>
       </div>
       <div id="gps-view-sesion">
         <div class="card" id="gps-form-section"></div>
@@ -2919,6 +2936,9 @@ function renderGpsShell(){
       </div>
       <div id="gps-view-planner" style="display:none">
         <div class="card" id="gps-planner-section"></div>
+      </div>
+      <div id="gps-view-glosario" style="display:none">
+        <div class="card" id="gps-glosario-section"></div>
       </div>
       <p class="muted" id="gps-footer-note" style="font-size:11px;margin-top:6px"></p>
       ${rosterList}
@@ -3371,7 +3391,12 @@ window.GpsRadar = (function(){
     html += '<div class="gps-field-grid">';
     html += fieldTemplate("Título / nombre", '<input type="text" data-tf="titulo" data-tid="' + t.id + '" placeholder="ej: Circuito de Pases" value="' + esc(t.titulo) + '">');
     html += fieldTemplate("Funciones / Acciones", '<input type="text" data-tf="funcion" data-tid="' + t.id + '" placeholder="ej: Tenencia - Componente cerrado" value="' + esc(t.funcion) + '">');
+    html += fieldTemplate("Tiempo total (min)", '<input type="number" data-tf="tiempoTotal" data-tid="' + t.id + '" min="0" value="' + esc(t.tiempoTotal) + '">');
     html += '</div>';
+    html += '<p class="gps-opt-note" style="margin-top:-6px">⏱ El tiempo es lo que usa el sistema para repartir bien el "dio o no dio" de esta tarea — sin esto, se compara contra el día completo.</p>';
+    html += '<details class="gps-task-more">';
+    html += '<summary>Más datos de la tarea (descripción, espacio, dosificación, video — opcional)</summary>';
+    html += '<div style="margin-top:10px">';
     html += fieldTemplate("Descripción", '<textarea data-tf="descripcion" data-tid="' + t.id + '" placeholder="Descripción de la tarea...">' + esc(t.descripcion) + '</textarea>');
     html += '<div class="gps-field-grid">';
     html += fieldTemplate("Dimensiones", '<input type="text" data-tf="dimensiones" data-tid="' + t.id + '" placeholder="ej: 30x25 o Medio Campo" value="' + esc(t.dimensiones) + '">');
@@ -3379,7 +3404,6 @@ window.GpsRadar = (function(){
     html += fieldTemplate("Ancho (m, opc.)", '<input type="number" data-tf="ancho" data-tid="' + t.id + '" min="0" value="' + esc(t.ancho) + '">');
     html += fieldTemplate("Jugadoras en la tarea (opc.)", '<input type="number" data-tf="jugadoras" data-tid="' + t.id + '" min="0" value="' + esc(t.jugadoras) + '">');
     html += fieldTemplate("Dosificación", '<input type="text" data-tf="dosificacion" data-tid="' + t.id + '" placeholder="ej: 2 series de 4 x 1 pausa" value="' + esc(t.dosificacion) + '">');
-    html += fieldTemplate("Tiempo total (min)", '<input type="number" data-tf="tiempoTotal" data-tid="' + t.id + '" min="0" value="' + esc(t.tiempoTotal) + '">');
     html += fieldTemplate("Link de video", '<input type="url" data-tf="linkVideo" data-tid="' + t.id + '" placeholder="https://..." value="' + esc(t.linkVideo) + '">');
     html += fieldTemplate("Link a plan completo (Drive, etc.)", '<input type="url" data-tf="linkDocumento" data-tid="' + t.id + '" placeholder="https://..." value="' + esc(t.linkDocumento) + '">');
     html += '</div>';
@@ -3392,6 +3416,7 @@ window.GpsRadar = (function(){
       html += '<label class="gps-file-btn">Subir imagen (pizarra/diagrama)<input type="file" accept="image/*" data-img-input="' + t.id + '" style="display:none"></label>';
     }
     html += '</div>';
+    html += '</div></details>';
     html += '<div class="gps-task-gps"><h4>GPS de esta tarea</h4>';
     html += '<div class="gps-import-box"><p>Subí el archivo de la PF de esta tarea (o cargá a mano abajo) — el sistema intenta adivinar el mapeo solo.</p><input type="file" accept=".csv,.xlsx,.xls" data-tarea-file="' + t.id + '"><div class="gps-import-result" data-tarea-import-result="' + t.id + '"></div></div>';
     html += '<p class="gps-opt-note" style="margin:0 0 6px">💡 Carga rápida: al escribir el nombre de la última fila se agrega otra sola, y podés pegar (Ctrl+V) filas copiadas de Excel/planilla desde cualquier celda — se reparten solas en las columnas y filas que siguen.</p>';
@@ -3413,7 +3438,7 @@ window.GpsRadar = (function(){
     return html;
   }
 
-  function renderExpectedPanel(){
+function renderExpectedPanel(){
     if (!draft.tipo) return "";
     var html = '<div class="gps-expected-panel"><div style="font-size:12.5px;font-weight:800;margin-bottom:6px">Números que nos tiene que dar hoy (' + draft.tipo + ')</div>';
     METRICS.forEach(function(m){
@@ -4043,18 +4068,24 @@ window.GpsRadar = (function(){
     var tareaProps = tareaProportions(session);
     (session.tareas||[]).forEach(function(t){
       if (!t.titulo && !t.descripcion && !t.dimensiones) return;
-      html += '<div class="gps-task-summary"><b>' + esc(t.titulo||"Tarea") + '</b>' + (t.funcion?' · ' + esc(t.funcion):'');
+      var tZoneClass = "info";
+      var verdictHtml = "";
       var prop = tareaProps[t.id];
       if (prop !== undefined){
         var tResult = analyzeTarea(session, t, prop);
         var tScore = tResult.scores[session.tipo];
         var tZone = tScore.total > 0 ? matchZone(session.tipo, tScore, tResult.bestKey) : null;
         if (tZone){
-          var tLabel = tZone==="ok" ? "✓ esta tarea dio" : tZone==="warn" ? "≈ cerca de lo esperado" : "✗ esta tarea no dio";
-          html += ' <span class="gps-tarea-verdict ' + tZone + '">' + tLabel + ' (' + tScore.matches + '/' + tScore.total + ')</span>';
-        } else { html += ' <span class="gps-tarea-verdict info">sin referencia propia todavía</span>'; }
+          tZoneClass = tZone;
+          var tIcon = tZone==="ok" ? "✅" : tZone==="warn" ? "🟡" : "⚠️";
+          var tLabel = tZone==="ok" ? "Esta tarea dio lo esperado" : tZone==="warn" ? "Cerca de lo esperado" : "Esta tarea no dio lo esperado";
+          verdictHtml = '<div class="gps-tarea-verdict-row ' + tZone + '"><span class="ico">' + tIcon + '</span><span class="txt">' + tLabel + '</span><span class="frac">' + tScore.matches + '/' + tScore.total + '</span></div>';
+        } else {
+          verdictHtml = '<div class="gps-tarea-verdict-row info"><span class="ico">ℹ️</span><span class="txt">Sin referencia propia todavía</span></div>';
+        }
       }
-      html += '<br>';
+      html += '<div class="gps-task-summary ' + tZoneClass + '"><b>' + esc(t.titulo||"Tarea") + '</b>' + (t.funcion?' · ' + esc(t.funcion):'') + '<br>';
+      html += verdictHtml;
       if (t.descripcion) html += esc(t.descripcion) + '<br>';
       var meta = [];
       if (t.dimensiones) meta.push("Dimensiones: " + esc(t.dimensiones));
@@ -4070,7 +4101,7 @@ window.GpsRadar = (function(){
       html += '<p class="gps-opt-note">El cartel de arriba es el resultado del <b>día completo</b>. El "dio o no dio" de cada tarea reparte los números esperados del día según el tiempo cargado en cada una.</p>';
     }
 
-    if (plannedScore.total > 0){
+if (plannedScore.total > 0){
       var canvasId = "gps-radar-" + session.id;
       html += '<h2 class="gps-h">Radar: perfil esperado vs. real</h2>';
       html += '<div class="chart-wrap" style="max-width:360px;margin:0 auto 10px"><canvas id="' + canvasId + '"></canvas></div>';
@@ -4088,7 +4119,7 @@ window.GpsRadar = (function(){
       var hoyTxt = fmtN(v, m.decimals) + (m.unit?' '+m.unit:'');
       var chrTxt = chr.value!==null ? (fmtN(chr.value, m.decimals) + (m.unit?' '+m.unit:'') + (chr.n < MIN_HISTORY ? ' (prelim.)' : '')) : '—';
       var cmpTxt = actual ? (SYMBOL[actual].arrow + ' hoy · ' + SYMBOL[expected].arrow + ' esperado') : '—';
-      html += '<tr><td class="mlabel">' + m.label + '</td><td class="mnum">' + hoyTxt + '</td><td class="mnum">' + chrTxt + '</td><td class="mnum">' + cmpTxt + '</td><td style="color:' + b.color + ';font-weight:700">' + b.text + '</td></tr>';
+      html += '<tr><td class="mlabel">' + (m.group==="velocidad"?"⚡ ":"📦 ") + m.label + '</td><td class="mnum">' + hoyTxt + '</td><td class="mnum">' + chrTxt + '</td><td class="mnum">' + cmpTxt + '</td><td style="color:' + b.color + ';font-weight:700">' + b.text + '</td></tr>';
     });
     html += '</tbody></table></div>';
     var diag = diagnose(session, result);
@@ -4328,6 +4359,7 @@ window.GpsRadar = (function(){
     renderWeekly(document.getElementById("gps-weekly-section"));
     renderHistory(document.getElementById("gps-history-section"));
     renderPlanner(document.getElementById("gps-planner-section"));
+    renderGlosario(document.getElementById("gps-glosario-section"));
     renderFooter();
   }
 
@@ -4335,8 +4367,10 @@ window.GpsRadar = (function(){
     gpsView = v;
     var elSesion = document.getElementById("gps-view-sesion");
     var elPlanner = document.getElementById("gps-view-planner");
+    var elGlosario = document.getElementById("gps-view-glosario");
     if (elSesion) elSesion.style.display = (v === "sesion") ? "" : "none";
     if (elPlanner) elPlanner.style.display = (v === "planner") ? "" : "none";
+    if (elGlosario) elGlosario.style.display = (v === "glosario") ? "" : "none";
     document.querySelectorAll(".gps-nav [data-gview]").forEach(function(btn){ btn.classList.toggle("active", btn.dataset.gview === v); });
   }
   function wireNav(){
@@ -4344,7 +4378,53 @@ window.GpsRadar = (function(){
     setGpsView(gpsView);
   }
 
-  function buildPrintSessionHtml(session, result){
+  // Glosario: explica cómo Metodika calcula "crónica" y "esperado", y cuáles
+  // variables son totales (se ajustan según el % de tiempo de la tarea) y
+  // cuáles son tasas/picos (se comparan enteras) — el mismo criterio que ya
+  // usa analyzeTarea() más arriba, mostrado en texto simple.
+  function renderGlosario(el){
+    if (!el) return;
+    var html = '<h2 class="gps-h">Cómo lee Metodika tus datos de GPS</h2>';
+    html += '<p class="gps-desc">Guía rápida para vos o para quien mire los datos con vos — qué significan "crónica" y "esperado", y por qué algunas variables se ajustan según cuánto duró la tarea y otras no.</p>';
+
+    html += '<h2 class="gps-h">Crónica y esperado</h2>';
+    html += '<p class="gps-desc">La <b>crónica</b> es el promedio de tus últimas ' + CHRONIC_WINDOW + ' sesiones cargadas, para cada variable — es tu propia referencia, no una tabla genérica de internet. Con menos de ' + MIN_HISTORY + ' sesiones cargadas todavía es preliminar. Lo <b>esperado</b> sale de comparar el número de hoy contra esa crónica, según el tipo de día (Tipo, Impacto, Carga, Descarga o Partido) — cada tipo tiene un perfil distinto de qué variables deberían subir o bajar.</p>';
+
+    html += '<h2 class="gps-h">Totales vs. tasas — para no comparar peras con manzanas</h2>';
+    html += '<p class="gps-desc">Si una tarea duró 12 minutos, no tiene sentido compararla en metros totales contra una crónica armada con sesiones de 90 — va a dar "por debajo" siempre, sin importar qué tan intensa fue. Por eso, para cada tarea dentro de una sesión, Metodika ajusta sola la crónica esperada según qué porcentaje del tiempo total de la sesión ocupó esa tarea. Así se separan las variables:</p>';
+    html += '<div class="gps-expected-panel">';
+    METRICS.forEach(function(m){
+      var escala = SCALABLE_METRICS[m.key];
+      var tag = escala
+        ? '<span class="gps-tarea-verdict ok">Total · se ajusta al tiempo de la tarea</span>'
+        : '<span class="gps-tarea-verdict warn">Tasa/pico · se compara entera</span>';
+      html += '<div class="gps-expected-row"><span class="en">' + m.label + (m.unit ? ' (' + m.unit + ')' : '') + '</span><span class="ev">' + tag + '</span></div>';
+    });
+    html += '</div>';
+    html += '<p class="gps-opt-note">Distancia relativa (m/min) y velocidad máxima ya son un ritmo o un pico, no una suma que crece con el tiempo — por eso no se achican: si en 12 minutos corrió a buen ritmo, tiene que verse igual que en un partido entero.</p>';
+
+    html += '<h2 class="gps-h">Qué significan los símbolos</h2>';
+    html += '<div class="gps-expected-panel">';
+    ["B","C","M","A"].forEach(function(k){
+      var s = SYMBOL[k];
+      html += '<div class="gps-expected-row"><span class="en">' + s.arrow + '</span><span class="ev">' + s.label + '</span></div>';
+    });
+    html += '</div>';
+
+    html += '<h2 class="gps-h">Preguntas para tener a mano</h2>';
+    html += '<p class="gps-desc">Si vos (o una IA) están mirando un reporte de GPS, conviene hacerse estas preguntas antes de mirar el número total suelto:</p>';
+    html += '<ul style="margin:0 0 12px;padding-left:18px;font-size:12.5px;color:var(--tinta);line-height:1.7">';
+    html += '<li>¿Esta tarea o sesión dio por encima o por debajo de <b>su propia crónica</b> — no de un número genérico de internet?</li>';
+    html += '<li>¿La variable que estoy mirando es un <b>total</b> (se achica si la tarea fue corta) o una <b>tasa/pico</b> (se compara entera, sin importar la duración)?</li>';
+    html += '<li>Si estoy comparando contra un partido completo, ¿uso una tarea de duración parecida, o miro la variable por minuto?</li>';
+    html += '<li>¿Qué tipo de día era (Tipo / Impacto / Carga / Descarga / Partido)? El perfil esperado cambia según eso.</li>';
+    html += '</ul>';
+    html += '<p class="gps-opt-note">En Metodika, cada tarea dentro de una sesión ya muestra un cartelito ✓ / ≈ / ✗ al lado de su nombre que contesta la primera pregunta sola, con tus propios datos — no hace falta calcularlo a mano.</p>';
+
+    el.innerHTML = html;
+  }
+
+function buildPrintSessionHtml(session, result){
     var h = '<h1>Radar de Carga — ' + esc(session.fecha) + ' · ' + esc(session.tipo) + '</h1>';
     var plannedScore = result.scores[session.tipo];
     h += '<p>' + plannedScore.matches + ' de ' + plannedScore.total + ' indicadores coincidieron con el perfil esperado para ' + esc(session.tipo) + '.</p>';
