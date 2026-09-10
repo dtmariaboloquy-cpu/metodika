@@ -1347,6 +1347,33 @@ function exportarPerfilJugadora(numero){
         h.minutos > 0 ? (h.rating && h.rating.toFixed ? h.rating.toFixed(1) : String(h.rating || "—")) : "—",
       ]);
       pdfTable(doc, y, ["Fecha","Rival","Estado","Min","Goles","Rating"], filas, [26, 54, 34, 18, 20, 30]);
+      y += 6;
+    }
+
+    const histGps = hist.filter(function(h){ return h.gps; });
+    if(histGps.length){
+      const pageH = doc.internal.pageSize.getHeight();
+      if (y > pageH - 60){ doc.addPage(); y = 24; }
+      y = pdfSectionTitle(doc, "GPS por partido", y);
+      const filasGps = histGps.slice(0, 15).map(function(h){
+        const g = h.gps;
+        return [
+          h.fecha || "—",
+          h.rival || "—",
+          g.min!=null ? g.min + "'" : "—",
+          g.distancia!=null ? Number(g.distancia).toLocaleString("es-AR",{maximumFractionDigits:0}) : "—",
+          g.drel!=null ? Number(g.drel).toLocaleString("es-AR",{maximumFractionDigits:0}) : "—",
+          g.z1923!=null ? Number(g.z1923).toLocaleString("es-AR",{maximumFractionDigits:0}) : "—",
+          g.z23!=null ? Number(g.z23).toLocaleString("es-AR",{maximumFractionDigits:0}) : "—",
+          g.sprints!=null ? String(g.sprints) : "—",
+          g.topspeed!=null ? Number(g.topspeed).toLocaleString("es-AR",{minimumFractionDigits:1,maximumFractionDigits:1}) : "—",
+          g.imb!=null ? String(g.imb) : "—",
+        ];
+      });
+      y = pdfTable(doc, y, ["Fecha","Rival","Min","Dist(m)","D.Rel","+19","+23","Sprint","VMax","IMB"], filasGps, [17, 24, 11, 19, 17, 16, 16, 16, 17, 14]);
+      doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor.apply(doc, PDF_THEME.gray);
+      const notaLines = doc.splitTextToSize("D.Rel = distancia relativa (m/min) · +19 y +23 = distancia a alta y muy alta intensidad (km/h) · VMax = velocidad máxima (km/h) · IMB = índice de asimetría de aceleraciones/desaceleraciones.", 182);
+      doc.text(notaLines, 14, y); y += notaLines.length*3.6 + 4;
     }
   });
 }
@@ -2058,6 +2085,7 @@ function jugadoraDetalle(j){
     ${renderAsistenciaJugadora(j)}
 
     <h2 class="section">Estadísticas físicas de partidos (GPS)</h2>
+    ${hist.filter(h=>h.gps).length ? `<div class="card"><div class="chart-wrap"><canvas id="chart-gps-carga"></canvas></div></div>` : ""}
     <div class="card" style="padding:8px">
       ${hist.filter(h=>h.gps).length ? `
       <div class="scrollx">
@@ -2169,6 +2197,28 @@ function initJugadoraCharts(j){
     data:{ labels, datasets:[{ label:"Valoración", data:hist.map(h=>h.rating||0), borderColor:bronce, backgroundColor:bronce+"33", fill:true, tension:.3, pointRadius:3 }] },
     options:{ plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:10, grid:{color:borde} }, x:{ grid:{display:false} } } }
   });
+
+  const elGpsCarga = document.getElementById('chart-gps-carga');
+  const histGps = hist.filter(function(h){ return h.gps; });
+  if(elGpsCarga && histGps.length){
+    new Chart(elGpsCarga, {
+      data:{
+        labels: histGps.map(h=>fechaCorta(h.fechaISO)),
+        datasets:[
+          { type:'bar', label:'Distancia total (m)', data: histGps.map(h=>h.gps.distancia), backgroundColor: borde, borderRadius:4, yAxisID:'y', order:2 },
+          { type:'line', label:'Distancia relativa (m/min)', data: histGps.map(h=>h.gps.drel), borderColor: bronce, backgroundColor: bronce, tension:.3, pointRadius:3, yAxisID:'y1', order:1 },
+        ]
+      },
+      options:{
+        plugins:{ legend:{ position:'bottom', labels:{boxWidth:10, font:{size:10}} } },
+        scales:{
+          y:{ position:'left', beginAtZero:true, grid:{color:borde}, title:{display:true, text:'metros', font:{size:9}} },
+          y1:{ position:'right', beginAtZero:true, grid:{display:false}, title:{display:true, text:'m/min', font:{size:9}} },
+          x:{ grid:{display:false} }
+        }
+      }
+    });
+  }
 
   const elAsis = document.getElementById('chart-asistencia-mensual');
   if(elAsis && j.asistencia && j.asistencia.porMes && j.asistencia.porMes.length){
