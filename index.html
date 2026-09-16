@@ -352,18 +352,23 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .paso-step.hecho{color:var(--verde)}
 .paso-num{width:20px;height:20px;border-radius:50%;background:var(--card);color:var(--tinta);display:flex;align-items:center;justify-content:center;font-size:10.5px;flex:none}
 .paso-step.activo .paso-num{background:#fff;color:var(--verde)}
-.cancha{position:relative;width:100%;max-width:360px;aspect-ratio:68/100;margin:0 auto;background:linear-gradient(180deg,#2E8B4E,#2A7D46);border-radius:10px;border:2px solid #fff;overflow:hidden}
-.cancha::before{content:"";position:absolute;left:10%;right:10%;top:50%;height:1px;background:rgba(255,255,255,.55)}
-.cancha::after{content:"";position:absolute;left:50%;top:50%;width:60px;height:60px;border:1px solid rgba(255,255,255,.55);border-radius:50%;transform:translate(-50%,-50%)}
+.cancha-wrap{background:linear-gradient(165deg,#0D2038,#06336E);border-radius:16px;padding:18px 10px 22px;margin-bottom:18px;box-shadow:0 8px 24px rgba(6,20,45,.25)}
+.cancha{position:relative;width:100%;max-width:460px;aspect-ratio:68/100;margin:0 auto;background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.05) 0 10%, transparent 10% 20%),
+    linear-gradient(180deg,#2E9C57,#1F7A40);
+  border-radius:10px;border:3px solid #fff;overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.18)}
+.cancha::before{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(255,255,255,.65)}
+.cancha::after{content:"";position:absolute;left:50%;top:50%;width:19%;height:11%;border:2px solid rgba(255,255,255,.65);border-radius:50%;transform:translate(-50%,-50%)}
 .cancha-slot{position:absolute;transform:translate(-50%,-50%);width:74px}
 .cancha-slot select{width:100%;font-size:9.5px;padding:3px 2px;border-radius:20px;text-align:center;font-weight:800}
-.cancha-slot-foto{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:62px;cursor:pointer}
+.cancha-slot-foto{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:84px;cursor:pointer}
 .cancha-slot-foto.pc-activo .pc-foto,.cancha-slot-foto.pc-activo .avatar-init.sm,.cancha-slot-foto.pc-activo .pc-vacio{outline:3px solid #FFD24D}
-.cancha-slot-foto .pc-foto{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex:none}
-.cancha-slot-foto .avatar-init.sm{width:42px;height:42px;border:2px solid #fff;flex:none}
-.pc-num-badge{position:relative;margin-top:-14px;align-self:flex-end;margin-right:4px;background:var(--verde);color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
-.pc-nom-cancha{font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);margin-top:2px;white-space:nowrap;max-width:62px;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.pc-vacio{width:42px;height:42px;border-radius:50%;border:2px dashed rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.12)}
+.cancha-slot-foto .pc-foto{width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid #fff;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.cancha-slot-foto .avatar-init.sm{width:58px;height:58px;border:3px solid #fff;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.4);font-size:16px}
+.pc-vacio{width:58px;height:58px;border-radius:50%;border:2px dashed rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.12)}
+.pc-tag-cancha{display:flex;align-items:stretch;margin-top:5px;border-radius:5px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.4);max-width:84px}
+.pc-tag-num{background:var(--verde);color:#fff;padding:2.5px 5px;font-size:10px;font-weight:800;display:flex;align-items:center}
+.pc-tag-nom{background:#fff;color:var(--tinta);padding:2.5px 6px;font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pc-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .pc-jug{display:flex;flex-direction:column;align-items:center;gap:3px;width:68px;cursor:pointer;padding:8px 2px;border-radius:10px;border:1px solid var(--borde);background:var(--card)}
 .pc-jug.pc-tocable{border-color:var(--verde)}
@@ -2712,17 +2717,17 @@ function pdfFotoCircular(doc, cx, cy, r, fotoDataUrl, numero){
 function renderCanchaConFotos(slotsDef, slots, convocadas, onSlotClick, onBenchClick){
   const enCancha = new Set(slots.filter(Boolean));
   const banco = convocadas.filter(j=>!enCancha.has(j.numero));
-  const cancha = `<div class="cancha" style="max-width:320px">
+  const cancha = `<div class="cancha-wrap"><div class="cancha">
     ${slotsDef.map(([rol,x,y],idx)=>{
       const numero = slots[idx];
       const j = numero ? JUGADORAS.find(x2=>x2.numero===numero) : null;
       return `<div class="cancha-slot-foto ${slotSeleccionado===idx?'pc-activo':''}" style="left:${x}%;top:${y}%" onclick="${onSlotClick}(${idx})">
         ${j
-          ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-num-badge">${j.numero}</span><span class="pc-nom-cancha">${esc(j.apellido)}</span>`
+          ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-tag-cancha"><span class="pc-tag-num">${j.numero}</span><span class="pc-tag-nom">${esc(j.apellido)}</span></span>`
           : `<div class="pc-vacio">${esc(rol)}</div>`}
       </div>`;
     }).join("")}
-  </div>`;
+  </div></div>`;
   const bancoHtml = `<h2 class="section">Banco (${banco.length})</h2>
     <div class="pc-grid">${banco.map(j=>`
       <div class="pc-jug ${slotSeleccionado!=null?'pc-tocable':''}" onclick="${onBenchClick}(${j.numero})">
