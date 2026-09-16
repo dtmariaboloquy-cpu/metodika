@@ -357,6 +357,20 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .cancha::after{content:"";position:absolute;left:50%;top:50%;width:60px;height:60px;border:1px solid rgba(255,255,255,.55);border-radius:50%;transform:translate(-50%,-50%)}
 .cancha-slot{position:absolute;transform:translate(-50%,-50%);width:74px}
 .cancha-slot select{width:100%;font-size:9.5px;padding:3px 2px;border-radius:20px;text-align:center;font-weight:800}
+.cancha-slot-foto{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:62px;cursor:pointer}
+.cancha-slot-foto.pc-activo .pc-foto,.cancha-slot-foto.pc-activo .avatar-init.sm,.cancha-slot-foto.pc-activo .pc-vacio{outline:3px solid #FFD24D}
+.cancha-slot-foto .pc-foto{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex:none}
+.cancha-slot-foto .avatar-init.sm{width:42px;height:42px;border:2px solid #fff;flex:none}
+.pc-num-badge{position:relative;margin-top:-14px;align-self:flex-end;margin-right:4px;background:var(--verde);color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
+.pc-nom-cancha{font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);margin-top:2px;white-space:nowrap;max-width:62px;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.pc-vacio{width:42px;height:42px;border-radius:50%;border:2px dashed rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.12)}
+.pc-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.pc-jug{display:flex;flex-direction:column;align-items:center;gap:3px;width:68px;cursor:pointer;padding:8px 2px;border-radius:10px;border:1px solid var(--borde);background:var(--card)}
+.pc-jug.pc-tocable{border-color:var(--verde)}
+.pc-jug:hover{background:var(--papel2)}
+.pc-foto-chip{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.pc-num{font-size:10px;font-weight:800;color:var(--sub)}
+.pc-nom{font-size:10.5px;font-weight:700;color:var(--tinta);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px}
 .tabla-carga input{width:52px;padding:5px 4px;text-align:center}
 .tabla-carga th{white-space:nowrap}
 .fila-evento{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
@@ -661,6 +675,8 @@ let DB=null, PERFILES={};
 let DOWNLOADS=null;
 let CONVOCADAS = {}; // { [fechaISO del próximo partido]: [numero, numero, ...] }
 let filtroConvocatoria = "";
+let FORMACIONES = {}; // { [fechaISO del próximo partido]: {sistema, slots:[numero|null,...]} } — parado de campo del próximo partido
+let slotSeleccionado = null; // idx del puesto de la cancha tocado, esperando que le asignen una jugadora
 let COMPETICIONES = []; // [{id, nombre, tipo, formato, minutosPartido, rivales:[nombre,...], fixture:[{jornada,rival,ubicacion,fecha,hora,confirmado}]}]
 let creandoCompeticion = false, rivalesSeleccionados = [];
 let borradorCompeticion = {nombre:"", tipo:"Liga", formato:"Todos contra todos (solo ida)", minutos:90}; // sobrevive a los re-render al tildar rivales
@@ -761,6 +777,15 @@ async function initDB(){
     if(docC.exists) CONVOCADAS[idConv] = docC.data().numeros || [];
     if(vista==="partidos" && tab==="convocatoria") render();
   }catch(e){ /* si falla, arranca sin convocatoria guardada */ }
+  try{
+    const idForm = proximoMatchId();
+    const docF = await DB.doc('formaciones/'+idForm).get();
+    if(docF.exists){
+      const d = docF.data();
+      FORMACIONES[idForm] = {sistema: d.sistema || "4-2-3-1", slots: Array.isArray(d.slots) ? d.slots : []};
+    }
+    if(vista==="partidos" && tab==="parado") render();
+  }catch(e){ /* si falla, arranca sin parado de campo guardado */ }
   try{
     const snapComp = await DB.collection('competiciones').get();
     COMPETICIONES = snapComp.docs.map(d=>({id:d.id, ...d.data()}));
@@ -1568,7 +1593,7 @@ function renderTabsPlantel(){
   `;
 }
 function renderTabsPartidos(){
-  const items = [["resultados","Resultados"],["posiciones","Tabla de posiciones"],["fixture","Fixture"],["convocatoria","Convocatoria"],["cargar","+ Cargar partido"],["competencias","Competencias"]];
+  const items = [["resultados","Resultados"],["posiciones","Tabla de posiciones"],["fixture","Fixture"],["convocatoria","Convocatoria"],["parado","Parado de campo"],["cargar","+ Cargar partido"],["competencias","Competencias"]];
   document.getElementById('tabs').innerHTML = `
     <button class="back" onclick="irHome()">← Inicio</button>
     <h1 class="page-title">Partidos</h1>
@@ -2440,6 +2465,27 @@ const TABLA_POSICIONES = {
 // Convocatoria: id estable del próximo partido (se usa como clave de guardado y para
 // saber a cuál partido corresponde la lista de citadas).
 function proximoMatchId(){ return TABLA_POSICIONES.proximoRivalFecha || "sin-fecha"; }
+// Avanza sola la ficha de "próximo partido": recorre el FIXTURE (definido más abajo)
+// buscando la primera fecha del club que todavía no esté en PARTIDOS. Así, apenas
+// cargás/importás el resultado de un partido, el de arriba pasa a ser el siguiente
+// automáticamente — sin tocar nada a mano.
+function actualizarProximoPartido(){
+  if(typeof FIXTURE === "undefined" || !FIXTURE || !Array.isArray(FIXTURE.fechas)) return;
+  const club = TABLA_POSICIONES.miClub;
+  const jugadas = new Set(PARTIDOS.map(p=>(p.fechaISO||"").slice(0,10)).filter(Boolean));
+  for(const f of FIXTURE.fechas){
+    if(jugadas.has(f.fecha)) continue;
+    const partido = (f.partidos||[]).find(pp=>pp[0]===club || pp[1]===club);
+    if(!partido) continue; // fecha libre para el club esa jornada
+    TABLA_POSICIONES.proximoRival = partido[0]===club ? partido[1] : partido[0];
+    TABLA_POSICIONES.proximoRivalFecha = f.fecha;
+    TABLA_POSICIONES.proximoRivalLugar = f.lugar || "";
+    return;
+  }
+  TABLA_POSICIONES.proximoRival = null;
+  TABLA_POSICIONES.proximoRivalFecha = null;
+  TABLA_POSICIONES.proximoRivalLugar = null;
+}
 async function toggleConvocada(numero){
   const id = proximoMatchId();
   const lista = (CONVOCADAS[id] || []).slice();
@@ -2470,22 +2516,40 @@ function estadoAmarillas(cantidad){
   return {nivel:"normal", texto:`${resto} de ${UMBRAL_AMARILLAS}`};
 }
 function renderAlertaAmarillas(){
-  const conDatos = JUGADORAS.filter(j=>j.amarillasAFA && j.amarillasAFA.cantidad>0);
+  // Usa las amarillas acumuladas en la temporada (se recalculan solas con cada
+  // planilla de Alonbalon que importás) en vez de un número cargado a mano.
+  const conDatos = JUGADORAS.filter(j=>j.amarillas>0);
   if(!conDatos.length) return "";
-  const enRiesgo = conDatos.filter(j=>estadoAmarillas(j.amarillasAFA.cantidad).nivel!=="normal")
-    .sort((a,b)=>b.amarillasAFA.cantidad-a.amarillasAFA.cantidad);
-  if(!enRiesgo.length) return "";
-  const actualizado = conDatos[0].amarillasAFA.actualizado;
+  const enAlerta = conDatos.filter(j=>estadoAmarillas(j.amarillas).nivel!=="normal")
+    .sort((a,b)=>b.amarillas-a.amarillas);
+  if(!enAlerta.length) return "";
+  const suspendidas = enAlerta.filter(j=>estadoAmarillas(j.amarillas).nivel==="suspendida");
+  const enRiesgo = enAlerta.filter(j=>estadoAmarillas(j.amarillas).nivel==="riesgo");
+  const T = TABLA_POSICIONES;
+  const vsProximo = T && T.proximoRival ? ` (vs ${esc(T.proximoRival)})` : "";
+  const ultimoPartido = PARTIDOS.length ? PARTIDOS[PARTIDOS.length-1].fecha : "";
+  let titulo;
+  if(suspendidas.length && enRiesgo.length){
+    titulo = `${suspendidas.length} jugadora${suspendidas.length>1?'s':''} no ${suspendidas.length>1?'pueden':'puede'} jugar el próximo partido${vsProximo} · ${enRiesgo.length} a un paso de la suspensión`;
+  } else if(suspendidas.length){
+    titulo = `${suspendidas.length} jugadora${suspendidas.length>1?'s':''} no ${suspendidas.length>1?'pueden':'puede'} jugar el próximo partido${vsProximo} por amarillas`;
+  } else {
+    titulo = `${enRiesgo.length} jugadora${enRiesgo.length>1?'s':''} a un paso de la suspensión`;
+  }
   return `
-  <div class="card" onclick="vista='plantel';tab=undefined;jugadoraAbierta=${enRiesgo[0].numero};editandoPerfil=false;render();window.scrollTo(0,0)" style="cursor:pointer;border-color:var(--rojo)">
+  <div class="card" onclick="vista='plantel';tab=undefined;jugadoraAbierta=${enAlerta[0].numero};editandoPerfil=false;render();window.scrollTo(0,0)" style="cursor:pointer;border-color:var(--rojo)">
     <span class="badge" style="background:#FBE4E4;color:var(--rojo)">⚠️ Alerta de amarillas</span>
-    <h3 style="margin:8px 0 6px">${enRiesgo.length} jugadora${enRiesgo.length>1?'s':''} a un paso de la suspensión</h3>
-    ${enRiesgo.map(j=>{
-      const st = estadoAmarillas(j.amarillasAFA.cantidad);
-      const color = st.nivel==="suspendida" ? "var(--rojo)" : "#B98A2E";
-      return `<p class="muted" style="margin:2px 0;font-size:12.5px"><b style="color:${color}">#${j.numero} ${esc(j.apellido)}</b> — ${j.amarillasAFA.cantidad} amarillas acumuladas (AFA) · ${esc(st.texto)}</p>`;
+    <h3 style="margin:8px 0 6px">${titulo}</h3>
+    ${enAlerta.map(j=>{
+      const st = estadoAmarillas(j.amarillas);
+      const suspendida = st.nivel==="suspendida";
+      const color = suspendida ? "var(--rojo)" : "#B98A2E";
+      const texto = suspendida
+        ? `No juega el próximo partido${vsProximo} — llegó a ${j.amarillas} amarillas en la temporada`
+        : `${j.amarillas} amarillas en la temporada · ${esc(st.texto)}`;
+      return `<p class="muted" style="margin:2px 0;font-size:12.5px"><b style="color:${color}">#${j.numero} ${esc(j.apellido)}</b> — ${texto}</p>`;
     }).join("")}
-    <p class="muted" style="margin:8px 0 0;font-size:10.5px">Dato oficial COMET/AFA actualizado al ${esc(fmtFechaLarga(actualizado))}. Sanción cada ${UMBRAL_AMARILLAS} amarillas acumuladas.</p>
+    <p class="muted" style="margin:8px 0 0;font-size:10.5px">Acumulado de tus partidos cargados (último: ${esc(ultimoPartido)}). Se actualiza solo con cada planilla que importés. Sanción cada ${UMBRAL_AMARILLAS} amarillas acumuladas — confirmá el número oficial en COMET/AFA si tenés dudas.</p>
   </div>`;
 }
 // Cintillo de "Próximo partido" para el Home (usa los mismos datos que Tabla de posiciones/Fixture).
@@ -2502,6 +2566,7 @@ function renderProximoPartidoCard(){
     <h3 style="margin:8px 0 2px">vs ${esc(T.proximoRival)}${cuenta ? ` <span class="countdown-pill">${esc(cuenta)}</span>` : ""}</h3>
     <p class="muted" style="margin:0">${esc(fmtFechaLarga(T.proximoRivalFecha))}${T.proximoRivalLugar?` · ${esc(T.proximoRivalLugar)}`:""}${rival ? ` · Rival: ${idxRival+1}° puesto · ${rival[1]} pts` : ""}</p>
     <p class="muted" style="margin:6px 0 0;font-size:12px">👥 Convocatoria: <b style="color:var(--tinta)">${convocadas}</b>${convocadas?` jugadora${convocadas!==1?'s':''} marcada${convocadas!==1?'s':''}`:" — todavía sin armar"} · tocá para ${convocadas?'ver/editar':'armarla'}</p>
+    <p class="muted" style="margin:4px 0 0;font-size:12px">🧩 <a onclick="event.stopPropagation();vista='partidos';tab='parado';render();window.scrollTo(0,0)" style="color:var(--verde);font-weight:700;cursor:pointer;text-decoration:underline">Armar el parado de campo</a></p>
   </div>`;
 }
 function renderConvocatoria(){
@@ -2544,6 +2609,164 @@ function renderConvocatoria(){
 }
 
 // =====================================================================================
+// ---- Parado de campo del próximo partido: se arma con las jugadoras ya marcadas en ----
+// ---- Convocatoria, tocando un puesto en la cancha y después una jugadora (o al      ----
+// ---- revés). Usa las fotos del plantel, y se puede descargar en PDF para pasarla.   ----
+// =====================================================================================
+function formacionProximaActual(){
+  const id = proximoMatchId();
+  if(!FORMACIONES[id]) FORMACIONES[id] = {sistema:"4-2-3-1", slots:Array(SISTEMAS_FORMACION["4-2-3-1"].length).fill(null)};
+  const f = FORMACIONES[id];
+  if(!SISTEMAS_FORMACION[f.sistema]) f.sistema = "4-2-3-1";
+  if(!Array.isArray(f.slots) || f.slots.length !== SISTEMAS_FORMACION[f.sistema].length){
+    f.slots = Array(SISTEMAS_FORMACION[f.sistema].length).fill(null);
+  }
+  return f;
+}
+async function guardarFormacionProxima(){
+  if(!DB) return;
+  const id = proximoMatchId();
+  const f = FORMACIONES[id];
+  if(!f) return;
+  try{
+    await DB.doc('formaciones/'+id).set({sistema:f.sistema, slots:f.slots, actualizadoEn:new Date().toISOString()});
+  }catch(e){ /* si falla, se sigue trabajando local aunque no quede guardado en la nube */ }
+}
+function elegirSistemaProximo(sistema){
+  const f = formacionProximaActual();
+  f.sistema = sistema;
+  f.slots = Array(SISTEMAS_FORMACION[sistema].length).fill(null);
+  slotSeleccionado = null;
+  guardarFormacionProxima();
+  render();
+}
+function tocarSlotProximo(idx){
+  const f = formacionProximaActual();
+  if(f.slots[idx]){ f.slots[idx] = null; slotSeleccionado = null; guardarFormacionProxima(); render(); return; }
+  slotSeleccionado = (slotSeleccionado===idx) ? null : idx;
+  render();
+}
+function asignarJugadoraProximo(numero){
+  if(slotSeleccionado==null){ mostrarToast("Primero tocá un puesto vacío en la cancha."); return; }
+  const f = formacionProximaActual();
+  const yaEn = f.slots.indexOf(numero);
+  if(yaEn>=0) f.slots[yaEn] = null;
+  f.slots[slotSeleccionado] = numero;
+  slotSeleccionado = null;
+  guardarFormacionProxima();
+  render();
+}
+function fotoOAvatar(j, claseImg, claseAvatar){
+  const perfil = perfilDe(j);
+  const foto = perfil.foto || null;
+  if(!foto) return `<div class="${claseAvatar}">${iniciales(j)}</div>`;
+  const fp = perfil.fotoPos || {x:50,y:50};
+  return `<img class="${claseImg}" src="${foto}" style="object-position:${fp.x}% ${fp.y}%">`;
+}
+function renderParadoDeCampo(){
+  const T = TABLA_POSICIONES;
+  if(!T || !T.proximoRival){
+    return `<p class="muted">Todavía no hay un próximo partido confirmado para armar el parado de campo.</p>`;
+  }
+  const id = proximoMatchId();
+  const marcadas = CONVOCADAS[id] || [];
+  const cabecera = `
+    <div class="card" style="margin-bottom:14px">
+      <span class="badge" style="background:#FBE9E7;color:var(--rojo)">Parado de campo</span>
+      <h3 style="margin:8px 0 2px">vs ${esc(T.proximoRival)}</h3>
+      <p class="muted" style="margin:0">${esc(fmtFechaLarga(T.proximoRivalFecha))}${T.proximoRivalLugar?` · ${esc(T.proximoRivalLugar)}`:""}</p>
+    </div>`;
+  if(!marcadas.length){
+    return cabecera + `<div class="card">
+      <p class="muted" style="margin:0 0 10px">Primero armá la convocatoria de este partido — necesitás marcar jugadoras convocadas antes de ubicarlas en la cancha.</p>
+      <button class="chip" style="cursor:pointer;border:none;background:var(--verde);color:#fff" onclick="tab='convocatoria';render();window.scrollTo(0,0)">Ir a Convocatoria</button>
+    </div>`;
+  }
+  const f = formacionProximaActual();
+  const slotsDef = SISTEMAS_FORMACION[f.sistema];
+  const convocadas = marcadas.map(n=>JUGADORAS.find(j=>j.numero===n)).filter(Boolean)
+    .sort((a,b)=>(ORDEN_POS[posKey(a)]??99)-(ORDEN_POS[posKey(b)]??99));
+  const enCancha = new Set(f.slots.filter(Boolean));
+  const banco = convocadas.filter(j=>!enCancha.has(j.numero));
+  return cabecera + `
+    <div class="card" style="margin-bottom:14px">
+      <div class="filtro-group" style="margin-bottom:4px"><label>Sistema</label>
+        <select onchange="elegirSistemaProximo(this.value)">${Object.keys(SISTEMAS_FORMACION).map(s=>`<option value="${s}" ${f.sistema===s?'selected':''}>${s}</option>`).join("")}</select>
+      </div>
+      <p class="muted" style="margin:8px 0 0;font-size:11.5px">${slotSeleccionado!=null ? 'Ahora tocá una jugadora de la convocatoria para ubicarla en ese puesto.' : 'Tocá un puesto vacío de la cancha y después una jugadora — o tocá una jugadora ya ubicada para sacarla.'}</p>
+    </div>
+    <div class="cancha" style="max-width:320px">
+      ${slotsDef.map(([rol,x,y],idx)=>{
+        const numero = f.slots[idx];
+        const j = numero ? JUGADORAS.find(x2=>x2.numero===numero) : null;
+        return `<div class="cancha-slot-foto ${slotSeleccionado===idx?'pc-activo':''}" style="left:${x}%;top:${y}%" onclick="tocarSlotProximo(${idx})">
+          ${j
+            ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-num-badge">${j.numero}</span><span class="pc-nom-cancha">${esc(j.apellido)}</span>`
+            : `<div class="pc-vacio">${esc(rol)}</div>`}
+        </div>`;
+      }).join("")}
+    </div>
+    <h2 class="section">Banco (${banco.length})</h2>
+    <div class="pc-grid">${banco.map(j=>`
+      <div class="pc-jug ${slotSeleccionado!=null?'pc-tocable':''}" onclick="asignarJugadoraProximo(${j.numero})">
+        ${fotoOAvatar(j,"pc-foto-chip","avatar-init sm")}
+        <span class="pc-num">#${j.numero}</span>
+        <span class="pc-nom">${esc(j.apellido)}</span>
+      </div>`).join("") || '<p class="muted">Todas las convocadas están ubicadas en la cancha.</p>'}</div>
+    <div style="margin-top:16px">
+      <button class="chip" style="cursor:pointer;border:none;background:var(--verde);color:#fff" onclick="descargarPdfParadoDeCampo()"><span class="icon-inline">${ICONOS_UI.clip}</span>Descargar PDF</button>
+    </div>
+  `;
+}
+function descargarPdfParadoDeCampo(){
+  const T = TABLA_POSICIONES;
+  if(!T || !T.proximoRival){ mostrarToast("Todavía no hay un próximo partido para exportar."); return; }
+  const id = proximoMatchId();
+  const f = formacionProximaActual();
+  const slotsDef = SISTEMAS_FORMACION[f.sistema];
+  const marcadas = CONVOCADAS[id] || [];
+  const convocadas = marcadas.map(n=>JUGADORAS.find(j=>j.numero===n)).filter(Boolean);
+  const enCancha = new Set(f.slots.filter(Boolean));
+  const banco = convocadas.filter(j=>!enCancha.has(j.numero)).sort((a,b)=>(ORDEN_POS[posKey(a)]??99)-(ORDEN_POS[posKey(b)]??99));
+  const archivo = `parado-de-campo-vs-${String(T.proximoRival||'rival').toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}.pdf`;
+  guardarPDF(archivo, function(doc){
+    let y = pdfHeader(doc, "Parado de campo", `vs ${T.proximoRival} · ${fmtFechaLarga(T.proximoRivalFecha)}${T.proximoRivalLugar?` · ${T.proximoRivalLugar}`:""}`);
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+    doc.setTextColor.apply(doc, PDF_THEME.text);
+    doc.text(`Sistema ${f.sistema}`, 14, y);
+    y += 6;
+    const canchaW = 110, canchaH = 150, canchaX = w/2 - canchaW/2, canchaY = y;
+    doc.setFillColor(46,139,78);
+    doc.roundedRect(canchaX, canchaY, canchaW, canchaH, 3, 3, "F");
+    doc.setDrawColor(255,255,255); doc.setLineWidth(0.4);
+    doc.line(canchaX+8, canchaY+canchaH/2, canchaX+canchaW-8, canchaY+canchaH/2);
+    doc.circle(canchaX+canchaW/2, canchaY+canchaH/2, 12);
+    slotsDef.forEach(([rol,sx,sy],idx)=>{
+      const numero = f.slots[idx];
+      const j = numero ? JUGADORAS.find(jj=>jj.numero===numero) : null;
+      const px = canchaX + (sx/100)*canchaW;
+      const py = canchaY + (sy/100)*canchaH;
+      doc.setFillColor(255,255,255);
+      doc.circle(px, py, 6.5, "F");
+      doc.setFont("helvetica","bold"); doc.setFontSize(8);
+      doc.setTextColor.apply(doc, PDF_THEME.navy);
+      doc.text(j ? String(j.numero) : "—", px, py+1.4, {align:"center"});
+      doc.setFont("helvetica","bold"); doc.setFontSize(6.3);
+      doc.setTextColor(255,255,255);
+      doc.text(j ? String(j.apellido).slice(0,13) : rol, px, py+9.5, {align:"center"});
+    });
+    y = canchaY + canchaH + 12;
+    y = pdfSectionTitle(doc, `Banco de suplentes (${banco.length})`, y);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+    doc.setTextColor.apply(doc, PDF_THEME.text);
+    const texto = banco.map(j=>`#${j.numero} ${j.apellido}`).join("   ·   ") || "—";
+    const lineas = doc.splitTextToSize(texto, w-28);
+    doc.text(lineas, 14, y);
+  });
+}
+
+// =====================================================================================
 // ---- Cargar partido: alta de un partido jugado (convocatoria, parado de campo,     ----
 // ---- minutos/estadísticas, goles/asistencias, cambios) con persistencia en Firestore ----
 // =====================================================================================
@@ -2561,15 +2784,28 @@ const PASOS_NUEVO = [
   [4,"Minutos y estadísticas"],[5,"Goles y cambios"],[6,"Revisión"],
 ];
 let nuevoPartido = null, pasoNuevo = 1;
-let jugadas = [], pizarraActual = null, vistaPizarras = 'lista', filtroCategoriaPizarra = 'Todas';
-function pzUid(){ return 'e'+Math.random().toString(36).slice(2,9); }
 
+// Si ya armaste la Convocatoria y el Parado de campo para el próximo partido
+// (desde esas pestañas), "+ Cargar partido" arranca con todo eso precargado —
+// así no hay que cargar dos veces lo mismo.
 function nuevoPartidoVacio(){
-  const sistema = "4-2-3-1";
+  const T = TABLA_POSICIONES;
+  const hayProximo = T && T.proximoRival;
+  const id = hayProximo ? proximoMatchId() : null;
+  const formaGuardada = id ? FORMACIONES[id] : null;
+  const convocadasGuardadas = id ? (CONVOCADAS[id]||[]) : [];
+  const sistema = (formaGuardada && formaGuardada.sistema) || "4-2-3-1";
+  const slotsDef = SISTEMAS_FORMACION[sistema];
+  let slots = Array(slotsDef.length).fill(null);
+  if(formaGuardada && Array.isArray(formaGuardada.slots) && formaGuardada.slots.length===slotsDef.length){
+    slots = formaGuardada.slots.slice();
+  }
   return {
-    rival:"", jornada:"", fecha:new Date().toISOString().slice(0,10), hora:"", lugar:"",
+    rival: hayProximo ? T.proximoRival : "",
+    jornada:"", fecha: hayProximo ? T.proximoRivalFecha : new Date().toISOString().slice(0,10), hora:"",
+    lugar: hayProximo ? (T.proximoRivalLugar||"") : "",
     golesFavor:0, golesContra:0, sistema,
-    convocadas:[], slots:Array(SISTEMAS_FORMACION[sistema].length).fill(null),
+    convocadas: convocadasGuardadas.slice(), slots,
     stats:{}, noConvocadasMotivo:{}, golesLista:[], sustituciones:[],
   };
 }
@@ -3292,6 +3528,7 @@ function renderFixture(){
 }
 
 function renderPartidos(){
+  const T = TABLA_POSICIONES;
   const partidos = PARTIDOS.length;
   const victorias = PARTIDOS.filter(p=>p.resultado==="W").length;
   const empates = PARTIDOS.filter(p=>p.resultado==="D").length;
@@ -3348,6 +3585,12 @@ function renderPartidos(){
               <span class="tl-rival">${esc(m.rival)}</span>
             </div>`;
           }).join("")}
+          <div class="tl-item" style="cursor:pointer" onclick="abrirCargarPartido()" title="Cargar el próximo partido">
+            <span class="tl-fecha">&nbsp;</span>
+            <div class="tl-circle" style="border-style:dashed;border-color:var(--verde);color:var(--verde);font-size:19px;font-weight:900">+</div>
+            <span class="tl-j">Nuevo</span>
+            <span class="tl-rival">${T.proximoRival ? esc(T.proximoRival) : 'Cargar'}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -5001,6 +5244,7 @@ function buildPrintSessionHtml(session, result){
 })();
 
 function render(){
+  actualizarProximoPartido();
   const main = document.getElementById('main');
   renderSidebar();
   if(vista==="home"){
@@ -5026,6 +5270,8 @@ function render(){
       main.innerHTML = renderFixture();
     } else if(tab==="convocatoria"){
       main.innerHTML = renderConvocatoria();
+    } else if(tab==="parado"){
+      main.innerHTML = renderParadoDeCampo();
     } else if(tab==="cargar"){
       main.innerHTML = renderCargarPartido();
     } else if(tab==="competencias"){
