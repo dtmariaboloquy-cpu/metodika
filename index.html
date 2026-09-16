@@ -677,6 +677,7 @@ let CONVOCADAS = {}; // { [fechaISO del próximo partido]: [numero, numero, ...]
 let filtroConvocatoria = "";
 let FORMACIONES = {}; // { [fechaISO del próximo partido]: {sistema, slots:[numero|null,...]} } — parado de campo del próximo partido
 let slotSeleccionado = null; // idx del puesto de la cancha tocado, esperando que le asignen una jugadora
+let CUERPO_TECNICO = {dt:"Boloquy", ac:"Quevedo", pf1:"Flores", pf2:"Spinsanti"}; // para el pie del PDF de Parado de campo
 let COMPETICIONES = []; // [{id, nombre, tipo, formato, minutosPartido, rivales:[nombre,...], fixture:[{jornada,rival,ubicacion,fecha,hora,confirmado}]}]
 let creandoCompeticion = false, rivalesSeleccionados = [];
 let borradorCompeticion = {nombre:"", tipo:"Liga", formato:"Todos contra todos (solo ida)", minutos:90}; // sobrevive a los re-render al tildar rivales
@@ -786,6 +787,11 @@ async function initDB(){
     }
     if(vista==="partidos" && tab==="parado") render();
   }catch(e){ /* si falla, arranca sin parado de campo guardado */ }
+  try{
+    const docCT = await DB.doc('config/cuerpoTecnico').get();
+    if(docCT.exists) CUERPO_TECNICO = Object.assign({}, CUERPO_TECNICO, docCT.data());
+    if(vista==="partidos" && tab==="parado") render();
+  }catch(e){ /* si falla, arranca con los nombres por defecto del cuerpo técnico */ }
   try{
     const snapComp = await DB.collection('competiciones').get();
     COMPETICIONES = snapComp.docs.map(d=>({id:d.id, ...d.data()}));
@@ -1634,7 +1640,7 @@ function renderSidebar(){
       </button>`).join('')}
   `;
 }
-function setTab(k){ tab=k; sesionAbierta=null; mesoAbierto=null; creandoSesion=false; borradorSesion=null; diaSeleccionadoCalendario=null; render(); window.scrollTo(0,0);}
+function setTab(k){ tab=k; sesionAbierta=null; mesoAbierto=null; creandoSesion=false; borradorSesion=null; diaSeleccionadoCalendario=null; slotSeleccionado=null; render(); window.scrollTo(0,0);}
 
 function statCard(n,l){ return `<div class="stat"><b>${n}</b><span>${l}</span></div>`; }
 function statPill(icon, bg, fg, value, label){
@@ -2632,6 +2638,12 @@ async function guardarFormacionProxima(){
     await DB.doc('formaciones/'+id).set({sistema:f.sistema, slots:f.slots, actualizadoEn:new Date().toISOString()});
   }catch(e){ /* si falla, se sigue trabajando local aunque no quede guardado en la nube */ }
 }
+function actualizarCuerpoTecnico(campo, val){
+  CUERPO_TECNICO[campo] = val;
+  if(DB){
+    DB.doc('config/cuerpoTecnico').set(CUERPO_TECNICO).catch(()=>{ /* se sigue trabajando local si falla */ });
+  }
+}
 function elegirSistemaProximo(sistema){
   const f = formacionProximaActual();
   f.sistema = sistema;
@@ -2663,6 +2675,63 @@ function fotoOAvatar(j, claseImg, claseAvatar){
   const fp = perfil.fotoPos || {x:50,y:50};
   return `<img class="${claseImg}" src="${foto}" style="object-position:${fp.x}% ${fp.y}%">`;
 }
+// Escudo del club, tal cual está cargado en el margen lateral, para reusar en el PDF.
+function obtenerEscudoClub(){
+  const img = document.querySelector('.sidebar-brand .mark');
+  return img ? img.getAttribute('src') : null;
+}
+// Dibuja una foto recortada en círculo dentro del PDF (o, si no hay foto o falla,
+// un círculo blanco con el número) — usado tanto en la cancha como en el banco.
+function pdfFotoCircular(doc, cx, cy, r, fotoDataUrl, numero){
+  if(fotoDataUrl){
+    try{
+      const size = r*2, x = cx-r, y = cy-r;
+      doc.saveGraphicsState();
+      doc.roundedRect(x, y, size, size, r, r, null);
+      doc.clip();
+      doc.discardPath();
+      const m = /^data:image\/(\w+)/i.exec(fotoDataUrl);
+      const formato = m ? m[1].toUpperCase().replace("JPG","JPEG") : "JPEG";
+      doc.addImage(fotoDataUrl, formato, x, y, size, size);
+      doc.restoreGraphicsState();
+      doc.setDrawColor(255,255,255); doc.setLineWidth(0.7);
+      doc.circle(cx, cy, r, "S");
+      return;
+    }catch(e){ /* si falla la foto, sigue con el círculo simple de abajo */ }
+  }
+  doc.setFillColor(255,255,255);
+  doc.circle(cx, cy, r, "F");
+  doc.setFont("helvetica","bold"); doc.setFontSize(r>6?8:6.5);
+  doc.setTextColor.apply(doc, PDF_THEME.navy);
+  doc.text(numero!=null?String(numero):"—", cx, cy+(r>6?1.4:1.1), {align:"center"});
+}
+// Cancha + banco con fotos, reutilizada tanto por "Parado de campo" (próximo partido)
+// como por el paso 3 de "+ Cargar partido" — para que se vean igual en toda la app.
+// onSlotClick/onBenchClick son los nombres (string) de las funciones onclick a usar,
+// distintas en cada pantalla porque escriben sobre estados distintos.
+function renderCanchaConFotos(slotsDef, slots, convocadas, onSlotClick, onBenchClick){
+  const enCancha = new Set(slots.filter(Boolean));
+  const banco = convocadas.filter(j=>!enCancha.has(j.numero));
+  const cancha = `<div class="cancha" style="max-width:320px">
+    ${slotsDef.map(([rol,x,y],idx)=>{
+      const numero = slots[idx];
+      const j = numero ? JUGADORAS.find(x2=>x2.numero===numero) : null;
+      return `<div class="cancha-slot-foto ${slotSeleccionado===idx?'pc-activo':''}" style="left:${x}%;top:${y}%" onclick="${onSlotClick}(${idx})">
+        ${j
+          ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-num-badge">${j.numero}</span><span class="pc-nom-cancha">${esc(j.apellido)}</span>`
+          : `<div class="pc-vacio">${esc(rol)}</div>`}
+      </div>`;
+    }).join("")}
+  </div>`;
+  const bancoHtml = `<h2 class="section">Banco (${banco.length})</h2>
+    <div class="pc-grid">${banco.map(j=>`
+      <div class="pc-jug ${slotSeleccionado!=null?'pc-tocable':''}" onclick="${onBenchClick}(${j.numero})">
+        ${fotoOAvatar(j,"pc-foto-chip","avatar-init sm")}
+        <span class="pc-num">#${j.numero}</span>
+        <span class="pc-nom">${esc(j.apellido)}</span>
+      </div>`).join("") || '<p class="muted">Todas las convocadas están ubicadas en la cancha.</p>'}</div>`;
+  return cancha + bancoHtml;
+}
 function renderParadoDeCampo(){
   const T = TABLA_POSICIONES;
   if(!T || !T.proximoRival){
@@ -2686,8 +2755,6 @@ function renderParadoDeCampo(){
   const slotsDef = SISTEMAS_FORMACION[f.sistema];
   const convocadas = marcadas.map(n=>JUGADORAS.find(j=>j.numero===n)).filter(Boolean)
     .sort((a,b)=>(ORDEN_POS[posKey(a)]??99)-(ORDEN_POS[posKey(b)]??99));
-  const enCancha = new Set(f.slots.filter(Boolean));
-  const banco = convocadas.filter(j=>!enCancha.has(j.numero));
   return cabecera + `
     <div class="card" style="margin-bottom:14px">
       <div class="filtro-group" style="margin-bottom:4px"><label>Sistema</label>
@@ -2695,25 +2762,18 @@ function renderParadoDeCampo(){
       </div>
       <p class="muted" style="margin:8px 0 0;font-size:11.5px">${slotSeleccionado!=null ? 'Ahora tocá una jugadora de la convocatoria para ubicarla en ese puesto.' : 'Tocá un puesto vacío de la cancha y después una jugadora — o tocá una jugadora ya ubicada para sacarla.'}</p>
     </div>
-    <div class="cancha" style="max-width:320px">
-      ${slotsDef.map(([rol,x,y],idx)=>{
-        const numero = f.slots[idx];
-        const j = numero ? JUGADORAS.find(x2=>x2.numero===numero) : null;
-        return `<div class="cancha-slot-foto ${slotSeleccionado===idx?'pc-activo':''}" style="left:${x}%;top:${y}%" onclick="tocarSlotProximo(${idx})">
-          ${j
-            ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-num-badge">${j.numero}</span><span class="pc-nom-cancha">${esc(j.apellido)}</span>`
-            : `<div class="pc-vacio">${esc(rol)}</div>`}
-        </div>`;
-      }).join("")}
+    ${renderCanchaConFotos(slotsDef, f.slots, convocadas, "tocarSlotProximo", "asignarJugadoraProximo")}
+    <h2 class="section">Cuerpo técnico (para el PDF)</h2>
+    <div class="card" style="margin-bottom:14px">
+      <div class="filtros">
+        <div class="filtro-group"><label>DT</label><input type="text" value="${esc(CUERPO_TECNICO.dt||"")}" style="width:130px" onchange="actualizarCuerpoTecnico('dt',this.value)"></div>
+        <div class="filtro-group"><label>AC</label><input type="text" value="${esc(CUERPO_TECNICO.ac||"")}" style="width:130px" onchange="actualizarCuerpoTecnico('ac',this.value)"></div>
+        <div class="filtro-group"><label>PF</label><input type="text" value="${esc(CUERPO_TECNICO.pf1||"")}" style="width:130px" onchange="actualizarCuerpoTecnico('pf1',this.value)"></div>
+        <div class="filtro-group"><label>PF</label><input type="text" value="${esc(CUERPO_TECNICO.pf2||"")}" style="width:130px" onchange="actualizarCuerpoTecnico('pf2',this.value)"></div>
+      </div>
+      <p class="muted" style="margin:6px 0 0;font-size:11px">Se guarda solo y aparece en el pie del PDF. Dejá el campo vacío para que no aparezca.</p>
     </div>
-    <h2 class="section">Banco (${banco.length})</h2>
-    <div class="pc-grid">${banco.map(j=>`
-      <div class="pc-jug ${slotSeleccionado!=null?'pc-tocable':''}" onclick="asignarJugadoraProximo(${j.numero})">
-        ${fotoOAvatar(j,"pc-foto-chip","avatar-init sm")}
-        <span class="pc-num">#${j.numero}</span>
-        <span class="pc-nom">${esc(j.apellido)}</span>
-      </div>`).join("") || '<p class="muted">Todas las convocadas están ubicadas en la cancha.</p>'}</div>
-    <div style="margin-top:16px">
+    <div style="margin-top:2px">
       <button class="chip" style="cursor:pointer;border:none;background:var(--verde);color:#fff" onclick="descargarPdfParadoDeCampo()"><span class="icon-inline">${ICONOS_UI.clip}</span>Descargar PDF</button>
     </div>
   `;
@@ -2729,40 +2789,87 @@ function descargarPdfParadoDeCampo(){
   const enCancha = new Set(f.slots.filter(Boolean));
   const banco = convocadas.filter(j=>!enCancha.has(j.numero)).sort((a,b)=>(ORDEN_POS[posKey(a)]??99)-(ORDEN_POS[posKey(b)]??99));
   const archivo = `parado-de-campo-vs-${String(T.proximoRival||'rival').toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}.pdf`;
+  const escudo = obtenerEscudoClub();
   guardarPDF(archivo, function(doc){
-    let y = pdfHeader(doc, "Parado de campo", `vs ${T.proximoRival} · ${fmtFechaLarga(T.proximoRivalFecha)}${T.proximoRivalLugar?` · ${T.proximoRivalLugar}`:""}`);
     const w = doc.internal.pageSize.getWidth();
-    doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
-    doc.setTextColor.apply(doc, PDF_THEME.text);
-    doc.text(`Sistema ${f.sistema}`, 14, y);
-    y += 6;
-    const canchaW = 110, canchaH = 150, canchaX = w/2 - canchaW/2, canchaY = y;
+    // ---- Encabezado con escudo, rival, fecha/lugar y sistema ----
+    doc.setFillColor.apply(doc, PDF_THEME.navy);
+    doc.rect(0, 0, w, 32, "F");
+    if(escudo){ try{ doc.addImage(escudo, "PNG", 12, 6, 20, 20); }catch(e){ /* si el escudo no carga, se sigue sin él */ } }
+    const tx = escudo ? 37 : 14;
+    doc.setFont("helvetica","bold"); doc.setFontSize(8);
+    doc.setTextColor.apply(doc, PDF_THEME.navySub);
+    doc.text("CLUB ATLÉTICO TALLERES · RESERVA FEMENINA · AFA", tx, 10.5);
+    doc.setFont("helvetica","bold"); doc.setFontSize(17);
+    doc.setTextColor.apply(doc, PDF_THEME.navyText);
+    doc.text(`vs ${T.proximoRival}`, tx, 21);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9);
+    doc.setTextColor.apply(doc, PDF_THEME.navySub);
+    doc.text(`${fmtFechaLarga(T.proximoRivalFecha)}${T.proximoRivalLugar?` · ${T.proximoRivalLugar}`:""}`, tx, 27.5);
+    doc.setFont("helvetica","bold"); doc.setFontSize(11);
+    doc.setTextColor.apply(doc, PDF_THEME.navyText);
+    doc.text(f.sistema, w-14, 21, {align:"right"});
+
+    // ---- Cancha con las fotos de las jugadoras ----
+    let y = 42;
+    const canchaW = 110, canchaH = 148, canchaX = w/2 - canchaW/2, canchaY = y;
     doc.setFillColor(46,139,78);
     doc.roundedRect(canchaX, canchaY, canchaW, canchaH, 3, 3, "F");
     doc.setDrawColor(255,255,255); doc.setLineWidth(0.4);
     doc.line(canchaX+8, canchaY+canchaH/2, canchaX+canchaW-8, canchaY+canchaH/2);
     doc.circle(canchaX+canchaW/2, canchaY+canchaH/2, 12);
+    const margenTop = 9, margenBottom = 13;
     slotsDef.forEach(([rol,sx,sy],idx)=>{
       const numero = f.slots[idx];
       const j = numero ? JUGADORAS.find(jj=>jj.numero===numero) : null;
       const px = canchaX + (sx/100)*canchaW;
-      const py = canchaY + (sy/100)*canchaH;
-      doc.setFillColor(255,255,255);
-      doc.circle(px, py, 6.5, "F");
-      doc.setFont("helvetica","bold"); doc.setFontSize(8);
-      doc.setTextColor.apply(doc, PDF_THEME.navy);
-      doc.text(j ? String(j.numero) : "—", px, py+1.4, {align:"center"});
+      const py = canchaY + margenTop + (sy/100)*(canchaH-margenTop-margenBottom);
+      pdfFotoCircular(doc, px, py, 7, j ? (perfilDe(j).foto||null) : null, j?j.numero:null);
       doc.setFont("helvetica","bold"); doc.setFontSize(6.3);
       doc.setTextColor(255,255,255);
-      doc.text(j ? String(j.apellido).slice(0,13) : rol, px, py+9.5, {align:"center"});
+      doc.text(j ? String(j.apellido).slice(0,13) : rol, px, py+11, {align:"center"});
     });
+
+    // ---- Banco de suplentes, con foto ----
     y = canchaY + canchaH + 12;
-    y = pdfSectionTitle(doc, `Banco de suplentes (${banco.length})`, y);
-    doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
-    doc.setTextColor.apply(doc, PDF_THEME.text);
-    const texto = banco.map(j=>`#${j.numero} ${j.apellido}`).join("   ·   ") || "—";
-    const lineas = doc.splitTextToSize(texto, w-28);
-    doc.text(lineas, 14, y);
+    y = pdfSectionTitle(doc, `Suplentes (${banco.length})`, y);
+    if(banco.length){
+      const perRow = 7, gap = 3, chipW = (w - 28 - gap*(perRow-1)) / perRow;
+      let cx = 14 + chipW/2, cy = y + 8, fila = 0;
+      banco.forEach((j,i)=>{
+        if(i>0 && i%perRow===0){ fila++; cy += 21; cx = 14 + chipW/2; }
+        pdfFotoCircular(doc, cx, cy, 6.5, perfilDe(j).foto||null, j.numero);
+        doc.setFont("helvetica","bold"); doc.setFontSize(6.2);
+        doc.setTextColor.apply(doc, PDF_THEME.text);
+        doc.text(String(j.apellido).slice(0,11), cx, cy+9.5, {align:"center", maxWidth:chipW});
+        cx += chipW + gap;
+      });
+      y = y + 8 + fila*21 + 15;
+    } else {
+      doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+      doc.setTextColor.apply(doc, PDF_THEME.text);
+      doc.text("—", 14, y);
+      y += 12;
+    }
+
+    // ---- Pie: cuerpo técnico ----
+    const staff = [["DT",CUERPO_TECNICO.dt],["AC",CUERPO_TECNICO.ac],["PF",CUERPO_TECNICO.pf1],["PF",CUERPO_TECNICO.pf2]].filter(s=>s[1] && String(s[1]).trim());
+    if(staff.length){
+      doc.setDrawColor.apply(doc, PDF_THEME.border);
+      doc.setLineWidth(0.3);
+      doc.line(14, y, w-14, y);
+      y += 7;
+      const colW = (w-28)/staff.length;
+      staff.forEach((s,i)=>{
+        const sx2 = 14 + i*colW;
+        doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+        doc.setTextColor.apply(doc, PDF_THEME.gray);
+        doc.text(s[0], sx2, y);
+        doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+        doc.setTextColor.apply(doc, PDF_THEME.navy);
+        doc.text(String(s[1]), sx2, y+5);
+      });
+    }
   });
 }
 
@@ -2810,7 +2917,7 @@ function nuevoPartidoVacio(){
   };
 }
 function asegurarNuevoPartido(){ if(!nuevoPartido){ nuevoPartido = nuevoPartidoVacio(); pasoNuevo = 1; } }
-function abrirCargarPartido(){ nuevoPartido = nuevoPartidoVacio(); pasoNuevo = 1; vista='partidos'; tab='cargar'; render(); window.scrollTo(0,0); }
+function abrirCargarPartido(){ nuevoPartido = nuevoPartidoVacio(); pasoNuevo = 1; slotSeleccionado = null; vista='partidos'; tab='cargar'; render(); window.scrollTo(0,0); }
 function cancelarNuevoPartido(){ if(!confirm("¿Descartar este partido? Se pierde lo cargado.")) return; nuevoPartido=null; tab='resultados'; render(); window.scrollTo(0,0); }
 function statsFor(numero){
   if(!nuevoPartido.stats[numero]){
@@ -2819,7 +2926,7 @@ function statsFor(numero){
   }
   return nuevoPartido.stats[numero];
 }
-function pasoIr(n){ pasoNuevo = n; render(); window.scrollTo(0,0); }
+function pasoIr(n){ pasoNuevo = n; slotSeleccionado = null; render(); window.scrollTo(0,0); }
 function pasoSiguiente(){
   if(pasoNuevo===1 && !nuevoPartido.rival.trim()){ mostrarToast("Falta el nombre del rival."); return; }
   if(pasoNuevo===2 && !nuevoPartido.convocadas.length){ mostrarToast("Marcá al menos una jugadora convocada."); return; }
@@ -2827,9 +2934,9 @@ function pasoSiguiente(){
     const titulares = nuevoPartido.slots.filter(Boolean);
     if(titulares.length !== nuevoPartido.slots.length){ mostrarToast(`Te faltan ${nuevoPartido.slots.length-titulares.length} puestos por asignar en la cancha.`); return; }
   }
-  pasoNuevo = Math.min(6, pasoNuevo+1); render(); window.scrollTo(0,0);
+  pasoNuevo = Math.min(6, pasoNuevo+1); slotSeleccionado = null; render(); window.scrollTo(0,0);
 }
-function pasoAnterior(){ pasoNuevo = Math.max(1, pasoNuevo-1); render(); window.scrollTo(0,0); }
+function pasoAnterior(){ pasoNuevo = Math.max(1, pasoNuevo-1); slotSeleccionado = null; render(); window.scrollTo(0,0); }
 function actualizarDatoPartido(campo,val){ nuevoPartido[campo] = val; }
 function actualizarNumPartido(campo,val){ nuevoPartido[campo] = Math.max(0, parseInt(val,10)||0); render(); }
 function toggleConvocadaNueva(numero){
@@ -2841,12 +2948,20 @@ function toggleConvocadaNueva(numero){
 function elegirSistema(sistema){
   nuevoPartido.sistema = sistema;
   nuevoPartido.slots = Array(SISTEMAS_FORMACION[sistema].length).fill(null);
+  slotSeleccionado = null;
   render();
 }
-function asignarSlot(idx, valor){
-  const numero = valor===""?null:parseInt(valor,10);
-  if(numero!=null && nuevoPartido.slots.includes(numero)) nuevoPartido.slots[nuevoPartido.slots.indexOf(numero)] = null;
-  nuevoPartido.slots[idx] = numero;
+function tocarSlotNuevo(idx){
+  if(nuevoPartido.slots[idx]){ nuevoPartido.slots[idx] = null; slotSeleccionado = null; render(); return; }
+  slotSeleccionado = (slotSeleccionado===idx) ? null : idx;
+  render();
+}
+function asignarJugadoraNueva(numero){
+  if(slotSeleccionado==null){ mostrarToast("Primero tocá un puesto vacío en la cancha."); return; }
+  const yaEn = nuevoPartido.slots.indexOf(numero);
+  if(yaEn>=0) nuevoPartido.slots[yaEn] = null;
+  nuevoPartido.slots[slotSeleccionado] = numero;
+  slotSeleccionado = null;
   render();
 }
 function actualizarStat(numero,campo,val){
@@ -2919,24 +3034,14 @@ function renderCargarPartidoPaso2(){
 }
 function renderCargarPartidoPaso3(){
   const p = nuevoPartido, slotsDef = SISTEMAS_FORMACION[p.sistema], convocadas = jugadorasConvocadasOrdenadas();
-  const enCancha = new Set(p.slots.filter(Boolean));
-  const banco = convocadas.filter(j=>!enCancha.has(j.numero));
-  return `<div class="card">
+  return `<div class="card" style="margin-bottom:14px">
     <h3 style="margin:0 0 10px">Parado de campo</h3>
-    <div class="filtro-group" style="margin-bottom:14px"><label>Sistema</label>
+    <div class="filtro-group" style="margin-bottom:4px"><label>Sistema</label>
       <select onchange="elegirSistema(this.value)">${Object.keys(SISTEMAS_FORMACION).map(s=>`<option value="${s}" ${p.sistema===s?'selected':''}>${s}</option>`).join("")}</select>
     </div>
-    <div class="cancha">
-      ${slotsDef.map(([rol,x,y],idx)=>`
-        <div class="cancha-slot" style="left:${x}%;top:${y}%">
-          <select onchange="asignarSlot(${idx},this.value)">
-            <option value="">${rol} —</option>
-            ${convocadas.map(j=>`<option value="${j.numero}" ${p.slots[idx]===j.numero?'selected':''}>#${j.numero} ${esc(j.apellido)}</option>`).join("")}
-          </select>
-        </div>`).join("")}
-    </div>
-    <p class="muted" style="margin:12px 0 6px;font-size:12.5px">Banco (${banco.length}): ${banco.map(j=>`#${j.numero} ${esc(j.apellido)}`).join(", ")||"—"}</p>
-  </div>`;
+    <p class="muted" style="margin:8px 0 0;font-size:11.5px">${slotSeleccionado!=null ? 'Ahora tocá una jugadora de la convocatoria para ubicarla en ese puesto.' : 'Tocá un puesto vacío de la cancha y después una jugadora — o tocá una jugadora ya ubicada para sacarla.'}</p>
+  </div>
+  ${renderCanchaConFotos(slotsDef, p.slots, convocadas, "tocarSlotNuevo", "asignarJugadoraNueva")}`;
 }
 function renderCargarPartidoPaso4(){
   const p = nuevoPartido, titularNums = new Set(p.slots.filter(Boolean)), convocadas = jugadorasConvocadasOrdenadas();
