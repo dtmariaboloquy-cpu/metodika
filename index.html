@@ -366,9 +366,7 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .cancha-slot-foto .pc-foto{width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid #fff;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 .cancha-slot-foto .avatar-init.sm{width:58px;height:58px;border:3px solid #fff;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.4);font-size:16px}
 .pc-vacio{width:58px;height:58px;border-radius:50%;border:2px dashed rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.12)}
-.pc-tag-cancha{display:flex;align-items:stretch;margin-top:5px;border-radius:5px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.4);max-width:84px}
-.pc-tag-num{background:var(--verde);color:#fff;padding:2.5px 5px;font-size:10px;font-weight:800;display:flex;align-items:center}
-.pc-tag-nom{background:#fff;color:var(--tinta);padding:2.5px 6px;font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-tag-cancha{margin-top:5px;border-radius:5px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.4);max-width:84px;background:#fff;color:var(--tinta);padding:2.5px 7px;font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block}
 .pc-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .pc-jug{display:flex;flex-direction:column;align-items:center;gap:3px;width:68px;cursor:pointer;padding:8px 2px;border-radius:10px;border:1px solid var(--borde);background:var(--card)}
 .pc-jug.pc-tocable{border-color:var(--verde)}
@@ -2686,8 +2684,9 @@ function obtenerEscudoClub(){
   return img ? img.getAttribute('src') : null;
 }
 // Dibuja una foto recortada en círculo dentro del PDF (o, si no hay foto o falla,
-// un círculo blanco con el número) — usado tanto en la cancha como en el banco.
-function pdfFotoCircular(doc, cx, cy, r, fotoDataUrl, numero){
+// un círculo blanco con las iniciales) — usado tanto en la cancha como en el banco.
+// No muestra el número de jugadora: es un ID interno del plantel, no el dorsal real.
+function pdfFotoCircular(doc, cx, cy, r, fotoDataUrl, texto){
   if(fotoDataUrl){
     try{
       const size = r*2, x = cx-r, y = cy-r;
@@ -2708,7 +2707,7 @@ function pdfFotoCircular(doc, cx, cy, r, fotoDataUrl, numero){
   doc.circle(cx, cy, r, "F");
   doc.setFont("helvetica","bold"); doc.setFontSize(r>6?8:6.5);
   doc.setTextColor.apply(doc, PDF_THEME.navy);
-  doc.text(numero!=null?String(numero):"—", cx, cy+(r>6?1.4:1.1), {align:"center"});
+  doc.text(texto||"—", cx, cy+(r>6?1.4:1.1), {align:"center"});
 }
 // Cancha + banco con fotos, reutilizada tanto por "Parado de campo" (próximo partido)
 // como por el paso 3 de "+ Cargar partido" — para que se vean igual en toda la app.
@@ -2723,7 +2722,7 @@ function renderCanchaConFotos(slotsDef, slots, convocadas, onSlotClick, onBenchC
       const j = numero ? JUGADORAS.find(x2=>x2.numero===numero) : null;
       return `<div class="cancha-slot-foto ${slotSeleccionado===idx?'pc-activo':''}" style="left:${x}%;top:${y}%" onclick="${onSlotClick}(${idx})">
         ${j
-          ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-tag-cancha"><span class="pc-tag-num">${j.numero}</span><span class="pc-tag-nom">${esc(j.apellido)}</span></span>`
+          ? fotoOAvatar(j, "pc-foto", "avatar-init sm") + `<span class="pc-tag-cancha">${esc(j.apellido)}</span>`
           : `<div class="pc-vacio">${esc(rol)}</div>`}
       </div>`;
     }).join("")}
@@ -2732,7 +2731,6 @@ function renderCanchaConFotos(slotsDef, slots, convocadas, onSlotClick, onBenchC
     <div class="pc-grid">${banco.map(j=>`
       <div class="pc-jug ${slotSeleccionado!=null?'pc-tocable':''}" onclick="${onBenchClick}(${j.numero})">
         ${fotoOAvatar(j,"pc-foto-chip","avatar-init sm")}
-        <span class="pc-num">#${j.numero}</span>
         <span class="pc-nom">${esc(j.apellido)}</span>
       </div>`).join("") || '<p class="muted">Todas las convocadas están ubicadas en la cancha.</p>'}</div>`;
   return cancha + bancoHtml;
@@ -2829,7 +2827,7 @@ function descargarPdfParadoDeCampo(){
       const j = numero ? JUGADORAS.find(jj=>jj.numero===numero) : null;
       const px = canchaX + (sx/100)*canchaW;
       const py = canchaY + margenTop + (sy/100)*(canchaH-margenTop-margenBottom);
-      pdfFotoCircular(doc, px, py, 7, j ? (perfilDe(j).foto||null) : null, j?j.numero:null);
+      pdfFotoCircular(doc, px, py, 7, j ? (perfilDe(j).foto||null) : null, j?iniciales(j):null);
       doc.setFont("helvetica","bold"); doc.setFontSize(6.3);
       doc.setTextColor(255,255,255);
       doc.text(j ? String(j.apellido).slice(0,13) : rol, px, py+11, {align:"center"});
@@ -2843,7 +2841,7 @@ function descargarPdfParadoDeCampo(){
       let cx = 14 + chipW/2, cy = y + 8, fila = 0;
       banco.forEach((j,i)=>{
         if(i>0 && i%perRow===0){ fila++; cy += 21; cx = 14 + chipW/2; }
-        pdfFotoCircular(doc, cx, cy, 6.5, perfilDe(j).foto||null, j.numero);
+        pdfFotoCircular(doc, cx, cy, 6.5, perfilDe(j).foto||null, iniciales(j));
         doc.setFont("helvetica","bold"); doc.setFontSize(6.2);
         doc.setTextColor.apply(doc, PDF_THEME.text);
         doc.text(String(j.apellido).slice(0,11), cx, cy+9.5, {align:"center", maxWidth:chipW});
