@@ -2488,13 +2488,27 @@ function actualizarProximoPartido(){
   if(typeof FIXTURE === "undefined" || !FIXTURE || !Array.isArray(FIXTURE.fechas)) return;
   const club = TABLA_POSICIONES.miClub;
   const jugadas = new Set(PARTIDOS.map(p=>(p.fechaISO||"").slice(0,10)).filter(Boolean));
+  const pos = FIXTURE.postergado;
+  const posPendiente = pos && pos.fecha && !jugadas.has(pos.fecha);
   for(const f of FIXTURE.fechas){
+    if(posPendiente && f.fecha > pos.fecha && !jugadas.has(f.fecha)){
+      TABLA_POSICIONES.proximoRival = pos.rival;
+      TABLA_POSICIONES.proximoRivalFecha = pos.fecha;
+      TABLA_POSICIONES.proximoRivalLugar = [pos.lugar, pos.hora].filter(Boolean).join(" · ");
+      return;
+    }
     if(jugadas.has(f.fecha)) continue;
     const partido = (f.partidos||[]).find(pp=>pp[0]===club || pp[1]===club);
     if(!partido) continue; // fecha libre para el club esa jornada
     TABLA_POSICIONES.proximoRival = partido[0]===club ? partido[1] : partido[0];
     TABLA_POSICIONES.proximoRivalFecha = f.fecha;
     TABLA_POSICIONES.proximoRivalLugar = f.lugar || "";
+    return;
+  }
+  if(posPendiente){
+    TABLA_POSICIONES.proximoRival = pos.rival;
+    TABLA_POSICIONES.proximoRivalFecha = pos.fecha;
+    TABLA_POSICIONES.proximoRivalLugar = [pos.lugar, pos.hora].filter(Boolean).join(" · ");
     return;
   }
   TABLA_POSICIONES.proximoRival = null;
@@ -3581,7 +3595,7 @@ function renderTablaPosiciones(){
 
 // Fixture de las fechas restantes del torneo (se carga a mano desde EstDepo, igual que la tabla).
 const FIXTURE = {
-  postergado: { rival: "Huracan", nota: "Hay una fecha libre reservada en octubre para jugarlo, pero todavía sin día ni horario confirmado" },
+  postergado: { rival: "Huracan", fecha: "2026-10-04", lugar: "BS AS (visitante)", hora: "9 o 10 hs (a confirmar)", nota: "Domingo 4 de octubre, de visitante en Buenos Aires, 9 o 10 hs (a confirmar). Ganando o empatando, Talleres es campeón." },
   fechas: [
     { n: 17, fecha: "2026-09-13", lugar: "BS AS", libre: "Huracan", partidos: [
       ["Union Santa Fe","Ferro C O"], ["SAT","Talleres CBA"], ["UAI Urquiza","Estudiantes LP"],
