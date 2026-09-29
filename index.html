@@ -584,6 +584,10 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 @media (max-width:700px){
   .gps-mod .gps-bar-row{grid-template-columns:100px 1fr 40px}
 }
+.analisis-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.analisis-btn{display:inline-flex;align-items:center;gap:7px;background:var(--verde);color:#fff;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:12.5px;font-weight:700}
+.analisis-btn:hover{opacity:.9}
+.analisis-frame{display:block;width:100%;height:calc(100vh - 150px);min-height:620px;border:1px solid var(--borde);border-radius:14px;background:#EAEFF6}
 </style>
 
 <div class="app-shell">
@@ -1088,7 +1092,7 @@ const MODULOS = [
   {k:"planificacion", nombre:"Planificación", desc:"Macrociclo, mesociclos y sesiones del año", activo:true, bg:"#EFE9FB", fg:"#6D4FC9"},
   {k:"modelo", nombre:"Modelo de Juego", desc:"Principios, fases y comportamientos del equipo", bg:"var(--verde-claro)", fg:"var(--verde)"},
   {k:"video", nombre:"Videoanálisis", desc:"Proyectos, cortes y presentaciones del partido", bg:"#FCE7F3", fg:"#C2377E"},
-  {k:"scouting", nombre:"Rivales / Scout", desc:"Informes, patrones y claves del próximo rival", bg:"#FFF6DA", fg:"#B98A2E"},
+  {k:"scouting", nombre:"Análisis de rival", desc:"Video del rival, recortes con dibujo, pantalla grande y PDF", activo:true, bg:"#FFF6DA", fg:"#B98A2E"},
   {k:"partidos", nombre:"Partidos", desc:"Resultados y estadísticas del equipo", activo:true, bg:"#E6F6EC", fg:"#1E8E5A"},
   {k:"plantel", nombre:"Plantel", desc:"Jugadoras y su presencia a lo largo del año", activo:true, bg:"var(--bronce-claro)", fg:"var(--bronce)"},
   {k:"rendimiento", nombre:"Rendimiento / Data", desc:"Carga, métricas y tendencias de rendimiento", activo:true, bg:"#FDEEDC", fg:"#C97A2B"},
@@ -5351,6 +5355,18 @@ function buildPrintSessionHtml(session, result){
   return {mount:mount, hydrate:hydrate};
 })();
 
+function renderAnalisisRival(){
+  return `
+    <div class="analisis-head">
+      <div>
+        <h2 class="section" style="margin:0">Análisis de rival</h2>
+        <p class="muted" style="margin:4px 0 0">Mirá el video del rival, capturá recortes, dibujales encima y armá el plan. Se guarda solo en la nube de Metodika.</p>
+      </div>
+      <a class="analisis-btn" href="analisis.html" target="_blank" rel="noopener">Abrir en pantalla completa</a>
+    </div>
+    <iframe class="analisis-frame" src="analisis.html" title="Análisis de rival" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  `;
+}
 function render(){
   actualizarProximoPartido();
   const main = document.getElementById('main');
@@ -5388,6 +5404,9 @@ function render(){
       main.innerHTML = renderPartidos();
       setTimeout(initPartidosCharts, 0);
     }
+  } else if(vista==="scouting"){
+    renderTabsHome();
+    main.innerHTML = renderAnalisisRival();
   } else if(vista==="rendimiento"){
     renderTabsRendimiento();
     main.innerHTML = renderRendimiento();
