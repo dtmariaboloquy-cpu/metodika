@@ -2138,7 +2138,9 @@ function jugadoraDetalle(j){
         <button class="backbtn" style="background:var(--verde);color:#fff;padding:9px 16px;border-radius:9px" onclick="exportarPerfilJugadora(${j.numero})"><span class="icon-inline">⬇</span> Descargar PDF del perfil</button>
       </div>
     </div>
-    ${j.amarillasAFA && j.amarillasAFA.cantidad>0 && estadoAmarillas(j.amarillasAFA.cantidad).nivel!=="normal" ? `
+    ${(()=>{ const st = estadoAmarillasJug(j); return st && (st.nivel!=="normal" || st.cumplida) && !(j.amarillasAFA && j.amarillasAFA.cantidad > j.amarillas) ? `
+    <p class="muted" style="margin:-10px 0 18px;font-size:12px;color:${st.cumplida?'var(--verde)':'var(--rojo)'}">${st.cumplida?'✅':'⚠️'} ${esc(st.texto)} — ${j.amarillas} amarillas en la temporada según tus partidos cargados. Sanción cada ${UMBRAL_AMARILLAS} amarillas.</p>` : ""; })()}
+    ${j.amarillasAFA && j.amarillasAFA.cantidad>0 && j.amarillasAFA.cantidad > j.amarillas && estadoAmarillas(j.amarillasAFA.cantidad).nivel!=="normal" ? `
     <p class="muted" style="margin:-10px 0 18px;font-size:12px;color:var(--rojo)">⚠️ ${esc(estadoAmarillas(j.amarillasAFA.cantidad).texto)} — dato oficial COMET/AFA al ${esc(fmtFechaLarga(j.amarillasAFA.actualizado))}. Sanción cada ${UMBRAL_AMARILLAS} amarillas.</p>` : ""}
 
     <h2 class="section">Minutos por partido</h2>
@@ -2528,16 +2530,33 @@ function estadoAmarillas(cantidad){
   if(resto===UMBRAL_AMARILLAS-1) return {nivel:"riesgo", texto:"A una amarilla de la suspensión"};
   return {nivel:"normal", texto:`${resto} de ${UMBRAL_AMARILLAS}`};
 }
+// Estado por jugadora usando su historial: la suspensión se da por cumplida
+// cuando el equipo ya jugó un partido después del que llegó al múltiplo de amarillas.
+function estadoAmarillasJug(j){
+  const cant = j && j.amarillas;
+  if(!cant) return null;
+  const resto = cant % UMBRAL_AMARILLAS;
+  const hist = Array.isArray(j.historial) ? j.historial.slice().sort((a,b)=>String(a.fechaISO||"").localeCompare(String(b.fechaISO||""))) : [];
+  if(resto===0 && hist.length){
+    let acum = 0, idxLlego = -1;
+    hist.forEach((h,i)=>{ const antes = acum; acum += (h.amarillas||0); if(Math.floor(acum/UMBRAL_AMARILLAS) > Math.floor(antes/UMBRAL_AMARILLAS)) idxLlego = i; });
+    if(idxLlego >= 0 && idxLlego < hist.length-1){
+      const cumplio = hist[idxLlego+1];
+      return {nivel:"normal", cumplida:true, texto:`Sanción cumplida (vs ${cumplio.rival||"—"})`};
+    }
+  }
+  return estadoAmarillas(cant);
+}
 function renderAlertaAmarillas(){
   // Usa las amarillas acumuladas en la temporada (se recalculan solas con cada
   // planilla de Alonbalon que importás) en vez de un número cargado a mano.
   const conDatos = JUGADORAS.filter(j=>j.amarillas>0);
   if(!conDatos.length) return "";
-  const enAlerta = conDatos.filter(j=>estadoAmarillas(j.amarillas).nivel!=="normal")
+  const enAlerta = conDatos.filter(j=>estadoAmarillasJug(j).nivel!=="normal")
     .sort((a,b)=>b.amarillas-a.amarillas);
   if(!enAlerta.length) return "";
-  const suspendidas = enAlerta.filter(j=>estadoAmarillas(j.amarillas).nivel==="suspendida");
-  const enRiesgo = enAlerta.filter(j=>estadoAmarillas(j.amarillas).nivel==="riesgo");
+  const suspendidas = enAlerta.filter(j=>estadoAmarillasJug(j).nivel==="suspendida");
+  const enRiesgo = enAlerta.filter(j=>estadoAmarillasJug(j).nivel==="riesgo");
   const T = TABLA_POSICIONES;
   const vsProximo = T && T.proximoRival ? ` (vs ${esc(T.proximoRival)})` : "";
   const ultimoPartido = PARTIDOS.length ? PARTIDOS[PARTIDOS.length-1].fecha : "";
@@ -2554,7 +2573,7 @@ function renderAlertaAmarillas(){
     <span class="badge" style="background:#FBE4E4;color:var(--rojo)">⚠️ Alerta de amarillas</span>
     <h3 style="margin:8px 0 6px">${titulo}</h3>
     ${enAlerta.map(j=>{
-      const st = estadoAmarillas(j.amarillas);
+      const st = estadoAmarillasJug(j);
       const suspendida = st.nivel==="suspendida";
       const color = suspendida ? "var(--rojo)" : "#B98A2E";
       const texto = suspendida
