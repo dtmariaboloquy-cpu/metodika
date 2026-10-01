@@ -465,7 +465,18 @@ function cargarScriptPlanillas(src, listo) {
     document.head.appendChild(s);
   });
 }
-function partidosParaPlanillas(jornada, config, sorteo) {
+function resultadoCargado(r) {
+  return r && r.gl !== undefined && r.gl !== "" && r.gl !== null && r.gv !== undefined && r.gv !== "" && r.gv !== null ? r : null;
+}
+function ganadorDe(a, b, r) {
+  if (!a || !b || !resultadoCargado(r)) return "";
+  const gl = Number(r.gl), gv = Number(r.gv);
+  if (gl !== gv) return gl > gv ? a : b;
+  if (r.pl === undefined || r.pl === "" || r.pv === undefined || r.pv === "") return "";
+  return Number(r.pl) > Number(r.pv) ? a : Number(r.pv) > Number(r.pl) ? b : "";
+}
+function partidosParaPlanillas(jornada, config, sorteo, resultados) {
+  resultados = resultados || {};
   const numZonas = Math.max(1, parseInt(config?.numZonas) || 1);
   const numCanchas = Math.max(1, parseInt(config?.numCanchas) || parseCanchas(jornada.sede));
   const formato = config?.formato || "todos";
@@ -473,16 +484,32 @@ function partidosParaPlanillas(jornada, config, sorteo) {
   const zonasAuto = Array.from({ length: numZonas }, (_, zi) => orden.filter((_, i) => i % numZonas === zi));
   const zonas = sorteo?.zonas || zonasAuto;
   const lista = [];
-  zonas.forEach((equipos, zi) => partidosDeZona(equipos, zi, numZonas, numCanchas, formato).forEach((pt) => lista.push({ ...pt, zona: numZonas > 1 ? String(zi + 1) : "Única" })));
+  const manual = sorteo?.manual || {};
+  const primeros = [], segundos = [];
+  zonas.forEach((equipos, zi) => {
+    const pts = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
+    pts.forEach((pt) => lista.push({ ...pt, zona: numZonas > 1 ? String(zi + 1) : "Única", r: resultadoCargado(resultados[pt.key] || resultados[pt.legacyKey] || resultados[pt.legacyReverseKey]) }));
+    const completa = pts.length > 0 && pts.every((pt) => resultadoCargado(resultados[pt.key] || resultados[pt.legacyKey] || resultados[pt.legacyReverseKey]));
+    const tabla = completa ? tablaPosiciones(equipos, pts, resultados, manual[zi], jornada.instancia === "PROVINCIAL") : [];
+    primeros.push(tabla[0]?.equipo || ""); segundos.push(tabla[1]?.equipo || "");
+  });
   lista.sort((a, b) => a.ronda - b.ronda || a.cancha - b.cancha || String(a.zona).localeCompare(String(b.zona)));
   // Fase final (los rivales se completan a mano cuando se conocen)
   const n = zonas.filter((z) => z.length > 0).length;
-  const finales = n === 2 ? ["FINAL"] : n === 3 ? ["FINAL ZONA 1", "FINAL ZONA 2", "FINAL ZONA 3", "CRUCE POR EL 4º"] : n === 4 ? ["SEMIFINAL 1", "SEMIFINAL 2", "FINAL"] : [];
-  finales.forEach((t) => lista.push({ local: "", visitante: "", ronda: null, cancha: null, zona: t }));
+  const F = (zona, key, local, visitante) => lista.push({ local: local || "", visitante: visitante || "", ronda: null, cancha: null, zona, r: resultadoCargado(resultados[key]) });
+  if (n === 2) F("FINAL", "fase-final", primeros[0], primeros[1]);
+  else if (n === 3) {
+    [0, 1, 2].forEach((zi) => F("FINAL ZONA " + (zi + 1), "fase-zona-final-" + (zi + 1), primeros[zi], segundos[zi]));
+    F("CRUCE POR EL 4º", "fase-repechaje", "", "");
+  } else if (n === 4) {
+    F("SEMIFINAL 1", "fase-semi-1", primeros[0], primeros[1]);
+    F("SEMIFINAL 2", "fase-semi-2", primeros[2], primeros[3]);
+    F("FINAL", "fase-final", ganadorDe(primeros[0], primeros[1], resultados["fase-semi-1"]), ganadorDe(primeros[2], primeros[3], resultados["fase-semi-2"]));
+  }
   return lista;
 }
-async function generarPlanillasArbitros(jornada, config, sorteo, ramaLabel) {
-  const partidos = partidosParaPlanillas(jornada, config, sorteo);
+async function generarPlanillasArbitros(jornada, config, sorteo, ramaLabel, resultados) {
+  const partidos = partidosParaPlanillas(jornada, config, sorteo, resultados);
   if (!partidos.length) { alert("Primero armá el fixture (sorteo) de esta fecha."); return; }
   await cargarScriptPlanillas("https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js", () => !!window.jspdf);
   const pdf = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
@@ -534,6 +561,7 @@ async function generarPlanillasArbitros(jornada, config, sorteo, ramaLabel) {
       // Recuadro grande de goles
       caja(ex, yE + 20, anchoE, 62);
       texto("GOLES", ex + 2, yE + 25, 8, true, GRIS);
+      if (pt.r) texto(String(k ? pt.r.gv : pt.r.gl), ex + anchoE / 2, yE + 66, 120, true, AZUL, { align: "center" });
       caja(ex, yE + 82, anchoE / 2, 8); caja(ex + anchoE / 2, yE + 82, anchoE / 2, 8);
       texto("DT:", ex + 2, yE + 87.5, 8, true, GRIS); texto("PF:", ex + anchoE / 2 + 2, yE + 87.5, 8, true, GRIS);
     });
@@ -544,6 +572,12 @@ async function generarPlanillasArbitros(jornada, config, sorteo, ramaLabel) {
     caja(M + 44, yR, 16, 9); texto("-", M + 63, yR + 6.5, 12, true); caja(M + 66, yR, 16, 9);
     texto("Penales:", M + 100, yR + 6, 10, true);
     caja(M + 118, yR, 14, 9); texto("-", M + 135, yR + 6.5, 12, true); caja(M + 138, yR, 14, 9);
+    if (pt.r) {
+      texto(String(pt.r.gl), M + 52, yR + 7, 13, true, AZUL, { align: "center" }); texto(String(pt.r.gv), M + 74, yR + 7, 13, true, AZUL, { align: "center" });
+      if (Number(pt.r.gl) === Number(pt.r.gv) && pt.r.pl !== undefined && pt.r.pl !== "" && pt.r.pv !== undefined && pt.r.pv !== "") {
+        texto(String(pt.r.pl), M + 125, yR + 7, 13, true, AZUL, { align: "center" }); texto(String(pt.r.pv), M + 145, yR + 7, 13, true, AZUL, { align: "center" });
+      }
+    }
     // Árbitros
     const yA = 162, tercio = (W - 2 * M) / 3;
     [["Árbitro/a:", 0], ["Asistente N° 1:", 1], ["Asistente N° 2:", 2]].forEach(([t, k]) => { caja(M + k * tercio, yA, tercio, 9); texto(t, M + k * tercio + 2, yA + 6, 8.5, true, GRIS); });
@@ -762,7 +796,7 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
               </button>
             )}
             {(sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
-              <button onClick={() => generarPlanillasArbitros(jornada, config, sorteo, ramaLabel).catch(() => alert("No se pudieron generar las planillas. Revisá la conexión e intentá de nuevo."))} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
+              <button onClick={() => generarPlanillasArbitros(jornada, config, sorteo, ramaLabel, resultados).catch(() => alert("No se pudieron generar las planillas. Revisá la conexión e intentá de nuevo."))} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
                 🖨 Planillas para árbitros
               </button>
             )}
