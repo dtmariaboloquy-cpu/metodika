@@ -76,7 +76,43 @@ function partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato) {
   return FixtureCordobeses.partidosDeZona(equipos, zonaIdx, numZonas, numCanchas, formato);
 }
 
-function tablaPosiciones(equipos, partidos, resultados, ordenManual) {
+// Desempate según el Reglamento Cordobeses Juegan 2026 (fútbol, art. 5.1 / 4.1), para dos o más empatados en puntos:
+// 1) resultado/puntos entre sí, 2) diferencia de gol entre sí, 3) goles a favor entre sí, 4) menos goles en contra entre sí,
+// 5) lo mismo con todos los partidos de la zona, 6) sorteo (se marca a mano con ✋).
+function ordenarReglamento(filas, partidos, resultados) {
+  const leer = (pt) => {
+    const r = resultados[pt.key] || resultados[pt.legacyKey] || resultados[pt.legacyReverseKey];
+    if (!r || r.gl === "" || r.gv === "" || r.gl == null || r.gv == null) return null;
+    const gl = parseInt(r.gl), gv = parseInt(r.gv);
+    return isNaN(gl) || isNaN(gv) ? null : [gl, gv];
+  };
+  const entreSi = (grupo) => {
+    const set = new Set(grupo.map((f) => f.equipo)), st = {};
+    grupo.forEach((f) => (st[f.equipo] = { pts: 0, gf: 0, gc: 0 }));
+    partidos.forEach((pt) => {
+      if (!set.has(pt.local) || !set.has(pt.visitante)) return;
+      const g = leer(pt); if (!g) return;
+      const L = st[pt.local], V = st[pt.visitante];
+      L.gf += g[0]; L.gc += g[1]; V.gf += g[1]; V.gc += g[0];
+      if (g[0] > g[1]) L.pts += 3; else if (g[0] < g[1]) V.pts += 3; else { L.pts++; V.pts++; }
+    });
+    return st;
+  };
+  const porPuntos = {};
+  filas.forEach((f) => (porPuntos[f.pts] = porPuntos[f.pts] || []).push(f));
+  return Object.keys(porPuntos).map(Number).sort((a, b) => b - a).flatMap((pts) => {
+    const grupo = porPuntos[pts];
+    if (grupo.length === 1) return grupo;
+    const m = entreSi(grupo);
+    return grupo.slice().sort((a, b) => {
+      const A = m[a.equipo], B = m[b.equipo];
+      return (B.pts - A.pts) || ((B.gf - B.gc) - (A.gf - A.gc)) || (B.gf - A.gf) || (A.gc - B.gc)
+        || (b.dg - a.dg) || (b.gf - a.gf) || (a.gc - b.gc) || a.equipo.localeCompare(b.equipo);
+    });
+  });
+}
+
+function tablaPosiciones(equipos, partidos, resultados, ordenManual, reglamento) {
   const tabla = {};
   equipos.forEach((eq) => (tabla[eq] = { equipo: eq, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }));
   partidos.forEach((partido) => {
@@ -92,9 +128,10 @@ function tablaPosiciones(equipos, partidos, resultados, ordenManual) {
     else if (gl < gv) { V.g++; L.p++; }
     else { L.e++; V.e++; }
   });
-  const ordenadaAutomatica = Object.values(tabla)
-    .map((t) => ({ ...t, dg: t.gf - t.gc, pts: t.g * 3 + t.e }))
-    .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+  const filasCalc = Object.values(tabla).map((t) => ({ ...t, dg: t.gf - t.gc, pts: t.g * 3 + t.e }));
+  const ordenadaAutomatica = reglamento
+    ? ordenarReglamento(filasCalc, partidos, resultados)
+    : filasCalc.sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
   // Clasificación manual: si se marcaron equipos a mano, van primero (en ese orden) y
   // el resto de la tabla sigue calculándose y ordenándose automáticamente por resultados.
   if (ordenManual && ordenManual.length) {
@@ -285,15 +322,15 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(numZonas, 2)}, minmax(260px, 1fr))`, gap: 10, marginTop: 4, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 6 }}>
           {zonas.map((equipos, zi) => {
             const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
-            const tabla = tablaPosiciones(equipos, partidos, resultados, manual[zi]);
+            const tabla = tablaPosiciones(equipos, partidos, resultados, manual[zi], jornada.instancia === "PROVINCIAL");
             const clasificacionManualActiva = manual[zi] && manual[zi].length > 0;
             const otrasZonas = zonas.map((_, i) => i).filter((i) => i !== zi);
             return (
               <div key={zi} style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: C.primario }}>ZONA {zi + 1} ({equipos.length})</div>
-                  {clasificacionManualActiva && <Badge color="#fff" bg={C.provincial}>✋ Clasificación manual</Badge>}
-                </div>
+                {/* El título "ZONA N (x)" tiene que ser hijo DIRECTO del recuadro de la zona: los scripts de
+                    "Ganadores" y "Fase final" buscan ese texto y leen los resultados de su contenedor. */}
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.primario, marginBottom: 6 }}>ZONA {zi + 1} ({equipos.length})</div>
+                {clasificacionManualActiva && <div style={{ marginBottom: 6 }}><Badge color="#fff" bg={C.provincial}>✋ Clasificación manual</Badge></div>}
                 {equipos.map((eq, i) => (
                   <div key={eq} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: eq === ultimoSacado ? C.verde : C.ink, fontWeight: eq === ultimoSacado ? 700 : 400, marginBottom: 3 }}>
                     <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i + 1}. {eq}</span>
