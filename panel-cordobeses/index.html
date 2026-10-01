@@ -808,6 +808,7 @@ function PanelCordobeses() {
   const [enviandoPedido, setEnviandoPedido] = useState(false);
   const [equipoAcceso, setEquipoAcceso] = useState({ admins: {}, permisos: {} });
   const [quitandoUid, setQuitandoUid] = useState("");
+  const [verAccesos, setVerAccesos] = useState(false);
   const [sumarAbierto, setSumarAbierto] = useState(false);
   const [entrandoGoogle, setEntrandoGoogle] = useState(false);
   const [mensajeGoogle, setMensajeGoogle] = useState("");
@@ -1204,15 +1205,18 @@ function PanelCordobeses() {
           if (!uids.length) return null;
           return (
             <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 6 }}>Personas con acceso para modificar</div>
-              {uids.map((u) => {
+              <button onClick={() => setVerAccesos((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", justifyContent: "space-between", border: `1px solid ${C.border}`, background: C.bg, borderRadius: 7, padding: "7px 10px", fontSize: 11, fontWeight: 800, color: C.ink, cursor: "pointer" }}>
+                <span>Personas con acceso para modificar ({uids.length})</span>
+                <span style={{ color: C.primario }}>{verAccesos ? "▲ Ocultar" : "▼ Ver lista"}</span>
+              </button>
+              {verAccesos && uids.map((u) => {
                 const esAdmin = equipoAcceso.admins[u] === true;
                 const p = equipoAcceso.permisos[u] || {};
                 const que = esAdmin ? "Coordinador/a (todo el panel)" : p._todas === true ? "Todas las fechas" : clavesActivas(p).map(nombreJornada).join(" / ");
                 const puedeQuitar = (!esAdmin || sesion?.uid === ADMIN_UID) && u !== sesion?.uid;
                 return (
                   <div key={u} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
-                    <span><strong>{p._nombre || "Sin nombre"}</strong> · {que}{u === sesion?.uid ? " · (vos)" : ""}</span>
+                    <span><strong>{u === sesion?.uid ? "Vos" : (p._nombre || "Sin nombre")}</strong> · {que}</span>
                     {puedeQuitar && (
                       <button disabled={quitandoUid === u} onClick={() => quitarAcceso(u)} style={{ border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: quitandoUid === u ? 0.6 : 1 }}>{quitandoUid === u ? "Quitando…" : "Quitar acceso"}</button>
                     )}
