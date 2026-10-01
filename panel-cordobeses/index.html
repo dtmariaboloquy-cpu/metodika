@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic.js?v=20260904-qr"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses 2026</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic.js?v=20260904-qr"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F3F5F9",
@@ -809,6 +809,8 @@ function PanelCordobeses() {
   const [equipoAcceso, setEquipoAcceso] = useState({ admins: {}, permisos: {} });
   const [quitandoUid, setQuitandoUid] = useState("");
   const [sumarAbierto, setSumarAbierto] = useState(false);
+  const [entrandoGoogle, setEntrandoGoogle] = useState(false);
+  const [mensajeGoogle, setMensajeGoogle] = useState("");
   const ultimaCopia = useRef({});
   const avisoGuardado = useRef(false);
   const ADMIN_UID = "EMT1NVvFNCSqDJVqz1rFJOUFx2v1";
@@ -831,7 +833,7 @@ function PanelCordobeses() {
       if (guardada?.refreshToken) {
         const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(guardada.refreshToken)}` });
         const d = await r.json();
-        if (r.ok) data = { uid: d.user_id, token: d.id_token, refreshToken: d.refresh_token };
+        if (r.ok) data = { uid: d.user_id, token: d.id_token, refreshToken: d.refresh_token, email: guardada.email || "" };
       }
       if (!data) {
         const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
@@ -967,6 +969,58 @@ function PanelCordobeses() {
     }
   };
 
+  // Entrar con Google: la primera vez, en el dispositivo donde ya tenés tu acceso,
+  // se "engancha" tu cuenta de Google a ese mismo usuario (no se pierde ningún permiso).
+  // Después, en cualquier otro celular o compu, entrás con Google y sos la misma persona.
+  const entrarConGoogle = async () => {
+    if (entrandoGoogle || !sesion) return;
+    if (!esCoordinadora && !clavesActivas(permisos).length && !confirm("Importante: si ya sos coordinador/a desde otro celular o compu, hacé esto primero desde ESE dispositivo, así Google te reconoce con tu acceso. ¿Seguir acá?")) return;
+    setEntrandoGoogle(true);
+    setMensajeGoogle("");
+    try {
+      if (typeof firebase === "undefined") throw new Error("sin-sdk");
+      const app = firebase.apps.find((a) => a.name === "login") || firebase.initializeApp({ apiKey: API_KEY, authDomain: "metodika-dt-multijugador.firebaseapp.com", projectId: "metodika-dt-multijugador" }, "login");
+      const auth = app.auth();
+      await auth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+      const proveedor = new firebase.auth.GoogleAuthProvider();
+      proveedor.setCustomParameters({ prompt: "select_account" });
+      const res = await auth.signInWithPopup(proveedor);
+      const email = res.user.email || "";
+      let nueva;
+      if (res.additionalUserInfo && res.additionalUserInfo.isNewUser) {
+        // Cuenta de Google nueva para el panel: se borra esa cuenta suelta y se engancha Google al usuario de este dispositivo.
+        const googleIdToken = res.credential && res.credential.idToken;
+        await res.user.delete();
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${API_KEY}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: sesion.token, postBody: `id_token=${googleIdToken}&providerId=google.com`, requestUri: location.origin, returnSecureToken: true, returnIdpCredential: true }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.localId) throw new Error((d.error && d.error.message) || "no-link");
+        nueva = { uid: d.localId, token: d.idToken, refreshToken: d.refreshToken, email };
+      } else {
+        // Tu cuenta de Google ya estaba enganchada: entrás como siempre, desde cualquier dispositivo.
+        nueva = { uid: res.user.uid, token: await res.user.getIdToken(), refreshToken: res.user.refreshToken, email };
+      }
+      await auth.signOut();
+      localStorage.setItem("cordobeses-sesion", JSON.stringify(nueva));
+      setSesion(nueva);
+      setMensajeGoogle(`✓ Listo. Quedaste conectada/o con ${email}. Desde ahora entrá con Google en cualquier celular o compu.`);
+    } catch (e) {
+      const c = String((e && (e.code || e.message)) || "");
+      setMensajeGoogle(
+        c.includes("popup-closed") || c.includes("cancelled") ? "Se cerró la ventana de Google antes de terminar. Volvé a tocar el botón." :
+        c.includes("popup-blocked") ? "El navegador bloqueó la ventana de Google. Permití las ventanas emergentes para esta página y volvé a intentar." :
+        c.includes("unauthorized-domain") ? "Falta autorizar esta página en Firebase (Dominios autorizados)." :
+        c.includes("operation-not-allowed") ? "Falta activar \"Google\" en Firebase (Método de acceso)." :
+        c.includes("FEDERATED_USER_ID_ALREADY_LINKED") || c.includes("credential-already-in-use") ? "Esa cuenta de Google ya está usada por otra persona del panel." :
+        "No se pudo entrar con Google. Volvé a intentarlo."
+      );
+    } finally {
+      setEntrandoGoogle(false);
+    }
+  };
+
   const linkPanel = location.origin + location.pathname;
   const mensajeSumar = `Hola! Te sumo al Panel de Cordobeses Juegan.\n1) Entrá desde tu celular: ${linkPanel}\n2) Tocá el botón "Solicitar permiso de edición"\n3) Poné tu nombre y elegí qué necesitás (por ejemplo "Coordinador/a")\n4) Tocá "Enviar pedido" y esperá que te lo apruebe. Se activa solo.\nImportante: usá siempre el mismo celular y navegador.`;
 
@@ -1074,7 +1128,12 @@ function PanelCordobeses() {
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>{esCoordinadora ? "Modo coordinador/a" : permisos._todas === true ? "Acceso a todas las fechas" : clavesActivas(permisos).length ? "Acceso autorizado" : "Modo consulta"}</div>
             <div style={{ fontSize: 10, color: C.sub }}>{esCoordinadora ? "Podés modificar todas las jornadas y aprobar responsables." : permisos._todas === true ? "Podés modificar todas las jornadas, sin administrar permisos." : clavesActivas(permisos).length ? "Solo podés modificar las fechas que te aprobaron." : "Podés ver toda la información sin modificarla."}</div>
           </div>
-          <span style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+          <span style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
+            {sesion?.email ? (
+              <span style={{ fontSize: 10, color: C.sub, fontWeight: 700 }}>✓ {sesion.email}</span>
+            ) : (
+              <button onClick={entrarConGoogle} disabled={entrandoGoogle || !sesion} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border}`, background: "#fff", color: C.ink, fontWeight: 700, cursor: "pointer", opacity: entrandoGoogle ? 0.6 : 1 }}>{entrandoGoogle ? "Conectando…" : "G  Entrar con mi cuenta de Google"}</button>
+            )}
             {esCoordinadora ? (
               <>
                 <button onClick={() => setSumarAbierto((v) => !v)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: "pointer" }}>+ Sumar coordinador/a</button>
@@ -1085,6 +1144,7 @@ function PanelCordobeses() {
             )}
           </span>
         </div>
+        {mensajeGoogle && <div style={{ marginTop: 8, padding: "7px 9px", borderRadius: 7, background: mensajeGoogle.startsWith("✓") ? "#E8F6EE" : "#FDECEC", color: mensajeGoogle.startsWith("✓") ? C.verde : C.rojo, fontSize: 11, fontWeight: 700 }}>{mensajeGoogle}</div>}
         {sumarAbierto && esCoordinadora && (
           <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: 10, background: "#E8F6EE", border: `1px solid ${C.verde}` }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 4 }}>Cómo sumar a alguien</div>
