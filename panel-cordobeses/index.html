@@ -763,7 +763,7 @@ function nombreJornada(id) {
 }
 // Claves de permisos que habilitan editar (se ignoran datos como _nombre)
 function clavesActivas(p) { return Object.keys(p || {}).filter((k) => k !== "_nombre" && p[k] === true); }
-const TIPOS_PEDIDO = { coordinador: "Coordinador/a (todo el panel)", todas: "Editar todas las fechas", jornada: "Editar una sola fecha" };
+const TIPOS_PEDIDO = { todas: "Coordinador/a de sede (todas las fechas)", jornada: "Editar una sola fecha" };
 
 function PanelCordobeses() {
   // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
@@ -803,7 +803,7 @@ function PanelCordobeses() {
   const [aplicandoCodigo, setAplicandoCodigo] = useState(false);
   const [mensajeCodigo, setMensajeCodigo] = useState("");
   const [codigoAbierto, setCodigoAbierto] = useState(false);
-  const [tipoPedido, setTipoPedido] = useState("coordinador");
+  const [tipoPedido, setTipoPedido] = useState("todas");
   const [mensajePedido, setMensajePedido] = useState("");
   const [enviandoPedido, setEnviandoPedido] = useState(false);
   const [equipoAcceso, setEquipoAcceso] = useState({ admins: {}, permisos: {} });
@@ -999,6 +999,13 @@ function PanelCordobeses() {
         if (!r.ok || !d.localId) throw new Error((d.error && d.error.message) || "no-link");
         nueva = { uid: d.localId, token: d.idToken, refreshToken: d.refreshToken, email };
       } else {
+        // Tu cuenta de Google ya estaba enganchada a OTRO usuario. Si en este dispositivo ya tenés
+        // permisos, no se cambia nada (para no perder el acceso que ya tenés acá).
+        if (res.user.uid !== sesion.uid && (esCoordinadora || clavesActivas(permisos).length)) {
+          await auth.signOut();
+          setMensajeGoogle("Esa cuenta de Google ya está enganchada a otro usuario del panel. No cambié nada: en este dispositivo seguís con tu acceso de siempre.");
+          return;
+        }
         // Tu cuenta de Google ya estaba enganchada: entrás como siempre, desde cualquier dispositivo.
         nueva = { uid: res.user.uid, token: await res.user.getIdToken(), refreshToken: res.user.refreshToken, email };
       }
@@ -1022,7 +1029,7 @@ function PanelCordobeses() {
   };
 
   const linkPanel = location.origin + location.pathname;
-  const mensajeSumar = `Hola! Te sumo al Panel de Cordobeses Juegan.\n1) Entrá desde tu celular: ${linkPanel}\n2) Tocá el botón "Solicitar permiso de edición"\n3) Poné tu nombre y elegí qué necesitás (por ejemplo "Coordinador/a")\n4) Tocá "Enviar pedido" y esperá que te lo apruebe. Se activa solo.\nImportante: usá siempre el mismo celular y navegador.`;
+  const mensajeSumar = `Hola! Te sumo al Panel de Cordobeses Juegan.\n1) Entrá desde tu celular: ${linkPanel}\n2) Tocá el botón "Solicitar permiso de edición"\n3) Poné tu nombre y elegí "Coordinador/a de sede"\n4) Tocá "Enviar pedido" y esperá que te lo apruebe. Se activa solo.\nImportante: usá siempre el mismo celular y navegador.`;
 
   const jornadas = rama === "provinciales"
     ? [...DATOS_CORDOBESES.femenino, ...DATOS_CORDOBESES.masculino].filter((j) => j.instancia === "PROVINCIAL")
@@ -1148,7 +1155,7 @@ function PanelCordobeses() {
         {sumarAbierto && esCoordinadora && (
           <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: 10, background: "#E8F6EE", border: `1px solid ${C.verde}` }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, marginBottom: 4 }}>Cómo sumar a alguien</div>
-            <div style={{ fontSize: 11, color: C.ink, lineHeight: 1.5 }}>1. Mandale el mensaje por WhatsApp (botón verde).<br />2. La persona entra y toca <b>Solicitar permiso de edición</b>.<br />3. Su pedido te aparece acá abajo en <b>Solicitudes pendientes</b>: tocá <b>Hacer coordinador/a</b> (o el permiso que corresponda). Listo.</div>
+            <div style={{ fontSize: 11, color: C.ink, lineHeight: 1.5 }}>1. Mandale el mensaje por WhatsApp (botón verde).<br />2. La persona entra y toca <b>Solicitar permiso de edición</b>.<br />3. Su pedido te aparece acá abajo en <b>Solicitudes pendientes</b>: tocá <b>Dar acceso a todas las fechas</b> (o <b>Aprobar jornada</b> si es para una sola fecha). Listo.</div>
             <span style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 9 }}>
               <a href={"https://wa.me/?text=" + encodeURIComponent(mensajeSumar)} target="_blank" rel="noopener" style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, background: "#25D366", color: "#fff", fontWeight: 800, textDecoration: "none" }}>Mandar por WhatsApp</a>
               <button onClick={() => setSumarAbierto(false)} style={{ fontSize: 11, padding: "7px 12px", borderRadius: 7, border: "none", background: "transparent", color: C.sub, fontWeight: 700, cursor: "pointer" }}>Cerrar</button>
@@ -1179,11 +1186,11 @@ function PanelCordobeses() {
               const guardando = aprobandoUid === uid;
               return (
                 <div key={uid} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 11, flexWrap: "wrap" }}>
-                  <span><strong>{s.nombre}</strong> · pide: <b>{s.tipo ? TIPOS_PEDIDO[s.tipo] : "Editar una sola fecha"}</b>{s.jornadaId ? ` (${nombreJornada(s.jornadaId)})` : ""}{s.email ? ` · ${s.email}` : ""}</span>
+                  <span><strong>{s.nombre}</strong> · pide: <b>{s.tipo ? (TIPOS_PEDIDO[s.tipo] || "Coordinador/a") : "Editar una sola fecha"}</b>{s.jornadaId ? ` (${nombreJornada(s.jornadaId)})` : ""}{s.email ? ` · ${s.email}` : ""}</span>
                   <span style={{ display: "flex", gap: 5 }}>
                     {s.jornadaId && <button disabled={guardando} onClick={() => aprobarSolicitud(uid, s.jornadaId)} style={{ border: "none", background: C.verde, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Aprobar jornada"}</button>}
-                    <button disabled={guardando} onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Acceso a todas las fechas"}</button>
-                    <button disabled={guardando} onClick={() => aprobarAdministrador(uid)} style={{ border: "none", background: C.primario, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Hacer coordinador/a"}</button>
+                    <button disabled={guardando} onClick={() => aprobarAccesoTotal(uid)} style={{ border: "none", background: C.doradoLogo, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Dar acceso a todas las fechas"}</button>
+                    {sesion?.uid === ADMIN_UID && <button disabled={guardando} onClick={() => aprobarAdministrador(uid)} style={{ border: "none", background: C.primario, color: "#fff", borderRadius: 6, padding: "5px 9px", fontWeight: 700, opacity: guardando ? 0.6 : 1 }}>{guardando ? "Guardando…" : "Hacer coordinador/a"}</button>}
                     <button disabled={guardando} onClick={async () => { if (confirm(`¿Rechazar el pedido de ${s.nombre}?`)) { try { await peticionDb(`panelSolicitudes/${uid}`, "DELETE"); setSolicitudes((prev) => { const n = { ...prev }; delete n[uid]; return n; }); } catch (e) {} } }} style={{ border: `1px solid ${C.rojo}`, background: "#fff", color: C.rojo, borderRadius: 6, padding: "5px 9px", fontWeight: 700 }}>Rechazar</button>
                   </span>
                 </div>
