@@ -2484,36 +2484,37 @@ function proximoMatchId(){ return TABLA_POSICIONES.proximoRivalFecha || "sin-fec
 // buscando la primera fecha del club que todavía no esté en PARTIDOS. Así, apenas
 // cargás/importás el resultado de un partido, el de arriba pasa a ser el siguiente
 // automáticamente — sin tocar nada a mano.
+function listaPostergados(){
+  if(typeof FIXTURE === "undefined" || !FIXTURE) return [];
+  if(Array.isArray(FIXTURE.postergados)) return FIXTURE.postergados;
+  return FIXTURE.postergado ? [FIXTURE.postergado] : [];
+}
+function fechasJugadas(){
+  return new Set(PARTIDOS.map(p=>(p.fechaISO||"").slice(0,10)).filter(Boolean));
+}
+// Arma la lista de partidos pendientes del club (fechas del fixture + postergados)
+// y toma el más cercano en el calendario.
 function actualizarProximoPartido(){
   if(typeof FIXTURE === "undefined" || !FIXTURE || !Array.isArray(FIXTURE.fechas)) return;
   const club = TABLA_POSICIONES.miClub;
-  const jugadas = new Set(PARTIDOS.map(p=>(p.fechaISO||"").slice(0,10)).filter(Boolean));
-  const pos = FIXTURE.postergado;
-  const posPendiente = pos && pos.fecha && !jugadas.has(pos.fecha);
+  const jugadas = fechasJugadas();
+  const pendientes = [];
   for(const f of FIXTURE.fechas){
-    if(posPendiente && f.fecha > pos.fecha && !jugadas.has(f.fecha)){
-      TABLA_POSICIONES.proximoRival = pos.rival;
-      TABLA_POSICIONES.proximoRivalFecha = pos.fecha;
-      TABLA_POSICIONES.proximoRivalLugar = [pos.lugar, pos.hora].filter(Boolean).join(" · ");
-      return;
-    }
-    if(jugadas.has(f.fecha)) continue;
+    if(!f.fecha || jugadas.has(f.fecha)) continue;
     const partido = (f.partidos||[]).find(pp=>pp[0]===club || pp[1]===club);
-    if(!partido) continue; // fecha libre para el club esa jornada
-    TABLA_POSICIONES.proximoRival = partido[0]===club ? partido[1] : partido[0];
-    TABLA_POSICIONES.proximoRivalFecha = f.fecha;
-    TABLA_POSICIONES.proximoRivalLugar = f.lugar || "";
-    return;
+    if(!partido) continue; // fecha libre para el club esa jornada (o su partido se postergó)
+    pendientes.push({rival: partido[0]===club ? partido[1] : partido[0], fecha: f.fecha, lugar: f.lugar || ""});
   }
-  if(posPendiente){
-    TABLA_POSICIONES.proximoRival = pos.rival;
-    TABLA_POSICIONES.proximoRivalFecha = pos.fecha;
-    TABLA_POSICIONES.proximoRivalLugar = [pos.lugar, pos.hora].filter(Boolean).join(" · ");
-    return;
-  }
-  TABLA_POSICIONES.proximoRival = null;
-  TABLA_POSICIONES.proximoRivalFecha = null;
-  TABLA_POSICIONES.proximoRivalLugar = null;
+  listaPostergados().forEach(pos=>{
+    if(pos && pos.fecha && !jugadas.has(pos.fecha)){
+      pendientes.push({rival: pos.rival, fecha: pos.fecha, lugar: [pos.lugar, pos.hora].filter(Boolean).join(" · ")});
+    }
+  });
+  pendientes.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const prox = pendientes[0];
+  TABLA_POSICIONES.proximoRival = prox ? prox.rival : null;
+  TABLA_POSICIONES.proximoRivalFecha = prox ? prox.fecha : null;
+  TABLA_POSICIONES.proximoRivalLugar = prox ? prox.lugar : null;
 }
 async function toggleConvocada(numero){
   const id = proximoMatchId();
@@ -3595,7 +3596,11 @@ function renderTablaPosiciones(){
 
 // Fixture de las fechas restantes del torneo (se carga a mano desde EstDepo, igual que la tabla).
 const FIXTURE = {
-  postergado: { rival: "Banfield", fecha: "2026-11-02", lugar: "BS AS (visitante)", hora: "horario a confirmar", nota: "Era la fecha 20 (11/10) y se pasó al lunes 2 de noviembre, de visitante en Buenos Aires. Horario a confirmar." },
+  // Partidos de Talleres que se pasaron de fecha (se sacan de su jornada original).
+  postergados: [
+    { rival: "Banfield", fecha: "2026-11-02", lugar: "BS AS (visitante)", hora: "horario a confirmar", nota: "Era la fecha 20 (11/10) y se pasó al lunes 2 de noviembre, de visitante en Buenos Aires. Horario a confirmar." },
+    { rival: "Racing Club", fecha: "2026-11-08", lugar: "CARD (local)", hora: "horario a confirmar", nota: "Era la fecha 21 (25/10) y se pasó al domingo 8 de noviembre, de local. Horario a confirmar." },
+  ],
   fechas: [
     { n: 17, fecha: "2026-09-13", lugar: "BS AS", libre: "Huracan", partidos: [
       ["Union Santa Fe","Ferro C O"], ["SAT","Talleres CBA"], ["UAI Urquiza","Estudiantes LP"],
@@ -3623,7 +3628,7 @@ const FIXTURE = {
     ]},
     { n: 21, fecha: "2026-10-25", lugar: "CARD", libre: "SAT", partidos: [
       ["Estudiantes LP","Huracan"], ["Ferro C O","Platense"], ["Newells OB","Banfield"],
-      ["Union Santa Fe","River Plate"], ["Talleres CBA","Racing Club"], ["Lanus","Rosario Central"],
+      ["Union Santa Fe","River Plate"], ["Lanus","Rosario Central"],
       ["Independiente","Belgrano CBA"], ["San Luis FC","Boca Juniors"], ["UAI Urquiza","Velez Sarsfield"],
       ["Gimnasia LP","San Lorenzo"]
     ]},
@@ -3637,14 +3642,15 @@ function renderFixture(){
   };
   const badge = info => info ? ` <span class="fx-rival-badge">${info.pos}° · ${info.pts} pts</span>` : "";
   let html = "";
-  if(FIXTURE.postergado){
-    const infoP = posInfo(FIXTURE.postergado.rival);
+  const jugadasFx = fechasJugadas();
+  listaPostergados().filter(pos=>pos && !jugadasFx.has(pos.fecha)).forEach(pos=>{
+    const infoP = posInfo(pos.rival);
     html += `
       <div class="tp-postpone">
         <span class="tp-postpone-ico">⏳</span>
-        <div><b>Partido postergado pendiente: vs ${esc(FIXTURE.postergado.rival)}${badge(infoP)}</b><span>${esc(FIXTURE.postergado.nota)}</span></div>
+        <div><b>Partido postergado pendiente: vs ${esc(pos.rival)}${badge(infoP)}</b><span>${esc(pos.nota)}</span></div>
       </div>`;
-  }
+  });
   html += FIXTURE.fechas.map(f=>{
     const rows = f.partidos.map(([local,visitante])=>{
       const isClub = local===club || visitante===club;
