@@ -246,6 +246,47 @@ body.vopen .viewer{position:sticky}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script>
+/* ===== Acceso con Google (solo cuentas autorizadas) ===== */
+window.addEventListener("load", function(){
+  const PERMITIDOS = ["dtmariaboloquy@gmail.com", "mariaboloquy9@gmail.com"];
+  try{ if(!firebase.apps.length && window.MTK_FIREBASE_CONFIG) firebase.initializeApp(window.MTK_FIREBASE_CONFIG); }catch(e){ console.error(e); }
+  function mostrarLogin(mensaje){
+    let box = document.getElementById("mk-login");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "mk-login";
+      box.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;font-family:sans-serif";
+      box.innerHTML = '<div style="background:#fff;padding:28px 24px;border-radius:12px;max-width:320px;width:90%;text-align:center">'
+        + '<h2 style="margin:0 0 8px;font-size:20px;color:#111">METODIKA</h2>'
+        + '<p style="margin:0 0 18px;color:#555;font-size:14px">Ingresá con tu cuenta de Google autorizada.</p>'
+        + '<button id="mk-login-btn" style="padding:12px 18px;font-size:15px;border:0;border-radius:8px;background:#1a73e8;color:#fff;cursor:pointer;width:100%">Entrar con Google</button>'
+        + '<p id="mk-login-msg" style="margin:14px 0 0;color:#c62828;font-size:13px"></p></div>';
+      document.body.appendChild(box);
+      document.getElementById("mk-login-btn").onclick = function(){
+        const prov = new firebase.auth.GoogleAuthProvider();
+        prov.setCustomParameters({ prompt: "select_account" });
+        firebase.auth().signInWithPopup(prov).catch(function(e){
+          document.getElementById("mk-login-msg").textContent = "No se pudo ingresar: " + (e && e.message ? e.message : e);
+        });
+      };
+    }
+    document.getElementById("mk-login-msg").textContent = mensaje || "";
+  }
+  try{
+    firebase.auth().onAuthStateChanged(function(user){
+      const email = user && user.email ? user.email.toLowerCase() : "";
+      if(user && PERMITIDOS.indexOf(email) !== -1){
+        const box = document.getElementById("mk-login"); if(box) box.remove();
+      } else {
+        if(user){ firebase.auth().signOut(); mostrarLogin("La cuenta " + email + " no tiene acceso."); }
+        else { mostrarLogin(""); }
+      }
+    });
+  }catch(e){ console.error("No se pudo iniciar el acceso con Google:", e); }
+});
+</script>
 <script>
 window.MTK_FIREBASE_CONFIG = {
   apiKey: "AIzaSyBch7vlYohOgLqJu1z4GQ_JmYaNVnyZmAQ",
