@@ -1628,6 +1628,30 @@ function _infRival3(r){
   return (limpio || String(r||"—")).slice(0,3).toUpperCase();
 }
 
+// Recorta la foto a un cuadrado (centrada en la cara si es vertical) antes de ponerla en el PDF,
+// para que no se vea estirada dentro del círculo.
+function _infPrepararFoto(src, pos, cb){
+  if(!src){ cb(null); return; }
+  const img = new Image();
+  img.onload = function(){
+    try{
+      const w = img.naturalWidth, h = img.naturalHeight;
+      let lado = Math.min(w, h), sx = (w - lado)/2, sy = (h - lado)/2;
+      const py = pos && typeof pos.y === "number" ? pos.y : 50;
+      if(h > w*1.1){
+        lado = Math.round(w*0.72);
+        sx = (w - lado)/2;
+        const topeY = h - lado;
+        sy = (py === 50) ? Math.round(h*0.04) : Math.round(topeY*py/100);
+      }
+      const c = document.createElement("canvas"); c.width = c.height = 500;
+      c.getContext("2d").drawImage(img, sx, sy, lado, lado, 0, 0, 500, 500);
+      cb(c.toDataURL("image/jpeg", 0.9));
+    }catch(e){ cb(src); }
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = src;
+}
 function exportarInformeJugadora(numero){
   const j = JUGADORAS.find(function(x){ return x.numero === numero; });
   if(!j) return;
@@ -1666,6 +1690,7 @@ function exportarInformeJugadora(numero){
 
   const archivo = "informe-" + (j.apellido||"jugadora").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"") + "-" + j.numero + ".pdf";
 
+  _infPrepararFoto(perfil.foto, perfil.fotoPos, function(fotoSq){
   guardarPDF(archivo, function(doc){
     const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
 
@@ -1684,7 +1709,7 @@ function exportarInformeJugadora(numero){
     _infTxt(doc, 25, "bold", [255,255,255]); doc.text("INFORME DE TEMPORADA", W/2, 103, {align:"center"});
     _infTxt(doc, 13, "bold", INF.sky); doc.text("PERFIL DE JUGADORA", W/2, 112, {align:"center", charSpace: 1.2});
     doc.setFillColor(255,255,255); doc.circle(W/2, 150, 30, "F");
-    pdfFotoCircular(doc, W/2, 150, 27.5, perfil.foto || null, iniciales);
+    pdfFotoCircular(doc, W/2, 150, 27.5, fotoSq, iniciales);
     doc.setDrawColor.apply(doc, PDF_THEME.navy); doc.setLineWidth(0.8); doc.circle(W/2, 150, 28, "S"); doc.setLineWidth(0.2);
     _infTxt(doc, 22, "bold", PDF_THEME.navy); doc.text(nombreCompleto, W/2, 195, {align:"center"});
     _infTxt(doc, 11.5, "normal", PDF_THEME.gray); doc.text("#" + dorsal + "   ·   " + posicion + (edad != null ? "   ·   " + edad + " años" : ""), W/2, 204, {align:"center"});
@@ -1693,13 +1718,14 @@ function exportarInformeJugadora(numero){
       esArquera ? [String(vallas), "Vallas invictas"] : [String(j.goles), "Goles"],
       [(j.calificacion||0).toFixed(1), "Calificación"],
     ];
-    const pw = (W - 28 - 3*5) / 4;
+    if(j.asistencia && typeof j.asistencia.pctAsistencia === "number") portada.push([j.asistencia.pctAsistencia + "%", "Asistencia"]);
+    const pw = (W - 28 - (portada.length-1)*4) / portada.length;
     portada.forEach(function(d, i){
-      const x = 14 + i*(pw + 5), yy = 216;
+      const x = 14 + i*(pw + 4), yy = 216;
       doc.setFillColor.apply(doc, PDF_THEME.rowAlt); doc.roundedRect(x, yy, pw, 26, 2.5, 2.5, "F");
       doc.setFillColor.apply(doc, INF.sky); doc.rect(x + pw/2 - 6, yy, 12, 1, "F");
-      _infTxt(doc, 18, "bold", PDF_THEME.navy); doc.text(d[0], x + pw/2, yy + 13, {align:"center"});
-      _infTxt(doc, 8, "normal", PDF_THEME.gray); doc.text(d[1].toUpperCase(), x + pw/2, yy + 20.5, {align:"center", charSpace: 0.4});
+      _infTxt(doc, portada.length > 4 ? 16 : 18, "bold", PDF_THEME.navy); doc.text(d[0], x + pw/2, yy + 13, {align:"center"});
+      _infTxt(doc, portada.length > 4 ? 7 : 8, "normal", PDF_THEME.gray); doc.text(d[1].toUpperCase(), x + pw/2, yy + 20.5, {align:"center", charSpace: 0.3});
     });
     _infTxt(doc, 8.5, "normal", PDF_THEME.gray);
     doc.text("Cuerpo Técnico: Boloquy – Quevedo   ·   " + new Date().toLocaleDateString("es-AR", {day:"2-digit", month:"long", year:"numeric"}), W/2, 262, {align:"center"});
@@ -1708,7 +1734,7 @@ function exportarInformeJugadora(numero){
     doc.addPage();
     let y = 18;
     doc.setFillColor.apply(doc, PDF_THEME.rowAlt); doc.circle(32, y + 16, 15, "F");
-    pdfFotoCircular(doc, 32, y + 16, 14, perfil.foto || null, iniciales);
+    pdfFotoCircular(doc, 32, y + 16, 14, fotoSq, iniciales);
     _infTxt(doc, 16, "bold", PDF_THEME.navy); doc.text(nombreCompleto, 53, y + 10);
     doc.setFillColor.apply(doc, PDF_THEME.navy); doc.rect(53, y + 14, 10, 6, "F");
     _infTxt(doc, 8.5, "bold", [255,255,255]); doc.text(String(dorsal), 58, y + 18.2, {align:"center"});
@@ -1725,12 +1751,14 @@ function exportarInformeJugadora(numero){
     y = _infTitulo(doc, "Información de partido", y);
     const datos = [
       [String(jugados.length), "Partidos"],
-      ...(esArquera ? [[String(golesRec), "Goles recibidos"], [String(vallas), "Vallas invictas"]] : [[String(j.goles), "Goles"], [String(j.asistencias), "Asistencias"]]),
+      ...(esArquera ? [[String(golesRec), "Goles recibidos"], [String(vallas), "Vallas invictas"]] : [[String(j.goles), "Goles"], [String(j.asistencias), "Asist. de gol"]]),
       [String(j.minutos), "Minutos"], [(j.calificacion||0).toFixed(1), "Calificación"], [String(j.amarillas), "Amarillas"], [String(j.rojas), "Rojas"],
+    
+      ...(j.asistencia && typeof j.asistencia.pctAsistencia === "number" ? [[j.asistencia.pctAsistencia + "%", "Asist. entrenam."]] : []),
     ];
-    const cw7 = (W - 28 - 6*3) / 7;
+    const cw7 = (W - 28 - (datos.length-1)*2.5) / datos.length;
     datos.forEach(function(d, i){
-      const x = 14 + i*(cw7 + 3);
+      const x = 14 + i*(cw7 + 2.5);
       _infCard(doc, x, y, cw7, 22);
       doc.setFillColor.apply(doc, INF.sky); doc.rect(x + cw7/2 - 4, y, 8, 0.8, "F");
       _infTxt(doc, 14, "bold", PDF_THEME.navy); doc.text(d[0], x + cw7/2, y + 11, {align:"center"});
@@ -1976,6 +2004,7 @@ function exportarInformeJugadora(numero){
       const anchoClub = doc.getTextWidth("Club Atlético Talleres");
       _infTxt(doc, 7, "normal", PDF_THEME.gray); doc.text("·  Reserva Femenina - AFA", W/2 - 22 + anchoClub + 2, H - 9);
     }
+  });
   });
 }
 
