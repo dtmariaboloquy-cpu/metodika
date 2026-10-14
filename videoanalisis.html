@@ -826,6 +826,8 @@ function renderDesc(){
       <button class="btn sm" id="dDib">✏️ ${tag.dibujos&&tag.dibujos.length?"Dibujar otro":"Dibujar"}</button>
       ${tag.dibujos&&tag.dibujos.length?`<button class="btn sm danger" id="dDibDel" title="Borrar los dibujos de este clip">Borrar ${tag.dibujos.length} dibujo${tag.dibujos.length>1?"s":""}</button>`:""}
       <button class="btn sm" id="dLista">＋ A una lista</button>
+      <button class="btn sm" id="dPdf" title="Descargar este recorte en PDF">PDF</button>
+      <button class="btn sm" id="dMp4" title="Descargar este recorte en video">🎬 Video</button>
     </div>
     <div class="chips" style="margin-bottom:8px">
       <button class="chip ${tag.equipo==="propio"?"on":""}" data-deq="propio">Talleres</button>
@@ -892,6 +894,8 @@ function renderTab(){
         <button class="btn sm solid" id="lPlay">▶︎ Reproducir selección (${ts.length})</button>
         <button class="btn sm" id="lPresent">Presentación en pantalla completa</button>
         <button class="btn sm" id="lPrev">◀︎ Anterior</button><button class="btn sm" id="lNext">Siguiente ▶︎</button>
+        <button class="btn sm" id="lMp4">🎬 Video ${marcados.size?"("+marcados.size+" tildados)":"("+ts.length+")"}</button>
+        <button class="btn sm" id="lPdf">⬇ PDF ${marcados.size?"("+marcados.size+" tildados)":"("+ts.length+")"}</button>
         <button class="btn sm" id="lAddList" ${marcados.size?"":"disabled"}>＋ Agregar ${marcados.size||""} tildado${marcados.size===1?"":"s"} a una lista</button>
         <span class="small muted" style="align-self:center">${P.tags.length} tags en total</span>
       </div>
@@ -937,7 +941,9 @@ function renderTab(){
         6. En <b>Tags</b> filtrás y armás la selección de clips para mostrarle al plantel.<br>
         7. Con <b>✏️ Dibujar</b> pausás y marcás flechas, jugadoras y zonas: el clip se frena solo en ese momento y muestra el dibujo.<br>
         8. En <b>Listas de clips</b> juntás clips de distintos partidos (ej.: “Presión tras pérdida – charla del martes”).<br>
-        9. En <b>Jugadoras</b> ves todas las acciones de cada una en la temporada, para la devolución individual.</div>
+        9. En <b>Jugadoras</b> ves todas las acciones de cada una en la temporada, para la devolución individual.<br>
+        10. <b>⬇ PDF</b> (en Tags, Listas, Jugadoras o en un tag) arma un PDF con la imagen de cada recorte, su dibujo, minuto, jugadora y nota. La imagen sale de los videos que elegiste desde tu compu en esta sesión; con YouTube va solo el dibujo.<br>
+        11. <b>🎬 Video</b> arma un video con los recortes: cartel con la acción, el minuto y la jugadora, y los dibujos. Se graba en tiempo real, así que dejá la pestaña abierta. Sale en MP4 en Chrome/Edge actualizados (si no, en WebM). Funciona con el video cargado como archivo, no con YouTube.</div>
       <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Atajos de teclado</h3>
         <kbd>Espacio</kbd> play / pausa · <kbd>←</kbd> <kbd>→</kbd> −/+ 5 s · <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> −/+ 1 s<br>
         <kbd>,</kbd> <kbd>.</kbd> cuadro a cuadro (archivo) · <kbd>Tab</kbd> cambia Talleres / Rival<br>
@@ -1027,6 +1033,8 @@ function renderJugadoras(){
       <button class="btn sm solid" id="jPlay">▶︎ Ver todos sus clips</button>
       <button class="btn sm" id="jPresent">Presentación en pantalla completa</button>
       <button class="btn sm" id="jLista">Crear lista con sus clips</button>
+      <button class="btn sm" id="jPdf">⬇ PDF para la devolución</button>
+      <button class="btn sm" id="jMp4">🎬 Video con sus clips</button>
     </div>
     <div class="statgrid">
       <div><h3 style="font-size:15px;margin-bottom:6px">Por acción</h3>
@@ -1086,7 +1094,7 @@ function renderListas(){
   return `<div class="two">${izq}<div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div><h3 style="font-size:17px">${esc(sel.nombre)}</h3><span class="small muted">${sel.items.length} clips · ${partidos} partido${partidos===1?"":"s"}</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm solid" id="liPlay">▶︎ Reproducir</button><button class="btn sm" id="liPresent">Presentación</button><button class="btn sm" id="liRen">Renombrar</button><button class="btn sm danger" id="liDel">Borrar lista</button></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm solid" id="liPlay">▶︎ Reproducir</button><button class="btn sm" id="liPresent">Presentación</button><button class="btn sm" id="liPdf">⬇ PDF</button><button class="btn sm" id="liMp4">🎬 Video</button><button class="btn sm" id="liRen">Renombrar</button><button class="btn sm danger" id="liDel">Borrar lista</button></div>
     </div>
     ${partidos>1?`<p class="small muted" style="margin:0 0 8px">Tiene clips de varios partidos: al pasar de uno a otro se cambia el video solo (si es un archivo de tu compu, la primera vez te lo pide).</p>`:""}
     <div class="scroll"><table class="t"><thead><tr><th>#</th><th>Partido</th><th>Min</th><th>Acción</th><th>Jugadora</th><th>Nota</th><th></th></tr></thead><tbody>${filas || `<tr><td colspan="7" class="muted" style="padding:12px">Lista vacía.</td></tr>`}</tbody></table></div>
@@ -1102,7 +1110,7 @@ function accionItem(acc, i){
 }
 
 /* ---------- dibujo sobre el clip ---------- */
-const cv = $("#cv"), ctx = cv.getContext("2d");
+const cv = $("#cv"), ctx = cv.getContext("2d"), ctxCv = ctx;
 let dibujando = false, herramienta = "flecha", colorDib = "#FFD60A", formasEd = [], trazo = null, tagDib = null, dibEditId = null;
 function ajustarCanvas(){
   const st = $("#stage"), dpr = window.devicePixelRatio||1;
@@ -1111,15 +1119,15 @@ function ajustarCanvas(){
 }
 new ResizeObserver(ajustarCanvas).observe($("#stage"));
 function limpiarCanvas(){ ctx.clearRect(0,0,cv.width,cv.height); }
-function flechaPunta(x1,y1,x2,y2,tam){
+function flechaPunta(x1,y1,x2,y2,tam,ctx){
   const a = Math.atan2(y2-y1,x2-x1);
   ctx.beginPath(); ctx.moveTo(x2,y2);
   ctx.lineTo(x2-tam*Math.cos(a-0.45), y2-tam*Math.sin(a-0.45));
   ctx.lineTo(x2-tam*Math.cos(a+0.45), y2-tam*Math.sin(a+0.45));
   ctx.closePath(); ctx.fill();
 }
-function pintarForma(f){
-  const W = cv.width, H = cv.height, k = W/1000;
+function pintarForma(f, c2, W2, H2){
+  const ctx = c2 || ctxCv, W = W2 || cv.width, H = H2 || cv.height, k = W/1000;
   const pts = f.pts.map(p=>[p[0]*W, p[1]*H]);
   ctx.save();
   ctx.strokeStyle = f.c; ctx.fillStyle = f.c; ctx.lineWidth = Math.max(2, 4*k); ctx.lineCap="round"; ctx.lineJoin="round";
@@ -1129,7 +1137,7 @@ function pintarForma(f){
     if (f.k==="punteada") ctx.setLineDash([14*k, 10*k]);
     ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
     ctx.setLineDash([]);
-    if (f.k!=="linea") flechaPunta(a[0],a[1],b[0],b[1], 22*k);
+    if (f.k!=="linea") flechaPunta(a[0],a[1],b[0],b[1], 22*k, ctx);
     if (f.k==="linea"){ [a,b].forEach(p=>{ ctx.beginPath(); ctx.arc(p[0],p[1],6*k,0,Math.PI*2); ctx.fill(); }); }
   } else if (f.k==="circulo"){
     const rx = Math.max(10*k, Math.hypot(b[0]-a[0], b[1]-a[1])), ry = rx*0.42;
@@ -1149,7 +1157,7 @@ function pintarForma(f){
   }
   ctx.restore();
 }
-function pintarFormas(formas){ limpiarCanvas(); (formas||[]).forEach(pintarForma); }
+function pintarFormas(formas){ limpiarCanvas(); (formas||[]).forEach(f=>pintarForma(f)); }
 function repintarEditor(){ pintarFormas(trazo ? formasEd.concat([trazo]) : formasEd); }
 function abrirDibujo(tag){
   if (!kind) return toast("Primero cargá el video.");
@@ -1212,6 +1220,230 @@ $("#drawBar").addEventListener("click", e=>{
   else if (b.id==="dCancel") cerrarDibujo(false);
   else if (b.id==="dSave") cerrarDibujo(true);
 });
+
+/* ---------- descargar recortes en video ---------- */
+let grabando = null;
+function tipoGrabacion(){
+  const op = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1,opus","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+  for (const t of op){ try{ if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t; }catch(e){} }
+  return "";
+}
+const vidRec = document.createElement("video"); vidRec.preload = "auto"; vidRec.playsInline = true;
+let recAudio = null;
+function audioDeRec(){
+  if (recAudio) return recAudio;
+  try{
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    const src = ac.createMediaElementSource(vidRec);
+    const dest = ac.createMediaStreamDestination();
+    src.connect(dest);               // no va a los parlantes: graba en silencio
+    recAudio = {ac, dest};
+  }catch(e){ recAudio = {ac:null, dest:null}; }
+  return recAudio;
+}
+function textoCartel(g, W, H, lineas){
+  g.fillStyle = "#042859"; g.fillRect(0,0,W,H);
+  g.fillStyle = "#C2377E"; g.fillRect(0,H-10,W,10);
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  lineas.forEach((l,i)=>{ g.font = (i===0?"800 60px ":i===1?"700 40px ":"500 30px ")+"Georama, Barlow, Arial"; g.fillStyle = i===0?"#FFFFFF":i===1?"#CFE3F7":"#9FB3C8"; g.fillText(String(l||"").slice(0,70), W/2, H/2-60+i*70); });
+  g.textAlign = "left";
+}
+function barraInfo(g, W, H, txt, sub){
+  g.save(); g.font = "700 30px Barlow, Arial"; const w1 = g.measureText(txt).width; g.font = "500 22px Barlow, Arial"; const w2 = sub ? g.measureText(sub).width : 0;
+  const w = Math.max(w1, w2) + 36, h = sub ? 84 : 54;
+  g.globalAlpha = .82; g.fillStyle = "#04101F"; g.fillRect(24, 24, w, h); g.globalAlpha = 1;
+  g.fillStyle = "#C2377E"; g.fillRect(24, 24, 6, h);
+  g.fillStyle = "#fff"; g.font = "700 30px Barlow, Arial"; g.textBaseline = "top"; g.fillText(txt, 44, 34);
+  if (sub){ g.font = "500 22px Barlow, Arial"; g.fillStyle = "#CFE3F7"; g.fillText(sub, 44, 70); }
+  g.restore();
+}
+function modalProgreso(){
+  return modal(`<h2>Armando el video…</h2>
+    <p class="small muted" style="margin:0 0 10px">Se graba en tiempo real: dejá esta pestaña abierta y a la vista hasta que termine.</p>
+    <div style="height:10px;background:var(--field);border-radius:6px;overflow:hidden"><div id="gBar" style="height:100%;width:0;background:var(--pink)"></div></div>
+    <p id="gTxt" class="small" style="margin:8px 0 12px">Preparando…</p>
+    <div style="display:flex;justify-content:flex-end"><button class="btn danger" id="gCancel">Cancelar</button></div>`, m=>{ m.querySelector("#gCancel").onclick = ()=>{ if (grabando) grabando.cancelado = true; }; });
+}
+async function grabarVideo(items, titulo, uno){
+  if (grabando) return toast("Ya se está armando un video.");
+  const mime = tipoGrabacion();
+  if (!mime) return toast("Este navegador no puede grabar video. Probá con Chrome o Edge.");
+  const datos = items.map(it=>Object.assign({it}, infoItem(it))).filter(x=>x.t);
+  if (!datos.length) return toast("No hay recortes para el video.");
+  const conVideo = datos.filter(x=>videoCache[x.p.id] && x.p.video && x.p.video.tipo==="archivo");
+  const faltan = [...new Set(datos.filter(x=>!conVideo.includes(x)).map(x=>x.p.nombre))];
+  if (!conVideo.length) return toast(datos.some(x=>x.p.video&&x.p.video.tipo==="youtube") ? "Los videos de YouTube no se pueden recortar. Usá el archivo del partido (mp4)." : "Para descargar el video, primero elegí el archivo del partido desde tu compu.");
+  const total = conVideo.reduce((a,x)=>a + (x.t.fin-x.t.ini) + (x.t.dibujos||[]).reduce((b,d)=>b+(+d.pausa||0),0) + (uno?0:2.2), 0);
+  if (faltan.length && !confirm("No están cargados los videos de: "+faltan.join(", ")+".\nEsos recortes no van a salir. ¿Seguir con los otros "+conVideo.length+"?")) return;
+  if (total > 600 && !confirm("El video va a durar unos "+Math.round(total/60)+" minutos y se graba en tiempo real. ¿Seguir?")) return;
+  pausar();
+  const W=1280, H=720, c = document.createElement("canvas"); c.width=W; c.height=H;
+  const g = c.getContext("2d");
+  const pm = modalProgreso();
+  grabando = {cancelado:false};
+  const {ac, dest} = audioDeRec(); if (ac && ac.state==="suspended") await ac.resume();
+  const stream = c.captureStream(30);
+  if (dest) dest.stream.getAudioTracks().forEach(tr=>stream.addTrack(tr));
+  const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond:5000000});
+  const chunks = []; rec.ondataavailable = e=>{ if (e.data && e.data.size) chunks.push(e.data); };
+  let modo = "cartel", cartel = [titulo||"Recortes"], formas = null, info = null;
+  const pintar = ()=>{
+    if (modo==="cartel") textoCartel(g, W, H, cartel);
+    else {
+      g.fillStyle="#000"; g.fillRect(0,0,W,H);
+      const vw = vidRec.videoWidth, vh = vidRec.videoHeight;
+      if (vw && vh){ const s = Math.min(W/vw, H/vh), dw=vw*s, dh=vh*s; g.drawImage(vidRec, (W-dw)/2, (H-dh)/2, dw, dh); }
+      if (formas) formas.forEach(f=>pintarForma(f, g, W, H));
+      if (info) barraInfo(g, W, H, info[0], info[1]);
+    }
+  };
+  const loop = setInterval(pintar, 1000/30);
+  const dormir = ms => new Promise(r=>setTimeout(r, ms));
+  let hecho = 0;
+  try{
+    pintar(); rec.start(1000);
+    if (!uno){ cartel = [titulo, conVideo.length+" recorte"+(conVideo.length>1?"s":""), "Talleres · Reserva Femenina"]; modo="cartel"; await dormir(2500); }
+    for (let i=0;i<conVideo.length && !grabando.cancelado;i++){
+      const {p,t} = conVideo[i];
+      const gt = pm.querySelector("#gTxt"); if (gt) gt.textContent = `Recorte ${i+1} de ${conVideo.length}: ${t.nombre} · ${minLabel(p,t.t)}`;
+      const url = videoCache[p.id];
+      if (vidRec.src !== url){ vidRec.src = url; await esperar(vidRec, "loadeddata", 10000); }
+      vidRec.currentTime = Math.max(0, t.ini); await esperar(vidRec, "seeked", 8000);
+      const linea = [t.nombre, minLabel(p,t.t), t.jugadora||(t.equipo==="propio"?"Talleres":(p.rival||"Rival"))].filter(Boolean).join(" · ");
+      const sub = [t.resultado==="pos"?"✓ Positiva":t.resultado==="neg"?"✗ Negativa":"", t.nota].filter(Boolean).join(" — ");
+      if (!uno){ cartel = [`${i+1}. ${t.nombre}`, [minLabel(p,t.t), t.jugadora].filter(Boolean).join(" · "), sub || p.nombre]; modo="cartel"; await dormir(1800); }
+      modo = "video"; info = [linea, sub.length>90 ? sub.slice(0,88)+"…" : sub]; formas = null;
+      const dibs = (t.dibujos||[]).slice().sort((a,b)=>a.t-b.t); const vistos = new Set();
+      await vidRec.play().catch(()=>{});
+      while (!grabando.cancelado && vidRec.currentTime < t.fin && !vidRec.ended){
+        const d = dibs.find(x=>!vistos.has(x.id) && vidRec.currentTime >= x.t-0.05);
+        if (d){
+          vistos.add(d.id); formas = d.formas;
+          if (+d.pausa>0){ vidRec.pause(); await dormir(+d.pausa*1000); formas = null; await vidRec.play().catch(()=>{}); }
+          else setTimeout(()=>{ formas=null; }, 2500);
+        }
+        const prog = (i + Math.min(1, Math.max(0,(vidRec.currentTime - t.ini)/Math.max(0.5, t.fin - t.ini)))) / conVideo.length;
+        const bar = pm.querySelector("#gBar"); if (bar) bar.style.width = Math.round(prog*100)+"%";
+        await dormir(40);
+      }
+      vidRec.pause(); formas = null; hecho++;
+    }
+    await dormir(300);
+  }catch(e){ console.error(e); toast("Hubo un problema grabando: "+(e.message||e)); }
+  clearInterval(loop);
+  await new Promise(r=>{ rec.onstop = r; try{ rec.stop(); }catch(e){ r(); } });
+  pm.remove();
+  const cancel = grabando.cancelado; grabando = null;
+  if (cancel){ toast("Video cancelado."); return; }
+  if (!hecho) return;
+  const ext = mime.includes("mp4") ? "mp4" : "webm";
+  descargar(slug(titulo||"recortes")+"."+ext, new Blob(chunks, {type:mime.split(";")[0]}), mime.split(";")[0]);
+  toast(ext==="mp4" ? "Video descargado (MP4)." : "Video descargado (WebM: se abre con Chrome o VLC).");
+}
+
+/* ---------- PDF de recortes ---------- */
+function cargarScript(src){ return new Promise((ok,err)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=()=>err(new Error("No se pudo cargar "+src)); document.head.appendChild(s); }); }
+async function jsPDFlib(){
+  if (!(window.jspdf && window.jspdf.jsPDF)) await cargarScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  return window.jspdf.jsPDF;
+}
+const vidAux = document.createElement("video"); vidAux.muted = true; vidAux.preload = "auto"; vidAux.playsInline = true;
+function esperar(el, ev, ms){ return new Promise(res=>{ let done=false; const f=()=>{ if(done) return; done=true; el.removeEventListener(ev,f); res(true); }; el.addEventListener(ev,f); setTimeout(()=>{ if(!done){ done=true; el.removeEventListener(ev,f); res(false); } }, ms||6000); }); }
+/* captura el cuadro del video (si está cargado como archivo) + el dibujo, en 1280x720 */
+async function capturaClip(p, t){
+  const W=1280, H=720, c = document.createElement("canvas"); c.width=W; c.height=H;
+  const g = c.getContext("2d");
+  g.fillStyle = "#0D2038"; g.fillRect(0,0,W,H);
+  const d = (t.dibujos||[])[0];
+  const momento = d ? d.t : t.t;
+  let hayImagen = false;
+  const url = videoCache[p.id];
+  if (url && p.video && p.video.tipo==="archivo"){
+    try{
+      if (vidAux.src !== url){ vidAux.src = url; await esperar(vidAux, "loadeddata", 8000); }
+      vidAux.currentTime = Math.max(0, momento);
+      await esperar(vidAux, "seeked", 6000);
+      const vw = vidAux.videoWidth, vh = vidAux.videoHeight;
+      if (vw && vh){ const s = Math.min(W/vw, H/vh), dw = vw*s, dh = vh*s; g.drawImage(vidAux, (W-dw)/2, (H-dh)/2, dw, dh); hayImagen = true; }
+    }catch(e){ console.warn(e); }
+  }
+  if (!hayImagen){
+    // fondo de cancha para que el dibujo igual se entienda
+    g.fillStyle = "#1E7A46"; g.fillRect(0,0,W,H);
+    g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 4; g.strokeRect(60,40,W-120,H-80);
+    g.beginPath(); g.moveTo(W/2,40); g.lineTo(W/2,H-40); g.stroke();
+    g.beginPath(); g.arc(W/2,H/2,90,0,Math.PI*2); g.stroke();
+    g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 26px Barlow, Arial"; g.textAlign = "center";
+    g.fillText(p.video && p.video.tipo==="youtube" ? "Video de YouTube: la imagen no se puede capturar" : "Elegí el archivo del partido para incluir la imagen", W/2, H-70);
+  }
+  if (d) d.formas.forEach(f=>pintarForma(f, g, W, H));
+  return {img: c.toDataURL("image/jpeg", 0.82), hayImagen};
+}
+let generandoPDF = false;
+async function descargarPDF(items, titulo, subtitulo, jugKey){
+  if (generandoPDF) return;
+  const datos = items.map(infoItem).filter(x=>x.t);
+  if (!datos.length) return toast("No hay recortes para el PDF.");
+  if (datos.length > 60 && !confirm("Son "+datos.length+" recortes. ¿Armar el PDF igual? Puede tardar un poco.")) return;
+  generandoPDF = true; setStatus("saving","Armando el PDF… 0/"+datos.length);
+  try{
+    const JsPDF = await jsPDFlib();
+    const doc = new JsPDF({unit:"mm", format:"a4"});
+    const PW = 210, M = 14, IW = 160, IH = IW*9/16, IX = (PW-IW)/2;
+    const fecha = new Date().toLocaleDateString("es-AR");
+    const sinImagen = new Set();
+    const cabecera = (primera)=>{
+      doc.setFillColor(4,40,89); doc.rect(0,0,PW,primera?34:14,"F");
+      doc.setTextColor(255,255,255);
+      if (primera){
+        doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("DT MARÍA BOLOQUY · TALLERES · RESERVA FEMENINA", M, 9);
+        doc.setFontSize(17); doc.text(doc.splitTextToSize(String(titulo||"Recortes"), IW)[0], M, 19);
+        doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text((subtitulo?subtitulo+" · ":"")+datos.length+" recorte"+(datos.length>1?"s":"")+" · "+fecha, M, 27);
+      } else { doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text(String(titulo||"Recortes"), M, 9); }
+      doc.setTextColor(13,32,56);
+      return primera ? 42 : 22;
+    };
+    let y = cabecera(true);
+    if (jugKey!=null){
+      const pos = datos.filter(x=>x.t.resultado==="pos").length, neg = datos.filter(x=>x.t.resultado==="neg").length;
+      doc.setFontSize(10); doc.setFont("helvetica","bold");
+      doc.text(`${datos.length} acciones · ${pos} positivas · ${neg} negativas${pos+neg?" · "+Math.round(pos/(pos+neg)*100)+"% efectividad":""}`, M, y); y += 8;
+    }
+    for (let i=0;i<datos.length;i++){
+      const {p,t} = datos[i];
+      setStatus("saving","Armando el PDF… "+(i+1)+"/"+datos.length);
+      const lineas = [];
+      const linea1 = `${i+1}. ${t.nombre}  ·  ${minLabel(p,t.t)}  ·  ${t.equipo==="propio"?"Talleres":(p.rival||"Rival")}`;
+      const det = [t.jugadora, ZONA_NOMBRE[t.zona], t.resultado==="pos"?"Positiva":t.resultado==="neg"?"Negativa":""].filter(Boolean).join("  ·  ");
+      doc.setFontSize(9.5);
+      const notaL = t.nota ? doc.splitTextToSize("Nota: "+t.nota, PW-2*M) : [];
+      const alto = 6 + IH + 5 + (det?5:0) + notaL.length*4.5 + 6;
+      if (y + alto > 297-12){ doc.addPage(); y = cabecera(false); }
+      doc.setFont("helvetica","bold"); doc.setFontSize(11.5); doc.text(linea1, M, y+4);
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(91,101,112);
+      doc.text(String(p.nombre||""), PW-M, y+4, {align:"right"}); doc.setTextColor(13,32,56);
+      y += 7;
+      const cap = await capturaClip(p, t);
+      if (!cap.hayImagen) sinImagen.add(p.nombre);
+      doc.addImage(cap.img, "JPEG", IX, y, IW, IH);
+      if (t.resultado){ doc.setFillColor(...(t.resultado==="pos"?[30,142,90]:[179,69,47])); doc.roundedRect(IX+IW-30, y+3, 27, 7, 2, 2, "F"); doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(8.5); doc.text(t.resultado==="pos"?"POSITIVA":"NEGATIVA", IX+IW-16.5, y+7.8, {align:"center"}); doc.setTextColor(13,32,56); }
+      y += IH + 5;
+      doc.setFontSize(9.5);
+      if (det){ doc.setFont("helvetica","bold"); doc.text(det, M, y); y += 5; }
+      if (notaL.length){ doc.setFont("helvetica","normal"); doc.text(notaL, M, y); y += notaL.length*4.5; }
+      y += 6;
+    }
+    const n = doc.getNumberOfPages();
+    for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(8); doc.setTextColor(138,149,163); doc.text("Metodika · Videoanálisis", M, 290); doc.text(i+" / "+n, PW-M, 290, {align:"right"}); }
+    doc.save(slug(titulo||"recortes")+".pdf");
+    setStatus(online?"saved":"", online?"Guardado en la nube de Metodika":"Guardado solo en este navegador");
+    if (sinImagen.size) toast("PDF listo. Sin imagen en: "+[...sinImagen].join(", ")+" (elegí el archivo del partido para incluirla).");
+    else toast("PDF descargado.");
+  }catch(e){
+    console.error(e); setStatus("err","No se pudo armar el PDF"); toast("No se pudo armar el PDF: "+(e.message||e));
+  }
+  generandoPDF = false;
+}
 
 /* ---------- modales ---------- */
 function modal(html, onMount){
@@ -1296,7 +1528,7 @@ function abrirEditor(){
 
 /* ---------- exportar / importar ---------- */
 function descargar(nombre, contenido, tipo){
-  const blob = new Blob([contenido], {type:tipo});
+  const blob = contenido instanceof Blob ? contenido : new Blob([contenido], {type:tipo});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre;
   document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
@@ -1364,6 +1596,8 @@ $("#descBox").addEventListener("click", e=>{
   if (t.id==="dDib") return abrirDibujo(tag);
   if (t.id==="dDibDel"){ if(confirm("¿Borrar los dibujos de este clip?")){ tag.dibujos=[]; changed(); renderDesc(); renderTab(); limpiarCanvas(); } return; }
   if (t.id==="dLista") return menuListas(t, [{p:P.id, id:tag.id}]);
+  if (t.id==="dMp4") return grabarVideo([{p:P.id, id:tag.id}], tag.nombre+" "+etiquetaMin(tag.t), true);
+  if (t.id==="dPdf") return descargarPDF([{p:P.id, id:tag.id}], tag.nombre+" · "+etiquetaMin(tag.t), P.nombre);
   if (t.dataset.deq){ tag.equipo=t.dataset.deq; }
   else if (t.dataset.res){ tag.resultado = tag.resultado===t.dataset.res ? "" : t.dataset.res; }
   else if (t.dataset.z){ tag.zona = tag.zona===t.dataset.z ? "" : t.dataset.z; }
@@ -1411,6 +1645,12 @@ $("#tabBody").addEventListener("click", e=>{
   if (clipJ){ const [pid,id]=clipJ.dataset.clip.split(":"); irAClip(pid,id,false); return; }
   if (t.id==="jPlay" || t.id==="jPresent"){ const its = clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})); reproducirLista(its, t.id==="jPresent", nombreJug(jugSel)); return; }
   if (t.id==="jLista"){ const its = clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})); if(!its.length) return; const l = crearLista("Clips de "+nombreJug(jugSel)); l.items = its; guardarListas(); listaSel=l.id; tabActual="listas"; renderTabs(); renderTab(); toast("Lista creada con "+its.length+" clips."); return; }
+  if (t.id==="lMp4"){ const ids = marcados.size ? P.tags.filter(x=>marcados.has(x.id)).map(x=>x.id) : tagsFiltrados().map(x=>x.id); grabarVideo(ids.map(id=>({p:P.id,id})), P.nombre); return; }
+  if (t.id==="jMp4"){ grabarVideo(clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})), "Clips de "+nombreJug(jugSel)); return; }
+  if (t.id==="liMp4"){ const l=LISTAS.find(x=>x.id===listaSel); if(l) grabarVideo(l.items, l.nombre); return; }
+  if (t.id==="lPdf"){ const ids = marcados.size ? P.tags.filter(x=>marcados.has(x.id)).map(x=>x.id) : tagsFiltrados().map(x=>x.id); descargarPDF(ids.map(id=>({p:P.id,id})), P.nombre, "Selección de recortes"); return; }
+  if (t.id==="jPdf"){ descargarPDF(clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})), nombreJug(jugSel), "Devolución individual · Videoanálisis", jugSel); return; }
+  if (t.id==="liPdf"){ const l=LISTAS.find(x=>x.id===listaSel); if(l) descargarPDF(l.items, l.nombre, "Lista de clips"); return; }
   if (t.id==="lAddList"){ menuListas(t, [...marcados].map(id=>({p:P.id,id}))); return; }
   if (t.id==="liNueva"){ const n=prompt("Nombre de la lista (ej.: Presión tras pérdida – charla del martes):"); if(n&&n.trim()){ const l=crearLista(n.trim()); listaSel=l.id; renderTab(); } return; }
   if (t.id==="liRen"){ const l=LISTAS.find(x=>x.id===listaSel); if(!l) return; const n=prompt("Nuevo nombre:", l.nombre); if(n&&n.trim()){ l.nombre=n.trim(); guardarListas(); renderTab(); } return; }
