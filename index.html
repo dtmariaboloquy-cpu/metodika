@@ -1142,7 +1142,7 @@ function calBadge(dt, fallbackText){
 const MODULOS = [
   {k:"planificacion", nombre:"Planificación", desc:"Macrociclo, mesociclos y sesiones del año", activo:true, bg:"#EFE9FB", fg:"#6D4FC9"},
   {k:"modelo", nombre:"Modelo de Juego", desc:"Principios, fases y comportamientos del equipo", bg:"var(--verde-claro)", fg:"var(--verde)"},
-  {k:"video", nombre:"Videoanálisis", desc:"Proyectos, cortes y presentaciones del partido", bg:"#FCE7F3", fg:"#C2377E"},
+  {k:"video", nombre:"Videoanálisis", desc:"Tagging del partido, clips, estadísticas y presentaciones", activo:true, bg:"#FCE7F3", fg:"#C2377E"},
   {k:"scouting", nombre:"Análisis de rival", desc:"Video del rival, recortes con dibujo, pantalla grande y PDF", activo:true, bg:"#FFF6DA", fg:"#B98A2E"},
   {k:"partidos", nombre:"Partidos", desc:"Resultados y estadísticas del equipo", activo:true, bg:"#E6F6EC", fg:"#1E8E5A"},
   {k:"plantel", nombre:"Plantel", desc:"Jugadoras y su presencia a lo largo del año", activo:true, bg:"var(--bronce-claro)", fg:"var(--bronce)"},
@@ -5971,6 +5971,18 @@ function renderAnalisisRival(){
     <iframe class="analisis-frame" src="analisis.html" title="Análisis de rival" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
   `;
 }
+function renderVideoanalisis(){
+  return `
+    <div class="analisis-head">
+      <div>
+        <h2 class="section" style="margin:0">Videoanálisis</h2>
+        <p class="muted" style="margin:4px 0 0">Taggeá el partido con la botonera, sumá jugadora, zona y resultado a cada acción, y armá la selección de clips. Se guarda en la nube de Metodika.</p>
+      </div>
+      <a class="analisis-btn" href="videoanalisis.html" target="_blank" rel="noopener">Abrir en pantalla completa</a>
+    </div>
+    <iframe class="analisis-frame" src="videoanalisis.html" title="Videoanálisis" allow="fullscreen; autoplay; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  `;
+}
 function render(){
   actualizarProximoPartido();
   const main = document.getElementById('main');
@@ -6008,6 +6020,9 @@ function render(){
       main.innerHTML = renderPartidos();
       setTimeout(initPartidosCharts, 0);
     }
+  } else if(vista==="video"){
+    renderTabsHome();
+    main.innerHTML = renderVideoanalisis();
   } else if(vista==="scouting"){
     renderTabsHome();
     main.innerHTML = renderAnalisisRival();

@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metodika · Videoanálisis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Georama:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAEFF6; --card:#FFFFFF; --ink:#0D2038; --sub:#5B6570; --mute:#8A95A3;
+  --line:#DADFE6; --field:#F4F7FB; --accent:#005AA7; --accent-ink:#FFFFFF; --accent-wash:#E3F0FA;
+  --navy:#042859; --rival:#B3452F; --rival-wash:#F6E4DF; --ok:#1E8E5A; --ok-wash:#E2F4EA; --pink:#C2377E;
+  --f-d:'Georama',Arial,sans-serif; --f-b:'Barlow','Segoe UI',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0B1520; --card:#111E2E; --ink:#E7ECF2; --sub:#8FA0B3; --mute:#6B7C90;
+    --line:#233247; --field:#0E1926; --accent:#5FA8DE; --accent-ink:#06121F; --accent-wash:#132A3E;
+    --navy:#5FA8DE; --rival:#E08A73; --rival-wash:#2E1C18; --ok:#4CC27F; --ok-wash:#12291D; --pink:#E57BB0;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B1520; --card:#111E2E; --ink:#E7ECF2; --sub:#8FA0B3; --mute:#6B7C90;
+  --line:#233247; --field:#0E1926; --accent:#5FA8DE; --accent-ink:#06121F; --accent-wash:#132A3E;
+  --navy:#5FA8DE; --rival:#E08A73; --rival-wash:#2E1C18; --ok:#4CC27F; --ok-wash:#12291D; --pink:#E57BB0;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:14px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1500px;margin:0 auto;padding:14px 16px 40px}
+h1,h2,h3{font-family:var(--f-d);margin:0}
+.muted{color:var(--sub)}
+.small{font-size:12px}
+.hidden{display:none!important}
+
+/* barra superior */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{font-size:22px;font-weight:800;letter-spacing:.2px}
+.top .eyebrow{font-family:var(--f-d);font-weight:600;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--pink)}
+.top .grow{flex:1}
+.status{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--mute)}
+.status.saved .dot{background:var(--ok)} .status.saving .dot{background:var(--accent)} .status.err .dot{background:var(--rival)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:7px 12px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.solid{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--rival)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:7px}
+.btn:disabled{opacity:.45;cursor:default}
+select.inp,input.inp,textarea.inp{background:var(--field);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;min-width:0}
+textarea.inp{width:100%;resize:vertical;min-height:54px}
+label.lbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);margin:0 0 4px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+
+/* layout principal */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px;align-items:start}
+@media (max-width:1050px){ .grid{grid-template-columns:1fr} }
+
+/* video */
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9}
+.stage video,.stage iframe,.stage #ytHost{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.stage .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#C9D3DF;text-align:center;padding:20px}
+.stage .empty b{font-family:var(--f-d);font-size:18px;color:#fff}
+.overlay{position:absolute;left:12px;top:12px;background:rgba(4,16,31,.78);color:#fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;pointer-events:none;display:none;max-width:80%}
+.overlay small{display:block;font-weight:500;opacity:.8}
+.stage:fullscreen .overlay{font-size:20px;padding:10px 16px}
+.flash{position:absolute;right:12px;top:12px;background:var(--ok);color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none}
+.flash.on{opacity:1}
+
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.clock{font-family:var(--f-d);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;padding:0 6px}
+.clock small{font-family:var(--f-b);font-weight:600;color:var(--pink);font-size:12px;margin-left:4px}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+
+/* timeline */
+.tl{margin-top:10px;position:relative;user-select:none}
+.tl-scale{position:relative;height:16px;margin-left:120px;font-size:10px;color:var(--mute)}
+.tl-scale span{position:absolute;transform:translateX(-50%)}
+.tl-row{display:flex;align-items:center;height:20px;border-top:1px solid var(--line)}
+.tl-row:last-child{border-bottom:1px solid var(--line)}
+.tl-name{width:120px;flex:none;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;display:flex;align-items:center;gap:5px}
+.tl-name i{width:8px;height:8px;border-radius:2px;flex:none}
+.tl-lane{position:relative;flex:1;height:100%;cursor:pointer;background:var(--field)}
+.tl-mk{position:absolute;top:3px;bottom:3px;min-width:4px;border-radius:2px;opacity:.9}
+.tl-mk.riv{top:10px;opacity:.55}
+.tl-mk.sel{outline:2px solid var(--ink);opacity:1}
+.tl-head{position:absolute;top:0;bottom:0;width:2px;background:var(--rival);pointer-events:none;margin-left:120px}
+.tl-empty{font-size:12px;color:var(--mute);padding:8px 0}
+
+/* botonera */
+.team{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.team button{border:0;background:var(--field);padding:8px;font-weight:700;cursor:pointer}
+.team button.on.prop{background:var(--accent);color:var(--accent-ink)}
+.team button.on.riv{background:var(--rival);color:#fff}
+.grp{margin-bottom:8px}
+.grp h3{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--sub);margin:0 0 5px;font-family:var(--f-b);font-weight:700}
+.btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.tb{position:relative;border:1px solid var(--line);border-left:4px solid var(--c);background:var(--card);border-radius:8px;padding:6px 18px 5px 7px;text-align:left;cursor:pointer;font-weight:700;font-size:12px;line-height:1.12;min-height:36px}
+.tb:hover{background:var(--field)}
+.tb kbd{position:absolute;right:3px;top:3px;font-family:var(--f-b);font-size:10px;font-weight:700;color:var(--sub);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.tb .m{display:block;font-size:10px;font-weight:500;color:var(--mute);margin-top:2px}
+.tb.rec{background:var(--c);color:#fff;animation:pulse 1s infinite}
+.tb.rec .m,.tb.rec kbd{color:#fff;background:transparent;border-color:rgba(255,255,255,.5)}
+@keyframes pulse{50%{opacity:.75}}
+
+/* ultimo tag / descriptores */
+.desc-box{border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:6px}
+.desc-box h4{margin:0 0 6px;font-size:13px;font-family:var(--f-d);display:flex;justify-content:space-between;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.chip.pos.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.chip.neg.on{background:var(--rival);border-color:var(--rival);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+
+/* mini cancha (zonas) */
+.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:105/68;background:linear-gradient(90deg,#1E7A46,#23864E);border-radius:8px;overflow:hidden;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.pitch::before{content:"";position:absolute;inset:6%;border:1.5px solid rgba(255,255,255,.65);pointer-events:none}
+.pitch::after{content:"";position:absolute;left:50%;top:6%;bottom:6%;border-left:1.5px solid rgba(255,255,255,.65);pointer-events:none}
+.pz{position:relative;border:1px dashed rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.pz:hover{background:rgba(255,255,255,.12)}
+.pz.on{background:rgba(255,255,255,.35)}
+.pitch .dir{position:absolute;bottom:2px;right:6px;font-size:10px;color:rgba(255,255,255,.85);pointer-events:none;z-index:2}
+
+/* pestañas inferiores */
+.tabs{display:flex;gap:4px;margin:14px 0 8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px;cursor:pointer}
+.tab.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr.sel td{background:var(--accent-wash)}
+table.t tr:hover td{background:var(--field)}
+.tagdot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+.pill.prop{background:var(--accent-wash);color:var(--accent)}
+.pill.riv{background:var(--rival-wash);color:var(--rival)}
+.pill.pos{background:var(--ok-wash);color:var(--ok)}
+.pill.neg{background:var(--rival-wash);color:var(--rival)}
+.scroll{max-height:440px;overflow:auto}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.bar{height:8px;border-radius:4px;background:var(--accent)}
+.bar.riv{background:var(--rival)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(4,12,24,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .box{background:var(--card);border-radius:14px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:18px}
+.modal h2{font-size:19px;margin-bottom:10px}
+.ed-row{display:grid;grid-template-columns:28px 1.6fr 1.3fr 54px 54px 54px 92px 74px 28px;gap:6px;align-items:center;margin-bottom:6px}
+.ed-row input[type=color]{width:28px;height:28px;border:0;padding:0;background:none}
+.ed-head{font-size:10.5px;text-transform:uppercase;color:var(--sub);font-weight:700}
+@media (max-width:700px){ .ed-row{grid-template-columns:28px 1fr 1fr 48px; } .ed-row .opt{display:none} }
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}
+.toast.show{opacity:1}
+.help{font-size:12.5px;color:var(--sub);line-height:1.6}
+.help kbd{font-family:var(--f-b);font-size:11px;font-weight:700;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--ink)}
+#panel{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
+@media (max-width:1050px){ #panel{position:static;max-height:none} }
+#descBox .pitch{max-width:260px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Videoanálisis · Tagging</div>
+      <h1 id="tituloProyecto">Videoanálisis</h1>
+    </div>
+    <div class="grow"></div>
+    <select class="inp" id="selProyecto" title="Proyecto"></select>
+    <button class="btn" id="btnNuevo">+ Nuevo análisis</button>
+    <button class="btn" id="btnDatos">Datos del partido</button>
+    <button class="btn danger sm" id="btnBorrarProy" title="Borrar este análisis">Borrar</button>
+    <div class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></div>
+  </div>
+
+  <div class="grid">
+    <!-- columna video -->
+    <div>
+      <div class="stage" id="stage">
+        <video id="vid" playsinline preload="auto" class="hidden"></video>
+        <div id="ytHost" class="hidden"></div>
+        <div class="empty" id="emptyStage">
+          <b>Cargá el video del partido</b>
+          <span>Elegí un archivo de tu compu (mp4) o pegá un link de YouTube.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <button class="btn solid" id="btnArchivo">Elegir archivo</button>
+            <button class="btn" id="btnYT">Pegar link de YouTube</button>
+          </div>
+          <span class="small" id="reelegir"></span>
+        </div>
+        <div class="overlay" id="overlay"></div>
+        <div class="flash" id="flash"></div>
+      </div>
+      <input type="file" id="fileIn" accept="video/*" hidden>
+      <input type="file" id="jsonIn" accept=".json,application/json" hidden>
+
+      <div class="ctrl">
+        <button class="btn sm" id="bPlay" title="Espacio">▶︎ / ❚❚</button>
+        <button class="btn sm" data-skip="-10">−10 s</button>
+        <button class="btn sm" data-skip="-5">−5 s</button>
+        <button class="btn sm" data-skip="5">+5 s</button>
+        <button class="btn sm" data-skip="10">+10 s</button>
+        <span class="sep"></span>
+        <button class="btn sm" data-rate="0.5">0,5×</button>
+        <button class="btn sm" data-rate="1">1×</button>
+        <button class="btn sm" data-rate="2">2×</button>
+        <span class="sep"></span>
+        <span class="clock" id="clock">0:00</span>
+        <div style="flex:1"></div>
+        <button class="btn sm" id="bIni1">Marcar inicio 1T</button>
+        <button class="btn sm" id="bIni2">Marcar inicio 2T</button>
+        <button class="btn sm" id="bCambiarVideo">Cambiar video</button>
+        <button class="btn sm" id="bFull">Pantalla completa</button>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
+          <h3 style="font-size:15px">Línea de tiempo</h3>
+          <span class="small muted">Tocá una franja para ir a ese momento · tocá un tag para verlo</span>
+        </div>
+        <div class="tl" id="tl"></div>
+      </div>
+    </div>
+
+    <!-- columna botonera -->
+    <div class="card" id="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="font-size:16px" title="El número en cada botón es la cantidad de tags marcados">Botonera</h3>
+        <button class="btn sm" id="btnEditar">Editar botones</button>
+      </div>
+      <div class="team" id="team">
+        <button class="prop" data-eq="propio">Talleres</button>
+        <button class="riv" data-eq="rival">Rival</button>
+      </div>
+      <div id="botonera"></div>
+      <div class="desc-box" id="descBox"></div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-t="lista">Tags</button>
+    <button class="tab" data-t="stats">Estadísticas</button>
+    <button class="tab" data-t="export">Exportar / importar</button>
+    <button class="tab" data-t="ayuda">Atajos y ayuda</button>
+  </div>
+  <div class="card" id="tabBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script>
+window.MTK_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBch7vlYohOgLqJu1z4GQ_JmYaNVnyZmAQ",
+  authDomain: "metodika-bde47.firebaseapp.com",
+  projectId: "metodika-bde47",
+  storageBucket: "metodika-bde47.firebasestorage.app",
+  messagingSenderId: "669756389436",
+  appId: "1:669756389436:web:87c0daf91329afc01c2b39"
+};
+/* ===== Acceso con Google (solo cuentas autorizadas) ===== */
+window.addEventListener("load", function(){
+  const PERMITIDOS = ["dtmariaboloquy@gmail.com", "mariaboloquy9@gmail.com"];
+  try{ if(!firebase.apps.length) firebase.initializeApp(window.MTK_FIREBASE_CONFIG); }catch(e){ console.error(e); return; }
+  function mostrarLogin(mensaje){
+    let box = document.getElementById("mk-login");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "mk-login";
+      box.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;font-family:sans-serif";
+      box.innerHTML = '<div style="background:#fff;padding:28px 24px;border-radius:12px;max-width:320px;width:90%;text-align:center">'
+        + '<h2 style="margin:0 0 8px;font-size:20px;color:#111">METODIKA</h2>'
+        + '<p style="margin:0 0 18px;color:#555;font-size:14px">Ingresá con tu cuenta de Google autorizada.</p>'
+        + '<button id="mk-login-btn" style="padding:12px 18px;font-size:15px;border:0;border-radius:8px;background:#1a73e8;color:#fff;cursor:pointer;width:100%">Entrar con Google</button>'
+        + '<p id="mk-login-msg" style="margin:14px 0 0;color:#c62828;font-size:13px"></p></div>';
+      document.body.appendChild(box);
+      document.getElementById("mk-login-btn").onclick = function(){
+        const prov = new firebase.auth.GoogleAuthProvider();
+        prov.setCustomParameters({ prompt: "select_account" });
+        firebase.auth().signInWithPopup(prov).catch(function(e){
+          document.getElementById("mk-login-msg").textContent = "No se pudo ingresar: " + (e && e.message ? e.message : e);
+        });
+      };
+    }
+    document.getElementById("mk-login-msg").textContent = mensaje || "";
+  }
+  try{
+    firebase.auth().onAuthStateChanged(function(user){
+      const email = user && user.email ? user.email.toLowerCase() : "";
+      if(user && PERMITIDOS.indexOf(email) !== -1){
+        const box = document.getElementById("mk-login"); if(box) box.remove();
+        if(window.VA && window.VA.onLogin) window.VA.onLogin();
+      } else {
+        if(user){ firebase.auth().signOut(); mostrarLogin("La cuenta " + email + " no tiene acceso."); }
+        else { mostrarLogin(""); }
+      }
+    });
+  }catch(e){ console.error("No se pudo iniciar el acceso con Google:", e); }
+});
+</script>
+
+<script>
+(function(){
+"use strict";
+/* =========================================================
+   Metodika · Videoanálisis (tagging de partido)
+   Guarda cada análisis en Firestore: colección "videoanalisis"
+   La botonera modelo se guarda en "videoanalisis-config/botonera".
+   Copia de respaldo en este navegador (localStorage).
+   ========================================================= */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const clone = o => JSON.parse(JSON.stringify(o));
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function fmt(t){ t=Math.max(0,t||0); const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=Math.floor(t%60); return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0"); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ---------- botonera por defecto (momentos del juego) ---------- */
+const GRUPOS = ["Ataque organizado","Transición ofensiva","Defensa organizada","Transición defensiva","Pelota parada"];
+function B(nombre, grupo, color, tecla, pre, post, modo){ return {id:uid(), nombre, grupo, color, tecla, pre, post, modo:modo||"clic"}; }
+function botoneraDefault(){ return [
+  B("Salida de juego","Ataque organizado","#2563EB","1",4,8),
+  B("Progresión","Ataque organizado","#3B82F6","2",5,6),
+  B("Llegada a último tercio","Ataque organizado","#0EA5E9","3",6,6),
+  B("Centro","Ataque organizado","#06B6D4","4",5,4),
+  B("Remate","Ataque organizado","#7C3AED","5",8,4),
+  B("Gol","Ataque organizado","#16A34A","G",15,8),
+  B("Recuperación","Transición ofensiva","#22C55E","R",3,8),
+  B("Contraataque","Transición ofensiva","#10B981","C",3,12),
+  B("Pérdida","Transición defensiva","#EF4444","P",4,6),
+  B("Presión tras pérdida","Transición defensiva","#F97316","X",2,8),
+  B("Repliegue","Transición defensiva","#FB923C","Z",2,10),
+  B("Presión alta","Defensa organizada","#DB2777","A",2,10),
+  B("Bloque medio","Defensa organizada","#C026D3","M",2,10),
+  B("Bloque bajo","Defensa organizada","#9333EA","B",2,10),
+  B("Duelo","Defensa organizada","#A855F7","D",3,3),
+  B("Falta","Defensa organizada","#64748B","F",4,4),
+  B("Córner","Pelota parada","#CA8A04","Q",3,12),
+  B("Tiro libre","Pelota parada","#EAB308","L",3,12),
+  B("Lateral","Pelota parada","#A16207","W",2,8),
+  B("Saque de arco","Pelota parada","#854D0E","S",2,10),
+  B("Penal","Pelota parada","#B45309","N",3,8),
+  B("Posesión larga","Ataque organizado","#1D4ED8","O",0,0,"rango")
+]; }
+
+const ZONAS = [
+  ["DI","Def. izq"],["MI","Medio izq"],["OI","Of. izq"],
+  ["DC","Def. centro"],["MC","Medio centro"],["OC","Of. centro"],
+  ["DD","Def. der"],["MD","Medio der"],["OD","Of. der"]
+];
+const ZONA_NOMBRE = Object.fromEntries(ZONAS);
+
+/* ---------- estado ---------- */
+let proyectos = [];          // [{id,nombre}]
+let P = null;                // proyecto abierto
+let plantilla = null;        // botonera modelo
+let equipo = "propio";
+let selTagId = null;
+let recording = {};          // botonId -> tiempo inicio (modo rango)
+let tabActual = lsGet("va_tab") || "lista";
+let filtros = {boton:"", equipo:"", jugadora:"", resultado:"", periodo:""};
+let JUGADORAS = [], PARTIDOS = [];
+let playlist = null;         // {ids:[], i:0, present:bool}
+let clipFin = null;
+
+/* ---------- plantel desde Metodika ---------- */
+function parseDataTag(html, id){
+  const re = new RegExp('<script[^>]*id=["\\\']'+id+'["\\\'][^>]*>([\\s\\S]*?)<\\/script>');
+  const m = html.match(re); if(!m) return null;
+  try{ return JSON.parse(m[1]); }catch(e){ return null; }
+}
+async function cargarPlantel(){
+  try{
+    if (window.parent && window.parent !== window) {
+      const d = window.parent.document;
+      const j = d.getElementById("jugadoras-data"), p = d.getElementById("partidos-data");
+      if (j) JUGADORAS = JSON.parse(j.textContent);
+      if (p) PARTIDOS = JSON.parse(p.textContent);
+    }
+  }catch(e){}
+  if (!JUGADORAS.length) {
+    const cache = lsGet("va_plantel");
+    if (cache) { try{ const c = JSON.parse(cache); JUGADORAS=c.j||[]; PARTIDOS=c.p||[]; }catch(e){} }
+    try{
+      const html = await fetch("index.html", {cache:"no-store"}).then(r=>r.ok?r.text():"");
+      const j = parseDataTag(html, "jugadoras-data"), p = parseDataTag(html, "partidos-data");
+      if (j) JUGADORAS = j; if (p) PARTIDOS = p;
+    }catch(e){}
+  }
+  JUGADORAS = (JUGADORAS||[]).map(j=>({num:j.numero, nombre:((j.nombrePropio||"")+" "+(j.apellido||"")).trim() || j.apellido, pos:j.posicion||""}))
+    .sort((a,b)=>(a.num||99)-(b.num||99));
+  lsSet("va_plantel", JSON.stringify({j:[], p:PARTIDOS})); // solo partidos (liviano)
+  render();
+}
+
+/* ---------- guardado (Firestore + respaldo local) ---------- */
+let db = null, online = false, saveTimer = null;
+function setStatus(cls, txt){ $("#status").className = "status "+cls; $("#statusTxt").textContent = txt; }
+function getDb(){
+  if (db) return db;
+  try{ if (typeof firebase==="undefined") return null; if(!firebase.apps.length) firebase.initializeApp(window.MTK_FIREBASE_CONFIG); db = firebase.firestore(); }catch(e){ db=null; }
+  return db;
+}
+function guardarLocal(){
+  if (!P) return;
+  lsSet("va_p_"+P.id, JSON.stringify(P));
+  const idx = proyectos.map(x=>({id:x.id,nombre:x.nombre,fecha:x.fecha||""}));
+  lsSet("va_index", JSON.stringify(idx));
+  lsSet("va_last", P.id);
+}
+function changed(){
+  if (!P) return;
+  P.actualizado = new Date().toISOString();
+  const it = proyectos.find(x=>x.id===P.id); if (it){ it.nombre=P.nombre; it.fecha=P.fecha; }
+  guardarLocal();
+  if (!online){ setStatus("", "Guardado solo en este navegador"); return; }
+  setStatus("saving","Guardando…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(guardarNube, 900);
+}
+async function guardarNube(){
+  if (!P || !online) return;
+  try{
+    const data = clone(P); delete data._videoUrl;
+    await getDb().doc("videoanalisis/"+P.id).set(data);
+    setStatus("saved","Guardado en la nube de Metodika");
+  }catch(e){
+    console.error(e);
+    setStatus("err","No se pudo guardar en la nube — quedó guardado en este navegador");
+  }
+}
+async function guardarPlantilla(){
+  lsSet("va_plantilla", JSON.stringify(plantilla));
+  if (online){ try{ await getDb().doc("videoanalisis-config/botonera").set({botones:plantilla, actualizado:new Date().toISOString()}); }catch(e){ console.error(e); } }
+}
+
+async function iniciar(){
+  // índice local primero (rápido)
+  try{ proyectos = JSON.parse(lsGet("va_index")||"[]"); }catch(e){ proyectos=[]; }
+  try{ plantilla = JSON.parse(lsGet("va_plantilla")||"null"); }catch(e){ plantilla=null; }
+  const d = getDb();
+  if (d){
+    try{
+      const snap = await d.collection("videoanalisis").get();
+      const nube = snap.docs.map(x=>{ const v=x.data(); return {id:x.id, nombre:v.nombre||"Sin nombre", fecha:v.fecha||"", _data:v}; });
+      // unir con locales que no estén en la nube
+      const ids = new Set(nube.map(x=>x.id));
+      proyectos.filter(x=>!ids.has(x.id)).forEach(x=>nube.push(x));
+      nube.forEach(x=>{ if (x._data){ lsSet("va_p_"+x.id, JSON.stringify(x._data)); delete x._data; } });
+      proyectos = nube;
+      online = true;
+      try{ const c = await d.doc("videoanalisis-config/botonera").get(); if (c.exists && c.data().botones) plantilla = c.data().botones; }catch(e){}
+      setStatus("saved","Conectado a la nube de Metodika");
+    }catch(e){
+      console.warn("Firestore no disponible:", e);
+      online = false;
+      setStatus("err","Sin conexión a la nube — se guarda en este navegador");
+    }
+  } else setStatus("", "Guardado solo en este navegador");
+  if (!plantilla) plantilla = botoneraDefault();
+  proyectos.sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+  const last = lsGet("va_last");
+  if (proyectos.length) abrirProyecto((proyectos.find(x=>x.id===last)||proyectos[0]).id);
+  else nuevoProyecto(true);
+}
+let iniciado = false;
+window.VA = { onLogin(){ if (!iniciado){ iniciado = true; iniciar(); } } };
+// si no hay login de Firebase (sin conexión), arrancar igual
+setTimeout(()=>{ if(!iniciado && (typeof firebase==="undefined")){ iniciado=true; iniciar(); } }, 2500);
+
+function abrirProyecto(id){
+  pausar(); playlist=null; recording={};
+  let data = null;
+  try{ data = JSON.parse(lsGet("va_p_"+id)||"null"); }catch(e){}
+  if (!data){ toast("No se encontró ese análisis."); return; }
+  P = data;
+  P.botones = P.botones && P.botones.length ? P.botones : clone(plantilla);
+  P.tags = P.tags || [];
+  selTagId = null;
+  lsSet("va_last", P.id);
+  cargarVideoDeProyecto();
+  render();
+}
+function nuevoProyecto(silencioso){
+  const p = {id:uid(), nombre:"Nuevo análisis", rival:"", fecha:new Date().toISOString().slice(0,10), competencia:"",
+    video:null, ini1:null, ini2:null, botones:clone(plantilla), tags:[], creado:new Date().toISOString()};
+  proyectos.unshift({id:p.id, nombre:p.nombre, fecha:p.fecha});
+  lsSet("va_p_"+p.id, JSON.stringify(p));
+  abrirProyecto(p.id);
+  changed();
+  if (!silencioso) abrirDatos();
+}
+async function borrarProyecto(){
+  if (!P) return;
+  if (!confirm("¿Borrar \""+P.nombre+"\" con sus "+P.tags.length+" tags? No se puede deshacer.")) return;
+  const id = P.id;
+  if (online){ try{ await getDb().doc("videoanalisis/"+id).delete(); }catch(e){ toast("No se pudo borrar en la nube."); return; } }
+  lsDel("va_p_"+id);
+  proyectos = proyectos.filter(x=>x.id!==id);
+  P = null;
+  if (proyectos.length) abrirProyecto(proyectos[0].id); else nuevoProyecto(true);
+  guardarLocal();
+  toast("Análisis borrado.");
+}
+
+/* ---------- reproductor (archivo o YouTube) ---------- */
+const vid = $("#vid");
+let kind = null, yt = null, ytReady = false;
+const player = {
+  time(){ if(kind==="file") return vid.currentTime||0; if(kind==="yt"&&ytReady) return yt.getCurrentTime()||0; return 0; },
+  dur(){ if(kind==="file") return isFinite(vid.duration)?vid.duration:0; if(kind==="yt"&&ytReady) return yt.getDuration()||0; return 0; },
+  seek(t){ t=Math.max(0,t); if(kind==="file") vid.currentTime=t; else if(kind==="yt"&&ytReady) yt.seekTo(t,true); },
+  play(){ if(kind==="file") vid.play().catch(()=>{}); else if(kind==="yt"&&ytReady) yt.playVideo(); },
+  pause(){ if(kind==="file") vid.pause(); else if(kind==="yt"&&ytReady) yt.pauseVideo(); },
+  paused(){ if(kind==="file") return vid.paused; if(kind==="yt"&&ytReady) return yt.getPlayerState()!==1; return true; },
+  rate(r){ if(kind==="file") vid.playbackRate=r; else if(kind==="yt"&&ytReady) yt.setPlaybackRate(r); }
+};
+function pausar(){ try{ player.pause(); }catch(e){} }
+function ytId(url){
+  const m = String(url||"").match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(url||"") ? url : null);
+}
+function mostrarVacio(msg){
+  vid.classList.add("hidden"); $("#ytHost").classList.add("hidden"); $("#emptyStage").classList.remove("hidden");
+  $("#reelegir").textContent = msg || "";
+}
+function cargarVideoDeProyecto(){
+  kind = null;
+  if (vid.src){ try{ vid.pause(); }catch(e){} vid.removeAttribute("src"); vid.load(); }
+  if (yt){ try{ yt.destroy(); }catch(e){} yt=null; ytReady=false; $("#ytHost").outerHTML = '<div id="ytHost" class="hidden"></div>'; }
+  if (!P || !P.video){ mostrarVacio(""); return; }
+  if (P.video.tipo==="youtube") cargarYT(P.video.url);
+  else mostrarVacio("Este análisis usa el archivo “"+P.video.nombre+"”. Volvé a elegirlo desde tu compu para seguir (los videos no se suben a la nube).");
+}
+function cargarArchivo(file){
+  if (!file) return;
+  if (yt){ try{ yt.destroy(); }catch(e){} yt=null; ytReady=false; $("#ytHost").outerHTML = '<div id="ytHost" class="hidden"></div>'; }
+  const prev = P && P.video && P.video.tipo==="archivo" ? P.video.nombre : null;
+  if (prev && prev !== file.name && P.tags.length && !confirm("Este análisis tenía el video “"+prev+"”. ¿Usar “"+file.name+"” igual? Los tags quedan con sus tiempos.")) return;
+  vid.src = URL.createObjectURL(file);
+  kind = "file";
+  vid.classList.remove("hidden"); $("#emptyStage").classList.add("hidden");
+  P.video = {tipo:"archivo", nombre:file.name, size:file.size};
+  changed();
+}
+function cargarYT(url){
+  const id = ytId(url);
+  if (!id){ toast("Ese link de YouTube no es válido."); return; }
+  if (vid.src){ vid.pause(); vid.removeAttribute("src"); vid.load(); }
+  if (yt){ try{ yt.destroy(); }catch(e){} yt=null; $("#ytHost").outerHTML = '<div id="ytHost"></div>'; }
+  vid.classList.add("hidden"); $("#emptyStage").classList.add("hidden");
+  const host = $("#ytHost"); host.classList.remove("hidden");
+  kind = "yt"; ytReady = false;
+  P.video = {tipo:"youtube", url:url, id:id};
+  const crear = ()=>{
+    yt = new YT.Player("ytHost", { videoId:id, playerVars:{rel:0, modestbranding:1, playsinline:1},
+      events:{ onReady(){ ytReady=true; } } });
+  };
+  if (window.YT && window.YT.Player) crear();
+  else {
+    window.onYouTubeIframeAPIReady = crear;
+    if (!document.getElementById("ytApi")){ const s=document.createElement("script"); s.id="ytApi"; s.src="https://www.youtube.com/iframe_api"; document.head.appendChild(s); }
+  }
+}
+
+/* ---------- reloj de partido ---------- */
+function minutoPartido(t){
+  if (!P) return null;
+  if (P.ini2!=null && t>=P.ini2) return {per:"2T", min:45+Math.floor((t-P.ini2)/60)+1};
+  if (P.ini1!=null && t>=P.ini1) return {per:"1T", min:Math.floor((t-P.ini1)/60)+1};
+  return null;
+}
+function etiquetaMin(t){ const m=minutoPartido(t); return m ? m.min+"' "+m.per : fmt(t); }
+
+/* ---------- taggear ---------- */
+function botonPorId(id){ return P.botones.find(b=>b.id===id); }
+function crearTag(b, ini, fin, centro){
+  const dur = player.dur();
+  const tag = {id:uid(), b:b.id, nombre:b.nombre, grupo:b.grupo, color:b.color, equipo,
+    t:+centro.toFixed(2), ini:+Math.max(0,ini).toFixed(2), fin:+(dur?Math.min(dur,fin):fin).toFixed(2),
+    jugadora:"", zona:"", resultado:"", nota:"", creado:new Date().toISOString()};
+  P.tags.push(tag);
+  P.tags.sort((a,c)=>a.t-c.t);
+  selTagId = tag.id;
+  flash(b.nombre + " · " + (equipo==="propio"?"Talleres":"Rival") + " · " + etiquetaMin(centro));
+  changed();
+  renderBotonera(); renderDesc(); renderTimeline(); renderTab();
+}
+function pulsar(b){
+  if (!kind){ toast("Primero cargá el video."); return; }
+  const t = player.time();
+  if (b.modo==="rango"){
+    if (recording[b.id]==null){ recording[b.id]=t; renderBotonera(); flash("Grabando "+b.nombre+"…"); return; }
+    const t0 = recording[b.id]; delete recording[b.id];
+    const a = Math.min(t0,t), z = Math.max(t0,t);
+    crearTag(b, a-(+b.pre||0), z+(+b.post||0), (a+z)/2);
+  } else {
+    crearTag(b, t-(+b.pre||0), t+(+b.post||0), t);
+  }
+}
+function flash(txt){ const f=$("#flash"); f.textContent=txt; f.classList.add("on"); clearTimeout(flash._t); flash._t=setTimeout(()=>f.classList.remove("on"),1300); }
+
+/* ---------- reproducir clips / playlist ---------- */
+function verTag(id, fromList){
+  const tag = P.tags.find(x=>x.id===id); if(!tag) return;
+  selTagId = id;
+  if (!fromList) playlist = null;
+  player.seek(tag.ini); player.play();
+  clipFin = tag.fin;
+  mostrarOverlay(tag);
+  renderDesc(); renderTimeline(); marcarFilaSel();
+}
+function mostrarOverlay(tag){
+  const o=$("#overlay");
+  if (!tag){ o.style.display="none"; return; }
+  const jug = tag.jugadora ? " · "+tag.jugadora : "";
+  o.innerHTML = esc(tag.nombre)+esc(jug)+"<small>"+(tag.equipo==="propio"?"Talleres":"Rival")+" · "+esc(etiquetaMin(tag.t))+(tag.zona?" · "+esc(ZONA_NOMBRE[tag.zona]||tag.zona):"")+(tag.nota?" — "+esc(tag.nota):"")+(playlist?" · clip "+(playlist.i+1)+"/"+playlist.ids.length:"")+"</small>";
+  o.style.display="block";
+}
+function reproducirLista(ids, present){
+  if (!ids.length){ toast("No hay tags con ese filtro."); return; }
+  playlist = {ids, i:0, present:!!present};
+  if (present) pantallaCompleta(true);
+  verTag(ids[0], true);
+}
+function siguienteClip(dir){
+  if (!playlist) return;
+  playlist.i += dir||1;
+  if (playlist.i<0) playlist.i=0;
+  if (playlist.i>=playlist.ids.length){ playlist=null; pausar(); clipFin=null; mostrarOverlay(null); toast("Fin de la selección."); return; }
+  verTag(playlist.ids[playlist.i], true);
+}
+function pantallaCompleta(on){
+  const st=$("#stage");
+  if (on===false || document.fullscreenElement){ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); return; }
+  (st.requestFullscreen||st.webkitRequestFullscreen||function(){}).call(st);
+}
+
+/* loop: reloj, cabezal, fin de clip */
+function tick(){
+  const t = player.time();
+  const m = minutoPartido(t);
+  $("#clock").innerHTML = fmt(t) + (m?'<small>'+m.min+"' "+m.per+"</small>":"");
+  const d = player.dur();
+  const head = document.getElementById("tlHead");
+  if (head && d){ const lane=document.querySelector(".tl-lane"); if(lane){ head.style.left = (t/d*lane.clientWidth)+"px"; } }
+  if (clipFin!=null && t>=clipFin){
+    clipFin=null;
+    if (playlist) siguienteClip(1); else { pausar(); setTimeout(()=>mostrarOverlay(null),1200); }
+  }
+  if (d && !renderTimeline._d){ renderTimeline(); }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ---------- render ---------- */
+function render(){
+  if (!P) return;
+  $("#tituloProyecto").textContent = P.nombre || "Videoanálisis";
+  $("#selProyecto").innerHTML = proyectos.map(x=>`<option value="${esc(x.id)}" ${x.id===P.id?"selected":""}>${esc(x.nombre)}${x.fecha?" · "+esc(x.fecha.split("-").reverse().join("/")):""}</option>`).join("");
+  document.querySelectorAll("#team button").forEach(b=>b.classList.toggle("on", b.dataset.eq===equipo));
+  $("#team .riv").textContent = P.rival || "Rival";
+  $("#bIni1").textContent = P.ini1!=null ? "1T: "+fmt(P.ini1) : "Marcar inicio 1T";
+  $("#bIni2").textContent = P.ini2!=null ? "2T: "+fmt(P.ini2) : "Marcar inicio 2T";
+  renderBotonera(); renderDesc(); renderTimeline(); renderTabs(); renderTab();
+}
+function renderBotonera(){
+  const grupos = [...new Set([...GRUPOS, ...P.botones.map(b=>b.grupo)])].filter(g=>P.botones.some(b=>b.grupo===g));
+  $("#botonera").innerHTML = grupos.map(g=>`
+    <div class="grp"><h3>${esc(g)}</h3><div class="btns">
+      ${P.botones.filter(b=>b.grupo===g).map(b=>{
+        const rec = recording[b.id]!=null;
+        const n = P.tags.filter(t=>t.b===b.id && t.equipo===equipo).length;
+        return `<button class="tb ${rec?"rec":""}" style="--c:${esc(b.color)}" data-b="${esc(b.id)}">${esc(b.nombre)}${b.tecla?`<kbd>${esc(b.tecla)}</kbd>`:""}<span class="m">${rec?"● grabando…":(b.modo==="rango"?"inicio/fin · ":"")+n}</span></button>`;
+      }).join("")}
+    </div></div>`).join("");
+}
+function renderDesc(){
+  const box = $("#descBox");
+  const tag = P && P.tags.find(x=>x.id===selTagId);
+  if (!tag){ box.innerHTML = `<div class="small muted">Después de marcar una acción, acá le agregás la jugadora, la zona, si salió bien o mal y una nota.</div>`; return; }
+  const jug = JUGADORAS.length
+    ? `<select class="inp" id="dJug" style="width:100%"><option value="">— Jugadora —</option>${JUGADORAS.map(j=>{const v=(j.num?j.num+" · ":"")+j.nombre; return `<option ${tag.jugadora===v?"selected":""}>${esc(v)}</option>`;}).join("")}${tag.jugadora && !JUGADORAS.some(j=>((j.num?j.num+" · ":"")+j.nombre)===tag.jugadora)?`<option selected>${esc(tag.jugadora)}</option>`:""}</select>`
+    : `<input class="inp" id="dJug" style="width:100%" placeholder="Jugadora (n° o nombre)" value="${esc(tag.jugadora)}">`;
+  box.innerHTML = `
+    <h4><span><span class="tagdot" style="background:${esc(tag.color)}"></span>${esc(tag.nombre)} · ${esc(etiquetaMin(tag.t))}</span>
+      <span><button class="btn sm" id="dVer" title="Ver clip">▶︎</button> <button class="btn sm danger" id="dDel" title="Borrar tag">✕</button></span></h4>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip ${tag.equipo==="propio"?"on":""}" data-deq="propio">Talleres</button>
+      <button class="chip ${tag.equipo==="rival"?"on":""}" data-deq="rival">Rival</button>
+      <span style="width:8px"></span>
+      <button class="chip pos ${tag.resultado==="pos"?"on":""}" data-res="pos">✓ Positiva</button>
+      <button class="chip neg ${tag.resultado==="neg"?"on":""}" data-res="neg">✗ Negativa</button>
+    </div>
+    ${jug}
+    <div style="margin-top:8px"><label class="lbl">Zona (atacando →)</label>
+      <div class="pitch" id="dPitch">${[0,1,2].map(r=>[0,1,2].map(c=>{ const z=ZONAS[r*3+c]; return `<div class="pz ${tag.zona===z[0]?"on":""}" data-z="${z[0]}" title="${z[1]}">${tag.zona===z[0]?"●":""}</div>`; }).join("")).join("")}<span class="dir">ataque →</span></div>
+    </div>
+    <div class="row2">
+      <div><label class="lbl">Inicio</label><div style="display:flex;gap:4px;align-items:center"><button class="btn sm" data-adj="ini:-1">−1</button><span class="clock" style="font-size:13px">${fmt(tag.ini)}</span><button class="btn sm" data-adj="ini:1">+1</button></div></div>
+      <div><label class="lbl">Fin</label><div style="display:flex;gap:4px;align-items:center"><button class="btn sm" data-adj="fin:-1">−1</button><span class="clock" style="font-size:13px">${fmt(tag.fin)}</span><button class="btn sm" data-adj="fin:1">+1</button></div></div>
+    </div>
+    <div style="margin-top:8px"><textarea class="inp" id="dNota" placeholder="Nota (ej.: buena lectura del pase filtrado)">${esc(tag.nota)}</textarea></div>`;
+}
+function renderTimeline(){
+  const el = $("#tl");
+  if (!P) return;
+  const d = player.dur();
+  renderTimeline._d = d;
+  const usados = P.botones.filter(b=>P.tags.some(t=>t.b===b.id));
+  if (!d){ el.innerHTML = `<div class="tl-empty">${kind?"Cargando duración del video…":"Cargá el video para ver la línea de tiempo."}</div>`; return; }
+  const paso = d>3600?600:d>1200?300:60;
+  let scale = ""; for (let s=0; s<=d; s+=paso) scale += `<span style="left:${s/d*100}%">${fmt(s)}</span>`;
+  const per = [];
+  if (P.ini1!=null) per.push(`<div class="tl-mk" title="Inicio 1T" style="left:${P.ini1/d*100}%;width:2px;background:var(--ink);top:0;bottom:0"></div>`);
+  if (P.ini2!=null) per.push(`<div class="tl-mk" title="Inicio 2T" style="left:${P.ini2/d*100}%;width:2px;background:var(--ink);top:0;bottom:0"></div>`);
+  const rows = (usados.length?usados:[{id:"_",nombre:"(sin tags todavía)",color:"var(--line)"}]).map(b=>`
+    <div class="tl-row"><div class="tl-name" title="${esc(b.nombre)}"><i style="background:${esc(b.color)}"></i>${esc(b.nombre)}</div>
+      <div class="tl-lane" data-lane="1">${per.join("")}${P.tags.filter(t=>t.b===b.id).map(t=>`<div class="tl-mk ${t.equipo==="rival"?"riv":""} ${t.id===selTagId?"sel":""}" data-tag="${esc(t.id)}" title="${esc(t.nombre)} · ${t.equipo==="propio"?"Talleres":"Rival"} · ${esc(etiquetaMin(t.t))}${t.jugadora?" · "+esc(t.jugadora):""}" style="left:${t.ini/d*100}%;width:${Math.max(.25,(t.fin-t.ini)/d*100)}%;background:${esc(t.color)}"></div>`).join("")}</div></div>`).join("");
+  el.innerHTML = `<div class="tl-scale">${scale}</div>${rows}<div class="tl-head" id="tlHead"></div>`;
+}
+function renderTabs(){ document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.toggle("on", b.dataset.t===tabActual)); }
+
+function tagsFiltrados(){
+  return P.tags.filter(t=>
+    (!filtros.boton || t.b===filtros.boton) &&
+    (!filtros.equipo || t.equipo===filtros.equipo) &&
+    (!filtros.jugadora || t.jugadora===filtros.jugadora) &&
+    (!filtros.resultado || (filtros.resultado==="sin" ? !t.resultado : t.resultado===filtros.resultado)) &&
+    (!filtros.periodo || ((minutoPartido(t.t)||{}).per===filtros.periodo)));
+}
+function filtrosHtml(){
+  const jugs = [...new Set(P.tags.map(t=>t.jugadora).filter(Boolean))].sort();
+  return `<div class="filters">
+    <select class="inp" data-f="boton"><option value="">Todas las acciones</option>${P.botones.map(b=>`<option value="${esc(b.id)}" ${filtros.boton===b.id?"selected":""}>${esc(b.nombre)}</option>`).join("")}</select>
+    <select class="inp" data-f="equipo"><option value="">Ambos equipos</option><option value="propio" ${filtros.equipo==="propio"?"selected":""}>Talleres</option><option value="rival" ${filtros.equipo==="rival"?"selected":""}>Rival</option></select>
+    <select class="inp" data-f="jugadora"><option value="">Todas las jugadoras</option>${jugs.map(j=>`<option ${filtros.jugadora===j?"selected":""}>${esc(j)}</option>`).join("")}</select>
+    <select class="inp" data-f="resultado"><option value="">Cualquier resultado</option><option value="pos" ${filtros.resultado==="pos"?"selected":""}>Positivas</option><option value="neg" ${filtros.resultado==="neg"?"selected":""}>Negativas</option><option value="sin" ${filtros.resultado==="sin"?"selected":""}>Sin calificar</option></select>
+    <select class="inp" data-f="periodo"><option value="">Todo el partido</option><option value="1T" ${filtros.periodo==="1T"?"selected":""}>1T</option><option value="2T" ${filtros.periodo==="2T"?"selected":""}>2T</option></select>
+    <button class="btn sm" id="fLimpiar">Limpiar</button>
+  </div>`;
+}
+function renderTab(){
+  const body = $("#tabBody");
+  if (!P) return;
+  if (tabActual==="lista"){
+    const ts = tagsFiltrados();
+    body.innerHTML = filtrosHtml() + `
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn sm solid" id="lPlay">▶︎ Reproducir selección (${ts.length})</button>
+        <button class="btn sm" id="lPresent">Presentación en pantalla completa</button>
+        <button class="btn sm" id="lPrev">◀︎ Anterior</button><button class="btn sm" id="lNext">Siguiente ▶︎</button>
+        <span class="small muted" style="align-self:center">${P.tags.length} tags en total</span>
+      </div>
+      <div class="scroll"><table class="t"><thead><tr><th>Min</th><th>Acción</th><th>Equipo</th><th>Jugadora</th><th>Zona</th><th>Res.</th><th>Nota</th><th>Dur.</th><th></th></tr></thead><tbody>
+      ${ts.map(t=>`<tr data-row="${esc(t.id)}" class="${t.id===selTagId?"sel":""}" style="cursor:pointer">
+        <td style="white-space:nowrap;font-variant-numeric:tabular-nums">${esc(etiquetaMin(t.t))}</td>
+        <td><span class="tagdot" style="background:${esc(t.color)}"></span>${esc(t.nombre)}</td>
+        <td><span class="pill ${t.equipo==="propio"?"prop":"riv"}">${t.equipo==="propio"?"Talleres":"Rival"}</span></td>
+        <td>${esc(t.jugadora)}</td><td>${esc(ZONA_NOMBRE[t.zona]||"")}</td>
+        <td>${t.resultado==="pos"?'<span class="pill pos">✓</span>':t.resultado==="neg"?'<span class="pill neg">✗</span>':""}</td>
+        <td class="small" style="max-width:240px">${esc(t.nota)}</td>
+        <td class="small muted">${Math.round(t.fin-t.ini)} s</td>
+        <td><button class="btn sm danger" data-del="${esc(t.id)}" title="Borrar">✕</button></td></tr>`).join("") || `<tr><td colspan="9" class="muted" style="padding:14px">Todavía no hay tags. Cargá el video y usá la botonera (o las teclas).</td></tr>`}
+      </tbody></table></div>`;
+  } else if (tabActual==="stats"){
+    body.innerHTML = filtrosHtml().replace(/<select class="inp" data-f="equipo">[\s\S]*?<\/select>/,"") + renderStats();
+  } else if (tabActual==="export"){
+    body.innerHTML = `
+      <div class="statgrid">
+        <div><h3 style="font-size:15px;margin-bottom:6px">Exportar este análisis</h3>
+          <p class="small muted" style="margin:0 0 8px">CSV para Excel / Google Sheets, XML compatible con Sportscode / LongoMatch / Nacsport, y JSON para respaldo completo.</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="xCsv">CSV (Excel)</button><button class="btn" id="xXml">XML (Sportscode)</button><button class="btn" id="xJson">JSON (respaldo)</button></div></div>
+        <div><h3 style="font-size:15px;margin-bottom:6px">Importar</h3>
+          <p class="small muted" style="margin:0 0 8px">Un JSON exportado desde acá: si trae tags se crea un análisis nuevo; si es solo una botonera, se usa como botonera de este análisis.</p>
+          <button class="btn" id="xImp">Importar JSON</button></div>
+        <div><h3 style="font-size:15px;margin-bottom:6px">Botonera modelo</h3>
+          <p class="small muted" style="margin:0 0 8px">Los análisis nuevos arrancan con la botonera modelo. Podés guardar la de este análisis como modelo o volver a la original.</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="xPlant">Usar esta botonera como modelo</button><button class="btn" id="xBotJson">Exportar botonera</button><button class="btn danger" id="xReset">Volver a la botonera original</button></div></div>
+      </div>`;
+  } else {
+    body.innerHTML = `<div class="statgrid help">
+      <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Cómo se usa</h3>
+        1. <b>Nuevo análisis</b> y completá los datos del partido.<br>
+        2. Cargá el video (archivo de tu compu o link de YouTube). El archivo no se sube: la próxima vez lo volvés a elegir y los tags siguen ahí.<br>
+        3. Marcá <b>inicio 1T</b> e <b>inicio 2T</b> para que cada tag tenga el minuto de juego.<br>
+        4. Elegí <b>Talleres / Rival</b> y tocá los botones (o sus teclas) mientras mirás. Cada tag guarda unos segundos antes y después.<br>
+        5. Al tag recién marcado le agregás jugadora, zona, ✓/✗ y nota.<br>
+        6. En <b>Tags</b> filtrás y armás la selección de clips para mostrarle al plantel.</div>
+      <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Atajos de teclado</h3>
+        <kbd>Espacio</kbd> play / pausa · <kbd>←</kbd> <kbd>→</kbd> −/+ 5 s · <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> −/+ 1 s<br>
+        <kbd>,</kbd> <kbd>.</kbd> cuadro a cuadro (archivo) · <kbd>Tab</kbd> cambia Talleres / Rival<br>
+        <kbd>Enter</kbd> ver el último tag · <kbd>Supr</kbd> borrar tag seleccionado<br>
+        <kbd>+</kbd> / <kbd>−</kbd> resultado positivo / negativo del tag seleccionado<br>
+        Cada botón tiene su letra o número (se ven en la botonera y se cambian en “Editar botones”).<br>
+        En la presentación: <kbd>→</kbd> siguiente clip · <kbd>←</kbd> anterior · <kbd>Esc</kbd> salir.</div>
+      <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Botones “clic” y “inicio / fin”</h3>
+        <b>Clic</b>: un toque marca el momento y guarda los segundos antes/después que tenga el botón.<br>
+        <b>Inicio / fin</b>: el primer toque empieza a grabar y el segundo lo cierra (sirve para posesiones largas, bloques, etc.).</div>
+    </div>`;
+  }
+}
+function renderStats(){
+  const ts = tagsFiltrados();
+  const botones = P.botones.filter(b=>ts.some(t=>t.b===b.id));
+  if (!ts.length) return `<p class="muted">Sin tags para mostrar con estos filtros.</p>`;
+  const max = Math.max(1,...botones.map(b=>Math.max(ts.filter(t=>t.b===b.id&&t.equipo==="propio").length, ts.filter(t=>t.b===b.id&&t.equipo==="rival").length)));
+  const tabla = botones.map(b=>{
+    const p = ts.filter(t=>t.b===b.id&&t.equipo==="propio"), r = ts.filter(t=>t.b===b.id&&t.equipo==="rival");
+    const pc = p.filter(t=>t.resultado), pp = pc.length ? Math.round(p.filter(t=>t.resultado==="pos").length/pc.length*100)+"%" : "—";
+    return `<tr><td><span class="tagdot" style="background:${esc(b.color)}"></span>${esc(b.nombre)}</td>
+      <td style="width:28%"><div style="display:flex;align-items:center;gap:6px"><b style="min-width:20px">${p.length}</b><div class="bar" style="width:${p.length/max*100}%"></div></div></td>
+      <td style="width:28%"><div style="display:flex;align-items:center;gap:6px"><b style="min-width:20px">${r.length}</b><div class="bar riv" style="width:${r.length/max*100}%"></div></div></td>
+      <td>${pp}</td></tr>`;
+  }).join("");
+  const porJug = {};
+  ts.filter(t=>t.equipo==="propio"&&t.jugadora).forEach(t=>{ const o = porJug[t.jugadora] = porJug[t.jugadora]||{n:0,pos:0,neg:0,acc:{}}; o.n++; if(t.resultado==="pos")o.pos++; if(t.resultado==="neg")o.neg++; o.acc[t.nombre]=(o.acc[t.nombre]||0)+1; });
+  const jugRows = Object.entries(porJug).sort((a,b)=>b[1].n-a[1].n).map(([j,o])=>`<tr><td>${esc(j)}</td><td><b>${o.n}</b></td><td><span class="pill pos">${o.pos}</span> <span class="pill neg">${o.neg}</span></td><td class="small muted">${Object.entries(o.acc).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>esc(k)+" "+v).join(" · ")}</td></tr>`).join("");
+  const zonas = {}; ts.filter(t=>t.zona).forEach(t=>zonas[t.zona]=(zonas[t.zona]||0)+1);
+  const zmax = Math.max(1,...Object.values(zonas));
+  const zTot = Object.values(zonas).reduce((a,b)=>a+b,0);
+  const pitch = `<div class="pitch" style="cursor:default">${[0,1,2].map(r=>[0,1,2].map(c=>{ const z=ZONAS[r*3+c][0]; const n=zonas[z]||0; return `<div class="pz" style="cursor:default;background:rgba(194,55,126,${(n/zmax*.75).toFixed(2)})" title="${esc(ZONA_NOMBRE[z])}">${n?n+"<br><small style='font-weight:600'>"+Math.round(n/zTot*100)+"%</small>":""}</div>`; }).join("")).join("")}<span class="dir">ataque →</span></div>`;
+  return `<div class="statgrid">
+    <div><h3 style="font-size:15px;margin-bottom:6px">Acciones por equipo</h3>
+      <table class="t"><thead><tr><th>Acción</th><th>Talleres</th><th>Rival</th><th>% ✓ Talleres</th></tr></thead><tbody>${tabla}</tbody></table></div>
+    <div><h3 style="font-size:15px;margin-bottom:6px">Zonas (${zTot} tags con zona)</h3>${zTot?pitch:'<p class="small muted">Todavía no hay tags con zona.</p>'}
+      <h3 style="font-size:15px;margin:14px 0 6px">Por jugadora (Talleres)</h3>
+      ${jugRows?`<table class="t"><thead><tr><th>Jugadora</th><th>Tags</th><th>✓ / ✗</th><th>Más frecuentes</th></tr></thead><tbody>${jugRows}</tbody></table>`:'<p class="small muted">Asigná jugadoras a los tags para ver este cuadro.</p>'}</div>
+  </div>`;
+}
+function marcarFilaSel(){ document.querySelectorAll("tr[data-row]").forEach(r=>r.classList.toggle("sel", r.dataset.row===selTagId)); }
+
+/* ---------- modales ---------- */
+function modal(html, onMount){
+  const m = document.createElement("div"); m.className="modal"; m.innerHTML = `<div class="box">${html}</div>`;
+  document.body.appendChild(m);
+  m.addEventListener("mousedown", e=>{ if(e.target===m) m.remove(); });
+  if (onMount) onMount(m);
+  return m;
+}
+function abrirDatos(){
+  const opts = (PARTIDOS||[]).slice().sort((a,b)=>String(b.fechaISO||"").localeCompare(String(a.fechaISO||""))).map((p,i)=>`<option value="${i}">${esc(p.fecha||"")} · vs ${esc(p.rival||"")}${p.golesFavor!=null?" ("+p.golesFavor+"-"+p.golesContra+")":""}</option>`).join("");
+  const lista = (PARTIDOS||[]).slice().sort((a,b)=>String(b.fechaISO||"").localeCompare(String(a.fechaISO||"")));
+  modal(`<h2>Datos del partido</h2>
+    ${opts?`<label class="lbl">Elegir de los partidos cargados en Metodika</label><select class="inp" id="mPart" style="width:100%;margin-bottom:12px"><option value="">—</option>${opts}</select>`:""}
+    <div class="row2">
+      <div><label class="lbl">Nombre del análisis</label><input class="inp" id="mNom" style="width:100%" value="${esc(P.nombre)}"></div>
+      <div><label class="lbl">Rival</label><input class="inp" id="mRiv" style="width:100%" value="${esc(P.rival)}"></div>
+      <div><label class="lbl">Fecha</label><input class="inp" type="date" id="mFec" style="width:100%" value="${esc(P.fecha)}"></div>
+      <div><label class="lbl">Competencia / resultado</label><input class="inp" id="mComp" style="width:100%" value="${esc(P.competencia)}" placeholder="Ej.: AFA fecha 12 · 2-0"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" id="mCanc">Cancelar</button><button class="btn solid" id="mOk">Guardar</button></div>`,
+  m=>{
+    const sel = m.querySelector("#mPart");
+    if (sel) sel.onchange = ()=>{ const p = lista[+sel.value]; if(!p) return;
+      m.querySelector("#mRiv").value = p.rival||"";
+      if (p.fechaISO) m.querySelector("#mFec").value = p.fechaISO.slice(0,10);
+      m.querySelector("#mNom").value = "Talleres vs "+(p.rival||"")+(p.fecha?" · "+p.fecha:"");
+      m.querySelector("#mComp").value = p.golesFavor!=null ? p.golesFavor+"-"+p.golesContra : "";
+    };
+    m.querySelector("#mCanc").onclick = ()=>m.remove();
+    m.querySelector("#mOk").onclick = ()=>{
+      P.nombre = m.querySelector("#mNom").value.trim() || "Análisis sin nombre";
+      P.rival = m.querySelector("#mRiv").value.trim();
+      P.fecha = m.querySelector("#mFec").value;
+      P.competencia = m.querySelector("#mComp").value.trim();
+      $("#team .riv").textContent = P.rival || "Rival";
+      changed(); render(); m.remove();
+    };
+  });
+}
+function abrirEditor(){
+  let bs = clone(P.botones);
+  const fila = (b,i)=>`<div class="ed-row" data-i="${i}">
+      <input type="color" data-k="color" value="${esc(b.color)}">
+      <input class="inp" data-k="nombre" value="${esc(b.nombre)}" placeholder="Nombre">
+      <input class="inp" data-k="grupo" value="${esc(b.grupo)}" list="grpList" placeholder="Momento">
+      <input class="inp" data-k="tecla" value="${esc(b.tecla)}" maxlength="1" placeholder="Tecla" style="text-align:center;text-transform:uppercase">
+      <input class="inp opt" data-k="pre" type="number" min="0" max="60" value="${+b.pre||0}" title="Segundos antes">
+      <input class="inp opt" data-k="post" type="number" min="0" max="60" value="${+b.post||0}" title="Segundos después">
+      <select class="inp opt" data-k="modo"><option value="clic" ${b.modo!=="rango"?"selected":""}>Clic</option><option value="rango" ${b.modo==="rango"?"selected":""}>Inicio / fin</option></select>
+      <span class="opt" style="display:flex;gap:2px"><button class="btn sm" data-mv="-1" title="Subir">↑</button><button class="btn sm" data-mv="1" title="Bajar">↓</button></span>
+      <button class="btn sm danger" data-rm="1" title="Quitar">✕</button></div>`;
+  const m = modal(`<h2>Editar botones</h2>
+    <p class="small muted" style="margin:-4px 0 10px">Cambiá nombres, colores, teclas y cuántos segundos antes/después guarda cada botón. Los tags que ya marcaste no se borran.</p>
+    <div class="ed-row ed-head"><span></span><span>Nombre</span><span>Momento del juego</span><span>Tecla</span><span class="opt">Antes</span><span class="opt">Después</span><span class="opt">Modo</span><span class="opt">Orden</span><span></span></div>
+    <div id="edRows"></div>
+    <datalist id="grpList">${GRUPOS.map(g=>`<option value="${esc(g)}">`).join("")}</datalist>
+    <button class="btn sm" id="edAdd" style="margin-top:6px">+ Agregar botón</button>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" id="edCanc">Cancelar</button><button class="btn solid" id="edOk">Guardar botonera</button></div>`);
+  const pintar = ()=>{ m.querySelector("#edRows").innerHTML = bs.map(fila).join(""); };
+  const leer = ()=>{ m.querySelectorAll("#edRows .ed-row").forEach(r=>{ const b = bs[+r.dataset.i]; r.querySelectorAll("[data-k]").forEach(inp=>{ let v=inp.value; if(inp.dataset.k==="tecla") v=v.toUpperCase(); if(inp.dataset.k==="pre"||inp.dataset.k==="post") v=+v||0; b[inp.dataset.k]=v; }); }); };
+  pintar();
+  m.addEventListener("click", e=>{
+    const r = e.target.closest(".ed-row");
+    if (e.target.dataset.rm){ leer(); bs.splice(+r.dataset.i,1); pintar(); }
+    else if (e.target.dataset.mv){ leer(); const i=+r.dataset.i, j=i+(+e.target.dataset.mv); if(j>=0&&j<bs.length){ [bs[i],bs[j]]=[bs[j],bs[i]]; pintar(); } }
+  });
+  m.querySelector("#edAdd").onclick = ()=>{ leer(); bs.push(B("Nueva acción","Ataque organizado","#64748B","",4,6)); pintar(); };
+  m.querySelector("#edCanc").onclick = ()=>m.remove();
+  m.querySelector("#edOk").onclick = ()=>{
+    leer();
+    const teclas = bs.map(b=>b.tecla).filter(Boolean);
+    const dup = teclas.find((t,i)=>teclas.indexOf(t)!==i);
+    if (dup){ toast("La tecla "+dup+" está repetida."); return; }
+    if (bs.some(b=>/^[ ,.+\-]$/.test(b.tecla))){ toast("Espacio, coma, punto, + y − están reservadas."); return; }
+    P.botones = bs.filter(b=>b.nombre.trim());
+    // actualizar nombre/color/grupo en tags existentes
+    P.tags.forEach(t=>{ const b = P.botones.find(x=>x.id===t.b); if(b){ t.nombre=b.nombre; t.color=b.color; t.grupo=b.grupo; } });
+    changed(); render(); m.remove(); toast("Botonera guardada.");
+  };
+}
+
+/* ---------- exportar / importar ---------- */
+function descargar(nombre, contenido, tipo){
+  const blob = new Blob([contenido], {type:tipo});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const slug = s => String(s||"analisis").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").toLowerCase();
+function exportCsv(){
+  const head = ["Minuto","Periodo","Tiempo video","Inicio","Fin","Duración (s)","Acción","Momento","Equipo","Jugadora","Zona","Resultado","Nota"];
+  const q = v => '"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const rows = P.tags.map(t=>{ const m=minutoPartido(t.t)||{}; return [m.min||"", m.per||"", fmt(t.t), fmt(t.ini), fmt(t.fin), Math.round(t.fin-t.ini), t.nombre, t.grupo, t.equipo==="propio"?"Talleres":(P.rival||"Rival"), t.jugadora, ZONA_NOMBRE[t.zona]||"", t.resultado==="pos"?"Positiva":t.resultado==="neg"?"Negativa":"", t.nota].map(q).join(";"); });
+  descargar(slug(P.nombre)+"-tags.csv", "﻿"+head.map(q).join(";")+"\n"+rows.join("\n"), "text/csv;charset=utf-8");
+}
+function exportXml(){
+  const x = s => esc(s);
+  const lbl = (g,t) => t ? `<label><group>${x(g)}</group><text>${x(t)}</text></label>` : "";
+  const inst = P.tags.map((t,i)=>`  <instance><ID>${i+1}</ID><start>${t.ini.toFixed(2)}</start><end>${t.fin.toFixed(2)}</end><code>${x(t.nombre)}</code>${lbl("Equipo", t.equipo==="propio"?"Talleres":(P.rival||"Rival"))}${lbl("Jugadora",t.jugadora)}${lbl("Zona",ZONA_NOMBRE[t.zona])}${lbl("Resultado",t.resultado==="pos"?"Positiva":t.resultado==="neg"?"Negativa":"")}${lbl("Momento",t.grupo)}${t.nota?`<free_text>${x(t.nota)}</free_text>`:""}</instance>`).join("\n");
+  const hex = c => { const m=String(c).replace("#",""); const r=parseInt(m.slice(0,2),16)||0,g=parseInt(m.slice(2,4),16)||0,b=parseInt(m.slice(4,6),16)||0; return `<R>${r*257}</R><G>${g*257}</G><B>${b*257}</B>`; };
+  const rows = P.botones.map(b=>`  <row><code>${x(b.nombre)}</code>${hex(b.color)}</row>`).join("\n");
+  descargar(slug(P.nombre)+".xml", `<?xml version="1.0" encoding="utf-8"?>\n<file>\n<ALL_INSTANCES>\n${inst}\n</ALL_INSTANCES>\n<ROWS>\n${rows}\n</ROWS>\n</file>\n`, "application/xml");
+}
+function exportJson(){ const d=clone(P); descargar(slug(P.nombre)+".json", JSON.stringify({metodika:"videoanalisis", version:1, proyecto:d}, null, 1), "application/json"); }
+function exportBotonera(){ descargar("botonera-metodika.json", JSON.stringify({metodika:"botonera", version:1, botones:P.botones}, null, 1), "application/json"); }
+function importar(file){
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    let d; try{ d = JSON.parse(fr.result); }catch(e){ toast("Ese archivo no es un JSON válido."); return; }
+    if (d.proyecto && Array.isArray(d.proyecto.tags)){
+      const p = d.proyecto; p.id = uid(); p.nombre = (p.nombre||"Importado")+" (importado)";
+      proyectos.unshift({id:p.id, nombre:p.nombre, fecha:p.fecha});
+      lsSet("va_p_"+p.id, JSON.stringify(p)); abrirProyecto(p.id); changed(); toast("Análisis importado.");
+    } else if (Array.isArray(d.botones)){
+      P.botones = d.botones.map(b=>Object.assign({id:uid(), pre:4, post:6, modo:"clic", grupo:"Ataque organizado", color:"#64748B", tecla:""}, b));
+      changed(); render(); toast("Botonera importada.");
+    } else toast("No reconozco ese archivo.");
+  };
+  fr.readAsText(file);
+}
+
+/* ---------- eventos ---------- */
+$("#btnArchivo").onclick = ()=>$("#fileIn").click();
+$("#bCambiarVideo").onclick = ()=>{ const yt = confirm("¿Querés usar un link de YouTube?\n\nAceptar = link de YouTube · Cancelar = archivo de tu compu"); if (yt) $("#btnYT").click(); else $("#fileIn").click(); };
+$("#fileIn").onchange = e=>{ cargarArchivo(e.target.files[0]); e.target.value=""; renderTimeline._d=0; };
+$("#btnYT").onclick = ()=>{ const u = prompt("Pegá el link del partido en YouTube:", P&&P.video&&P.video.url||""); if(u){ cargarYT(u.trim()); changed(); renderTimeline._d=0; } };
+$("#jsonIn").onchange = e=>{ if(e.target.files[0]) importar(e.target.files[0]); e.target.value=""; };
+vid.addEventListener("loadedmetadata", ()=>{ renderTimeline._d=0; });
+$("#bPlay").onclick = ()=>{ player.paused()?player.play():player.pause(); };
+document.querySelectorAll("[data-skip]").forEach(b=>b.onclick=()=>{ clipFin=null; player.seek(player.time()+(+b.dataset.skip)); });
+document.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{ player.rate(+b.dataset.rate); toast("Velocidad "+b.textContent); });
+$("#bIni1").onclick = ()=>{ if(!kind) return toast("Primero cargá el video."); P.ini1 = +player.time().toFixed(1); changed(); render(); toast("Inicio del 1T marcado en "+fmt(P.ini1)); };
+$("#bIni2").onclick = ()=>{ if(!kind) return toast("Primero cargá el video."); P.ini2 = +player.time().toFixed(1); changed(); render(); toast("Inicio del 2T marcado en "+fmt(P.ini2)); };
+$("#bFull").onclick = ()=>pantallaCompleta();
+$("#btnNuevo").onclick = ()=>nuevoProyecto(false);
+$("#btnDatos").onclick = ()=>abrirDatos();
+$("#btnBorrarProy").onclick = ()=>borrarProyecto();
+$("#btnEditar").onclick = ()=>abrirEditor();
+$("#selProyecto").onchange = e=>abrirProyecto(e.target.value);
+$("#team").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; equipo=b.dataset.eq; render(); };
+$("#botonera").onclick = e=>{ const b=e.target.closest("[data-b]"); if(!b) return; pulsar(botonPorId(b.dataset.b)); b.blur(); };
+$("#tabs").onclick = e=>{ const b=e.target.closest("[data-t]"); if(!b) return; tabActual=b.dataset.t; lsSet("va_tab",tabActual); renderTabs(); renderTab(); };
+
+$("#descBox").addEventListener("click", e=>{
+  const tag = P.tags.find(x=>x.id===selTagId); if(!tag) return;
+  const t = e.target.closest("button,.pz"); if(!t) return;
+  if (t.id==="dVer") return verTag(tag.id);
+  if (t.id==="dDel") return borrarTag(tag.id);
+  if (t.dataset.deq){ tag.equipo=t.dataset.deq; }
+  else if (t.dataset.res){ tag.resultado = tag.resultado===t.dataset.res ? "" : t.dataset.res; }
+  else if (t.dataset.z){ tag.zona = tag.zona===t.dataset.z ? "" : t.dataset.z; }
+  else if (t.dataset.adj){ const [k,v]=t.dataset.adj.split(":"); tag[k]=Math.max(0,+(tag[k]+(+v)).toFixed(2)); if(tag.fin<=tag.ini) tag.fin=tag.ini+1; }
+  else return;
+  changed(); renderDesc(); renderTimeline(); renderTab();
+});
+$("#descBox").addEventListener("change", e=>{
+  const tag = P.tags.find(x=>x.id===selTagId); if(!tag) return;
+  if (e.target.id==="dJug"){ tag.jugadora = e.target.value.trim(); changed(); renderTab(); }
+  if (e.target.id==="dNota"){ tag.nota = e.target.value.trim(); changed(); renderTab(); }
+});
+function borrarTag(id){
+  P.tags = P.tags.filter(x=>x.id!==id);
+  if (selTagId===id) selTagId = null;
+  changed(); renderDesc(); renderTimeline(); renderTab(); renderBotonera();
+}
+$("#tl").addEventListener("click", e=>{
+  const mk = e.target.closest("[data-tag]");
+  if (mk) return verTag(mk.dataset.tag);
+  const lane = e.target.closest(".tl-lane");
+  if (lane){ const r=lane.getBoundingClientRect(); clipFin=null; player.seek((e.clientX-r.left)/r.width*player.dur()); }
+});
+$("#tabBody").addEventListener("change", e=>{
+  if (e.target.dataset.f){ filtros[e.target.dataset.f]=e.target.value; renderTab(); }
+});
+$("#tabBody").addEventListener("click", e=>{
+  const t = e.target;
+  if (t.closest("[data-del]")){ e.stopPropagation(); return borrarTag(t.closest("[data-del]").dataset.del); }
+  const row = t.closest("tr[data-row]"); if (row) return verTag(row.dataset.row);
+  switch(t.id){
+    case "fLimpiar": filtros={boton:"",equipo:"",jugadora:"",resultado:"",periodo:""}; renderTab(); break;
+    case "lPlay": reproducirLista(tagsFiltrados().map(x=>x.id), false); break;
+    case "lPresent": reproducirLista(tagsFiltrados().map(x=>x.id), true); break;
+    case "lPrev": playlist ? siguienteClip(-1) : moverSel(-1); break;
+    case "lNext": playlist ? siguienteClip(1) : moverSel(1); break;
+    case "xCsv": exportCsv(); break;
+    case "xXml": exportXml(); break;
+    case "xJson": exportJson(); break;
+    case "xBotJson": exportBotonera(); break;
+    case "xImp": $("#jsonIn").click(); break;
+    case "xPlant": plantilla = clone(P.botones); guardarPlantilla(); toast("Botonera guardada como modelo."); break;
+    case "xReset": if(confirm("¿Volver a la botonera original en este análisis? Los tags quedan.")){ const nb=botoneraDefault(); P.tags.forEach(tg=>{ const m=nb.find(b=>b.nombre===tg.nombre); if(m) tg.b=m.id; }); P.botones=nb; changed(); render(); } break;
+  }
+});
+function moverSel(dir){
+  const ts = tagsFiltrados(); if(!ts.length) return;
+  let i = ts.findIndex(x=>x.id===selTagId); i = i<0 ? 0 : Math.min(ts.length-1, Math.max(0,i+dir));
+  verTag(ts[i].id);
+}
+
+document.addEventListener("keydown", e=>{
+  if (!P) return;
+  if (e.target.matches("input,textarea,select") || document.querySelector(".modal")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (k===" "){ e.preventDefault(); player.paused()?player.play():player.pause(); return; }
+  if (k==="ArrowLeft"||k==="ArrowRight"){
+    e.preventDefault();
+    if (playlist && !e.shiftKey){ siguienteClip(k==="ArrowRight"?1:-1); return; }
+    clipFin=null; player.seek(player.time()+(k==="ArrowRight"?1:-1)*(e.shiftKey?1:5)); return;
+  }
+  if ((k==="," || k===".") && kind==="file"){ e.preventDefault(); vid.pause(); vid.currentTime += k==="."?0.04:-0.04; return; }
+  if (k==="Tab"){ e.preventDefault(); equipo = equipo==="propio"?"rival":"propio"; render(); flash(equipo==="propio"?"Taggeando: Talleres":"Taggeando: Rival"); return; }
+  if (k==="Escape"){ if (playlist){ playlist=null; clipFin=null; mostrarOverlay(null); } return; }
+  const tag = P.tags.find(x=>x.id===selTagId);
+  if (k==="Enter" && tag){ verTag(tag.id); return; }
+  if ((k==="Delete"||k==="Backspace") && tag){ e.preventDefault(); borrarTag(tag.id); return; }
+  if ((k==="+"||k==="-") && tag){ tag.resultado = k==="+"?"pos":"neg"; changed(); renderDesc(); renderTab(); return; }
+  const b = P.botones.find(x=>x.tecla && x.tecla.toUpperCase()===k.toUpperCase());
+  if (b){ e.preventDefault(); pulsar(b); }
+});
+window.addEventListener("resize", ()=>renderTimeline());
+cargarPlantel();
+})();
+</script>
+</body>
+</html>
