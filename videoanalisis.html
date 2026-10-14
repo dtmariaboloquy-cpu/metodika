@@ -165,6 +165,36 @@ table.t tr:hover td{background:var(--field)}
 #panel{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
 @media (max-width:1050px){ #panel{position:static;max-height:none} }
 #descBox .pitch{max-width:260px}
+
+/* dibujo */
+#cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.stage.drawing #cv{pointer-events:auto;cursor:crosshair}
+.drawbar{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;z-index:4;display:none;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;background:rgba(4,16,31,.88);padding:6px 8px;border-radius:12px;max-width:96%}
+.stage.drawing .drawbar{display:flex}
+.drawbar button{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer}
+.drawbar button.on{background:#fff;color:#0D2038}
+.drawbar .sw{width:22px;height:22px;border-radius:50%;padding:0;border:2px solid rgba(255,255,255,.4)}
+.drawbar .sw.on{border-color:#fff;box-shadow:0 0 0 2px #fff}
+.drawbar select{background:#0D2038;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:12px;padding:3px}
+.drawbar .ok{background:#1E8E5A;border-color:#1E8E5A}
+.drawbar .vs{width:1px;height:20px;background:rgba(255,255,255,.25);margin:0 2px}
+.drawhint{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:4;background:rgba(4,16,31,.85);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;display:none}
+.stage.drawing .drawhint{display:block}
+.pausa-dib{position:absolute;right:12px;bottom:12px;z-index:4;background:rgba(194,55,126,.9);color:#fff;font-weight:700;font-size:12px;padding:4px 10px;border-radius:8px;display:none}
+
+/* listas / jugadoras */
+.two{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px}
+@media (max-width:800px){ .two{grid-template-columns:1fr} }
+.li{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-weight:600}
+.li.on{border-color:var(--accent);background:var(--accent-wash)}
+.li small{color:var(--sub);font-weight:500}
+.kpis{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.kpi{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:90px}
+.kpi b{display:block;font-family:var(--f-d);font-size:20px}
+.kpi span{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.menu{position:absolute;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;min-width:220px}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 10px;border-radius:7px;font-weight:600;cursor:pointer}
+.menu button:hover{background:var(--field)}
 </style>
 </head>
 <body>
@@ -197,6 +227,30 @@ table.t tr:hover td{background:var(--field)}
           </div>
           <span class="small" id="reelegir"></span>
         </div>
+        <canvas id="cv"></canvas>
+        <div class="drawhint">Pausado · dibujá sobre la imagen. Se va a ver cuando reproduzcas este clip.</div>
+        <div class="drawbar" id="drawBar">
+          <button data-tool="flecha" class="on" title="Flecha (pase / movimiento)">➝ Flecha</button>
+          <button data-tool="punteada" title="Flecha punteada (desmarque / conducción)">⇢ Punteada</button>
+          <button data-tool="linea" title="Línea (líneas del equipo)">— Línea</button>
+          <button data-tool="circulo" title="Marcar jugadora">◯ Jugadora</button>
+          <button data-tool="zona" title="Zona / espacio">▭ Zona</button>
+          <button data-tool="lapiz" title="Mano alzada">✎ Lápiz</button>
+          <button data-tool="texto" title="Texto">T Texto</button>
+          <span class="vs"></span>
+          <button class="sw on" data-col="#FFD60A" style="background:#FFD60A" title="Amarillo"></button>
+          <button class="sw" data-col="#FF3B30" style="background:#FF3B30" title="Rojo"></button>
+          <button class="sw" data-col="#FFFFFF" style="background:#FFFFFF" title="Blanco"></button>
+          <button class="sw" data-col="#38BDF8" style="background:#38BDF8" title="Celeste"></button>
+          <button class="sw" data-col="#22C55E" style="background:#22C55E" title="Verde"></button>
+          <span class="vs"></span>
+          <button id="dUndo" title="Deshacer">↶</button>
+          <button id="dClear" title="Borrar todo el dibujo">Limpiar</button>
+          <select id="dPausa" title="Cuántos segundos se frena el clip mostrando el dibujo"><option value="3">Pausa 3 s</option><option value="5" selected>Pausa 5 s</option><option value="8">Pausa 8 s</option><option value="12">Pausa 12 s</option><option value="0">Sin pausa</option></select>
+          <button id="dCancel">Cancelar</button>
+          <button id="dSave" class="ok">Guardar dibujo</button>
+        </div>
+        <div class="pausa-dib" id="pausaDib"></div>
         <div class="overlay" id="overlay"></div>
         <div class="flash" id="flash"></div>
       </div>
@@ -218,6 +272,7 @@ table.t tr:hover td{background:var(--field)}
         <div style="flex:1"></div>
         <button class="btn sm" id="bIni1">Marcar inicio 1T</button>
         <button class="btn sm" id="bIni2">Marcar inicio 2T</button>
+        <button class="btn sm" id="bDibujar" title="Dibujar sobre el tag seleccionado">✏️ Dibujar</button>
         <button class="btn sm" id="bCambiarVideo">Cambiar video</button>
         <button class="btn sm" id="bFull">Pantalla completa</button>
       </div>
@@ -248,6 +303,8 @@ table.t tr:hover td{background:var(--field)}
 
   <div class="tabs" id="tabs">
     <button class="tab on" data-t="lista">Tags</button>
+    <button class="tab" data-t="listas">Listas de clips</button>
+    <button class="tab" data-t="jugadoras">Jugadoras</button>
     <button class="tab" data-t="stats">Estadísticas</button>
     <button class="tab" data-t="export">Exportar / importar</button>
     <button class="tab" data-t="ayuda">Atajos y ayuda</button>
@@ -375,8 +432,14 @@ let recording = {};          // botonId -> tiempo inicio (modo rango)
 let tabActual = lsGet("va_tab") || "lista";
 let filtros = {boton:"", equipo:"", jugadora:"", resultado:"", periodo:""};
 let JUGADORAS = [], PARTIDOS = [];
-let playlist = null;         // {ids:[], i:0, present:bool}
+let playlist = null;         // {items:[{p,id}], i:0, present:bool, nombre}
 let clipFin = null;
+let LISTAS = [];             // [{id,nombre,items:[{p,id}]}]
+let listaSel = lsGet("va_lista") || null;
+let jugSel = null;           // num de jugadora en pestaña Jugadoras
+let videoCache = {};         // pid -> objectURL del archivo elegido en esta sesión
+let pendiente = null;        // clip esperando que se cargue el video {p,id}
+let marcados = new Set();    // tags tildados en la tabla
 
 /* ---------- plantel desde Metodika ---------- */
 function parseDataTag(html, id){
@@ -387,25 +450,27 @@ function parseDataTag(html, id){
 async function cargarPlantel(){
   try{
     if (window.parent && window.parent !== window) {
+      try{ const r = window.parent.eval('JUGADORAS.map(function(j){return {numero:j.numero,dorsal:(typeof dorsalDe==="function"?dorsalDe(j):j.numero),nombrePropio:j.nombrePropio,apellido:j.apellido,posicion:j.posicion};})'); if (r && r.length) JUGADORAS = r; }catch(e){}
       const d = window.parent.document;
       const j = d.getElementById("jugadoras-data"), p = d.getElementById("partidos-data");
-      if (j) JUGADORAS = JSON.parse(j.textContent);
+      if (j && !JUGADORAS.length) JUGADORAS = JSON.parse(j.textContent);
       if (p) PARTIDOS = JSON.parse(p.textContent);
     }
   }catch(e){}
   if (!JUGADORAS.length) {
     const cache = lsGet("va_plantel");
     if (cache) { try{ const c = JSON.parse(cache); JUGADORAS=c.j||[]; PARTIDOS=c.p||[]; }catch(e){} }
-    try{
+    if (!JUGADORAS.length) try{
       const html = await fetch("index.html", {cache:"no-store"}).then(r=>r.ok?r.text():"");
       const j = parseDataTag(html, "jugadoras-data"), p = parseDataTag(html, "partidos-data");
       if (j) JUGADORAS = j; if (p) PARTIDOS = p;
     }catch(e){}
   }
-  JUGADORAS = (JUGADORAS||[]).map(j=>({num:j.numero, nombre:((j.nombrePropio||"")+" "+(j.apellido||"")).trim() || j.apellido, pos:j.posicion||""}))
-    .sort((a,b)=>(a.num||99)-(b.num||99));
-  lsSet("va_plantel", JSON.stringify({j:[], p:PARTIDOS})); // solo partidos (liviano)
-  render();
+  const crudo = JUGADORAS||[];
+  JUGADORAS = crudo.map(j=>{ const dorsal = (j.dorsal!=null && j.dorsal!=="") ? j.dorsal : j.numero; const nombre = ((j.nombrePropio||"")+" "+(j.apellido||"")).trim() || j.apellido || ""; return {num:j.numero, dorsal, apellido:j.apellido||"", nombre, pos:j.posicion||"", label:(dorsal!=null&&dorsal!==""?dorsal+" · ":"")+nombre}; })
+    .sort((a,b)=>(+a.dorsal||99)-(+b.dorsal||99));
+  lsSet("va_plantel", JSON.stringify({j:crudo.map(j=>({numero:j.numero,dorsal:j.dorsal,nombrePropio:j.nombrePropio,apellido:j.apellido,posicion:j.posicion})), p:(PARTIDOS||[]).map(x=>({fecha:x.fecha,fechaISO:x.fechaISO,rival:x.rival,golesFavor:x.golesFavor,golesContra:x.golesContra}))}));
+  if (P) render();
 }
 
 /* ---------- guardado (Firestore + respaldo local) ---------- */
@@ -444,6 +509,17 @@ async function guardarNube(){
     setStatus("err","No se pudo guardar en la nube — quedó guardado en este navegador");
   }
 }
+let listasTimer = null;
+function guardarListas(){
+  lsSet("va_listas", JSON.stringify(LISTAS));
+  if (!online) return;
+  clearTimeout(listasTimer);
+  listasTimer = setTimeout(async ()=>{ try{ await getDb().doc("videoanalisis-config/listas").set({listas:LISTAS, actualizado:new Date().toISOString()}); }catch(e){ console.error(e); setStatus("err","No se pudieron guardar las listas en la nube"); } }, 700);
+}
+function getProyecto(pid){
+  if (P && P.id===pid) return P;
+  try{ return JSON.parse(lsGet("va_p_"+pid)||"null"); }catch(e){ return null; }
+}
 async function guardarPlantilla(){
   lsSet("va_plantilla", JSON.stringify(plantilla));
   if (online){ try{ await getDb().doc("videoanalisis-config/botonera").set({botones:plantilla, actualizado:new Date().toISOString()}); }catch(e){ console.error(e); } }
@@ -453,6 +529,7 @@ async function iniciar(){
   // índice local primero (rápido)
   try{ proyectos = JSON.parse(lsGet("va_index")||"[]"); }catch(e){ proyectos=[]; }
   try{ plantilla = JSON.parse(lsGet("va_plantilla")||"null"); }catch(e){ plantilla=null; }
+  try{ LISTAS = JSON.parse(lsGet("va_listas")||"[]"); }catch(e){ LISTAS=[]; }
   const d = getDb();
   if (d){
     try{
@@ -465,6 +542,7 @@ async function iniciar(){
       proyectos = nube;
       online = true;
       try{ const c = await d.doc("videoanalisis-config/botonera").get(); if (c.exists && c.data().botones) plantilla = c.data().botones; }catch(e){}
+      try{ const l = await d.doc("videoanalisis-config/listas").get(); if (l.exists && Array.isArray(l.data().listas)) { LISTAS = l.data().listas; lsSet("va_listas", JSON.stringify(LISTAS)); } }catch(e){}
       setStatus("saved","Conectado a la nube de Metodika");
     }catch(e){
       console.warn("Firestore no disponible:", e);
@@ -475,16 +553,22 @@ async function iniciar(){
   if (!plantilla) plantilla = botoneraDefault();
   proyectos.sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
   const last = lsGet("va_last");
-  if (proyectos.length) abrirProyecto((proyectos.find(x=>x.id===last)||proyectos[0]).id);
+  // parámetros: ?clip=pid:tagId · ?jug=numero
+  const q = new URLSearchParams(location.search);
+  const clip = (q.get("clip")||"").split(":");
+  if (clip.length===2 && proyectos.some(x=>x.id===clip[0])){ abrirProyecto(clip[0]); selTagId = clip[1]; pendiente = {p:clip[0], id:clip[1]}; render(); intentarPendiente(); }
+  else if (proyectos.length) abrirProyecto((proyectos.find(x=>x.id===last)||proyectos[0]).id);
   else nuevoProyecto(true);
+  if (q.get("jug")){ jugSel = q.get("jug"); tabActual = "jugadoras"; renderTabs(); renderTab(); setTimeout(()=>$("#tabs").scrollIntoView({behavior:"smooth"}), 300); }
 }
 let iniciado = false;
 window.VA = { onLogin(){ if (!iniciado){ iniciado = true; iniciar(); } } };
 // si no hay login de Firebase (sin conexión), arrancar igual
 setTimeout(()=>{ if(!iniciado && (typeof firebase==="undefined")){ iniciado=true; iniciar(); } }, 2500);
 
-function abrirProyecto(id){
-  pausar(); playlist=null; recording={};
+function abrirProyecto(id, mantenerLista){
+  if (dibujando) cerrarDibujo(false);
+  pausar(); if(!mantenerLista) playlist=null; recording={}; clipFin=null; marcados.clear();
   let data = null;
   try{ data = JSON.parse(lsGet("va_p_"+id)||"null"); }catch(e){}
   if (!data){ toast("No se encontró ese análisis."); return; }
@@ -545,6 +629,7 @@ function cargarVideoDeProyecto(){
   if (yt){ try{ yt.destroy(); }catch(e){} yt=null; ytReady=false; $("#ytHost").outerHTML = '<div id="ytHost" class="hidden"></div>'; }
   if (!P || !P.video){ mostrarVacio(""); return; }
   if (P.video.tipo==="youtube") cargarYT(P.video.url);
+  else if (videoCache[P.id]){ vid.src = videoCache[P.id]; kind="file"; vid.classList.remove("hidden"); $("#emptyStage").classList.add("hidden"); }
   else mostrarVacio("Este análisis usa el archivo “"+P.video.nombre+"”. Volvé a elegirlo desde tu compu para seguir (los videos no se suben a la nube).");
 }
 function cargarArchivo(file){
@@ -552,7 +637,7 @@ function cargarArchivo(file){
   if (yt){ try{ yt.destroy(); }catch(e){} yt=null; ytReady=false; $("#ytHost").outerHTML = '<div id="ytHost" class="hidden"></div>'; }
   const prev = P && P.video && P.video.tipo==="archivo" ? P.video.nombre : null;
   if (prev && prev !== file.name && P.tags.length && !confirm("Este análisis tenía el video “"+prev+"”. ¿Usar “"+file.name+"” igual? Los tags quedan con sus tiempos.")) return;
-  vid.src = URL.createObjectURL(file);
+  vid.src = videoCache[P.id] = URL.createObjectURL(file);
   kind = "file";
   vid.classList.remove("hidden"); $("#emptyStage").classList.add("hidden");
   P.video = {tipo:"archivo", nombre:file.name, size:file.size};
@@ -569,7 +654,7 @@ function cargarYT(url){
   P.video = {tipo:"youtube", url:url, id:id};
   const crear = ()=>{
     yt = new YT.Player("ytHost", { videoId:id, playerVars:{rel:0, modestbranding:1, playsinline:1},
-      events:{ onReady(){ ytReady=true; } } });
+      events:{ onReady(){ ytReady=true; renderTimeline._d=0; intentarPendiente(); } } });
   };
   if (window.YT && window.YT.Player) crear();
   else {
@@ -616,34 +701,57 @@ function pulsar(b){
 function flash(txt){ const f=$("#flash"); f.textContent=txt; f.classList.add("on"); clearTimeout(flash._t); flash._t=setTimeout(()=>f.classList.remove("on"),1300); }
 
 /* ---------- reproducir clips / playlist ---------- */
+let clipTag = null, dibMostrados = new Set(), pausaDibTimer = null;
 function verTag(id, fromList){
   const tag = P.tags.find(x=>x.id===id); if(!tag) return;
+  if (dibujando) cerrarDibujo(false);
   selTagId = id;
   if (!fromList) playlist = null;
+  if (!kind){ pendiente = {p:P.id, id}; toast(P.video && P.video.tipo==="archivo" ? "Elegí el archivo “"+P.video.nombre+"” para ver el clip." : "Cargá el video para ver el clip."); renderDesc(); return; }
+  limpiarCanvas(); clearTimeout(pausaDibTimer); $("#pausaDib").style.display="none";
+  clipTag = tag; dibMostrados = new Set();
   player.seek(tag.ini); player.play();
   clipFin = tag.fin;
   mostrarOverlay(tag);
   renderDesc(); renderTimeline(); marcarFilaSel();
 }
+/* abre un clip de cualquier partido (para listas y jugadoras) */
+function irAClip(pid, id, fromList){
+  if (!P || P.id!==pid){ if (!getProyecto(pid)){ toast("Ese análisis ya no existe."); if(fromList) siguienteClip(1); return; } abrirProyecto(pid, !!fromList); }
+  pendiente = {p:pid, id, lista:!!fromList};
+  intentarPendiente();
+}
+function intentarPendiente(){
+  if (!pendiente || !P || P.id!==pendiente.p) return;
+  const listo = (kind==="file" && vid.readyState>=1) || (kind==="yt" && ytReady);
+  if (!listo){
+    if (!kind && P.video && P.video.tipo==="archivo") toast("Para seguir, elegí el archivo “"+P.video.nombre+"”.");
+    return;
+  }
+  const pe = pendiente; pendiente = null;
+  verTag(pe.id, pe.lista);
+}
 function mostrarOverlay(tag){
   const o=$("#overlay");
   if (!tag){ o.style.display="none"; return; }
   const jug = tag.jugadora ? " · "+tag.jugadora : "";
-  o.innerHTML = esc(tag.nombre)+esc(jug)+"<small>"+(tag.equipo==="propio"?"Talleres":"Rival")+" · "+esc(etiquetaMin(tag.t))+(tag.zona?" · "+esc(ZONA_NOMBRE[tag.zona]||tag.zona):"")+(tag.nota?" — "+esc(tag.nota):"")+(playlist?" · clip "+(playlist.i+1)+"/"+playlist.ids.length:"")+"</small>";
+  o.innerHTML = esc(tag.nombre)+esc(jug)+"<small>"+(tag.equipo==="propio"?"Talleres":"Rival")+" · "+esc(etiquetaMin(tag.t))+(tag.zona?" · "+esc(ZONA_NOMBRE[tag.zona]||tag.zona):"")+(tag.nota?" — "+esc(tag.nota):"")+(playlist?" · clip "+(playlist.i+1)+"/"+playlist.items.length+(playlist.nombre?" · "+esc(playlist.nombre):""):"")+"</small>";
   o.style.display="block";
 }
-function reproducirLista(ids, present){
-  if (!ids.length){ toast("No hay tags con ese filtro."); return; }
-  playlist = {ids, i:0, present:!!present};
+function reproducirLista(items, present, nombre){
+  items = items.filter(it=>{ const p=getProyecto(it.p); return p && p.tags.some(t=>t.id===it.id); });
+  if (!items.length){ toast("No hay clips para reproducir."); return; }
+  playlist = {items, i:0, present:!!present, nombre:nombre||""};
   if (present) pantallaCompleta(true);
-  verTag(ids[0], true);
+  irAClip(items[0].p, items[0].id, true);
 }
 function siguienteClip(dir){
   if (!playlist) return;
   playlist.i += dir||1;
   if (playlist.i<0) playlist.i=0;
-  if (playlist.i>=playlist.ids.length){ playlist=null; pausar(); clipFin=null; mostrarOverlay(null); toast("Fin de la selección."); return; }
-  verTag(playlist.ids[playlist.i], true);
+  if (playlist.i>=playlist.items.length){ playlist=null; pausar(); clipFin=null; mostrarOverlay(null); toast("Fin de la selección."); return; }
+  const it = playlist.items[playlist.i];
+  irAClip(it.p, it.id, true);
 }
 function pantallaCompleta(on){
   const st=$("#stage");
@@ -659,7 +767,20 @@ function tick(){
   const d = player.dur();
   const head = document.getElementById("tlHead");
   if (head && d){ const lane=document.querySelector(".tl-lane"); if(lane){ head.style.left = (t/d*lane.clientWidth)+"px"; } }
+  if (clipTag && clipFin!=null && !dibujando && clipTag.dibujos && clipTag.dibujos.length && !player.paused()){
+    const dd = clipTag.dibujos.find(x=>!dibMostrados.has(x.id) && t>=x.t-0.05 && t<x.t+1.5);
+    if (dd){
+      dibMostrados.add(dd.id);
+      pintarFormas(dd.formas);
+      if (+dd.pausa>0){
+        pausar(); const pd=$("#pausaDib"); let rest=+dd.pausa; pd.style.display="block"; pd.textContent="✏️ "+rest+" s";
+        clearInterval(pausaDibTimer);
+        pausaDibTimer = setInterval(()=>{ rest--; pd.textContent="✏️ "+rest+" s"; if(rest<=0){ clearInterval(pausaDibTimer); pd.style.display="none"; limpiarCanvas(); if(clipFin!=null) player.play(); } }, 1000);
+      } else setTimeout(limpiarCanvas, 2500);
+    }
+  }
   if (clipFin!=null && t>=clipFin){
+    limpiarCanvas();
     clipFin=null;
     if (playlist) siguienteClip(1); else { pausar(); setTimeout(()=>mostrarOverlay(null),1200); }
   }
@@ -694,12 +815,18 @@ function renderDesc(){
   const box = $("#descBox");
   const tag = P && P.tags.find(x=>x.id===selTagId);
   if (!tag){ box.innerHTML = `<div class="small muted">Después de marcar una acción, acá le agregás la jugadora, la zona, si salió bien o mal y una nota.</div>`; return; }
+  const actual = jugadoraDeTag(tag);
   const jug = JUGADORAS.length
-    ? `<select class="inp" id="dJug" style="width:100%"><option value="">— Jugadora —</option>${JUGADORAS.map(j=>{const v=(j.num?j.num+" · ":"")+j.nombre; return `<option ${tag.jugadora===v?"selected":""}>${esc(v)}</option>`;}).join("")}${tag.jugadora && !JUGADORAS.some(j=>((j.num?j.num+" · ":"")+j.nombre)===tag.jugadora)?`<option selected>${esc(tag.jugadora)}</option>`:""}</select>`
+    ? `<select class="inp" id="dJug" style="width:100%"><option value="">— Jugadora —</option>${JUGADORAS.map(j=>`<option value="${esc(j.num)}" ${actual&&actual.num===j.num?"selected":""}>${esc(j.label)}</option>`).join("")}${tag.jugadora && !actual?`<option value="_txt" selected>${esc(tag.jugadora)}</option>`:""}</select>`
     : `<input class="inp" id="dJug" style="width:100%" placeholder="Jugadora (n° o nombre)" value="${esc(tag.jugadora)}">`;
   box.innerHTML = `
     <h4><span><span class="tagdot" style="background:${esc(tag.color)}"></span>${esc(tag.nombre)} · ${esc(etiquetaMin(tag.t))}</span>
       <span><button class="btn sm" id="dVer" title="Ver clip">▶︎</button> <button class="btn sm danger" id="dDel" title="Borrar tag">✕</button></span></h4>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn sm" id="dDib">✏️ ${tag.dibujos&&tag.dibujos.length?"Dibujar otro":"Dibujar"}</button>
+      ${tag.dibujos&&tag.dibujos.length?`<button class="btn sm danger" id="dDibDel" title="Borrar los dibujos de este clip">Borrar ${tag.dibujos.length} dibujo${tag.dibujos.length>1?"s":""}</button>`:""}
+      <button class="btn sm" id="dLista">＋ A una lista</button>
+    </div>
     <div class="chips" style="margin-bottom:8px">
       <button class="chip ${tag.equipo==="propio"?"on":""}" data-deq="propio">Talleres</button>
       <button class="chip ${tag.equipo==="rival"?"on":""}" data-deq="rival">Rival</button>
@@ -765,19 +892,25 @@ function renderTab(){
         <button class="btn sm solid" id="lPlay">▶︎ Reproducir selección (${ts.length})</button>
         <button class="btn sm" id="lPresent">Presentación en pantalla completa</button>
         <button class="btn sm" id="lPrev">◀︎ Anterior</button><button class="btn sm" id="lNext">Siguiente ▶︎</button>
+        <button class="btn sm" id="lAddList" ${marcados.size?"":"disabled"}>＋ Agregar ${marcados.size||""} tildado${marcados.size===1?"":"s"} a una lista</button>
         <span class="small muted" style="align-self:center">${P.tags.length} tags en total</span>
       </div>
-      <div class="scroll"><table class="t"><thead><tr><th>Min</th><th>Acción</th><th>Equipo</th><th>Jugadora</th><th>Zona</th><th>Res.</th><th>Nota</th><th>Dur.</th><th></th></tr></thead><tbody>
+      <div class="scroll"><table class="t"><thead><tr><th><input type="checkbox" id="chkAll" title="Tildar todos" ${ts.length&&ts.every(t=>marcados.has(t.id))?"checked":""}></th><th>Min</th><th>Acción</th><th>Equipo</th><th>Jugadora</th><th>Zona</th><th>Res.</th><th>Nota</th><th>Dur.</th><th></th></tr></thead><tbody>
       ${ts.map(t=>`<tr data-row="${esc(t.id)}" class="${t.id===selTagId?"sel":""}" style="cursor:pointer">
+        <td><input type="checkbox" data-chk="${esc(t.id)}" ${marcados.has(t.id)?"checked":""}></td>
         <td style="white-space:nowrap;font-variant-numeric:tabular-nums">${esc(etiquetaMin(t.t))}</td>
-        <td><span class="tagdot" style="background:${esc(t.color)}"></span>${esc(t.nombre)}</td>
+        <td><span class="tagdot" style="background:${esc(t.color)}"></span>${esc(t.nombre)}${t.dibujos&&t.dibujos.length?' <span title="Tiene dibujo">✏️</span>':""}</td>
         <td><span class="pill ${t.equipo==="propio"?"prop":"riv"}">${t.equipo==="propio"?"Talleres":"Rival"}</span></td>
         <td>${esc(t.jugadora)}</td><td>${esc(ZONA_NOMBRE[t.zona]||"")}</td>
         <td>${t.resultado==="pos"?'<span class="pill pos">✓</span>':t.resultado==="neg"?'<span class="pill neg">✗</span>':""}</td>
         <td class="small" style="max-width:240px">${esc(t.nota)}</td>
         <td class="small muted">${Math.round(t.fin-t.ini)} s</td>
-        <td><button class="btn sm danger" data-del="${esc(t.id)}" title="Borrar">✕</button></td></tr>`).join("") || `<tr><td colspan="9" class="muted" style="padding:14px">Todavía no hay tags. Cargá el video y usá la botonera (o las teclas).</td></tr>`}
+        <td><button class="btn sm danger" data-del="${esc(t.id)}" title="Borrar">✕</button></td></tr>`).join("") || `<tr><td colspan="10" class="muted" style="padding:14px">Todavía no hay tags. Cargá el video y usá la botonera (o las teclas).</td></tr>`}
       </tbody></table></div>`;
+  } else if (tabActual==="listas"){
+    body.innerHTML = renderListas();
+  } else if (tabActual==="jugadoras"){
+    body.innerHTML = renderJugadoras();
   } else if (tabActual==="stats"){
     body.innerHTML = filtrosHtml().replace(/<select class="inp" data-f="equipo">[\s\S]*?<\/select>/,"") + renderStats();
   } else if (tabActual==="export"){
@@ -801,7 +934,10 @@ function renderTab(){
         3. Marcá <b>inicio 1T</b> e <b>inicio 2T</b> para que cada tag tenga el minuto de juego.<br>
         4. Elegí <b>Talleres / Rival</b> y tocá los botones (o sus teclas) mientras mirás. Cada tag guarda unos segundos antes y después.<br>
         5. Al tag recién marcado le agregás jugadora, zona, ✓/✗ y nota.<br>
-        6. En <b>Tags</b> filtrás y armás la selección de clips para mostrarle al plantel.</div>
+        6. En <b>Tags</b> filtrás y armás la selección de clips para mostrarle al plantel.<br>
+        7. Con <b>✏️ Dibujar</b> pausás y marcás flechas, jugadoras y zonas: el clip se frena solo en ese momento y muestra el dibujo.<br>
+        8. En <b>Listas de clips</b> juntás clips de distintos partidos (ej.: “Presión tras pérdida – charla del martes”).<br>
+        9. En <b>Jugadoras</b> ves todas las acciones de cada una en la temporada, para la devolución individual.</div>
       <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Atajos de teclado</h3>
         <kbd>Espacio</kbd> play / pausa · <kbd>←</kbd> <kbd>→</kbd> −/+ 5 s · <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> −/+ 1 s<br>
         <kbd>,</kbd> <kbd>.</kbd> cuadro a cuadro (archivo) · <kbd>Tab</kbd> cambia Talleres / Rival<br>
@@ -844,6 +980,238 @@ function renderStats(){
   </div>`;
 }
 function marcarFilaSel(){ document.querySelectorAll("tr[data-row]").forEach(r=>r.classList.toggle("sel", r.dataset.row===selTagId)); }
+
+/* ---------- jugadoras ---------- */
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+function jugadoraDeTag(t){
+  if (!t) return null;
+  if (t.jugNum!=null){ const j = JUGADORAS.find(x=>x.num===t.jugNum); if (j) return j; }
+  if (!t.jugadora) return null;
+  const txt = norm(t.jugadora);
+  return JUGADORAS.find(j=>norm(j.label)===txt) || JUGADORAS.find(j=>txt.startsWith(norm(j.dorsal)+" · ")) || JUGADORAS.find(j=>j.apellido && txt.includes(norm(j.apellido))) || null;
+}
+function nombreJug(key){ const j = JUGADORAS.find(x=>String(x.num)===String(key)); return j ? j.label : String(key||""); }
+function todosLosProyectos(){ return proyectos.map(x=>getProyecto(x.id)).filter(Boolean); }
+function clipsDeJugadora(key){
+  if (key==null || key==="") return [];
+  const out = [];
+  todosLosProyectos().forEach(p=>(p.tags||[]).forEach(t=>{
+    if (t.equipo!=="propio") return;
+    const j = jugadoraDeTag(t);
+    if ((j && String(j.num)===String(key)) || (!j && t.jugadora && t.jugadora===key)) out.push({p,t});
+  }));
+  out.sort((a,b)=>String(b.p.fecha||"").localeCompare(String(a.p.fecha||"")) || a.t.t-b.t.t);
+  return out;
+}
+function renderJugadoras(){
+  const conteo = {};
+  todosLosProyectos().forEach(p=>(p.tags||[]).forEach(t=>{ if(t.equipo!=="propio") return; const j=jugadoraDeTag(t); const k = j?String(j.num):(t.jugadora||null); if(k) conteo[k]=(conteo[k]||0)+1; }));
+  const opciones = JUGADORAS.map(j=>`<option value="${esc(j.num)}" ${String(jugSel)===String(j.num)?"selected":""}>${esc(j.label)}${conteo[j.num]?" ("+conteo[j.num]+")":""}</option>`).join("")
+    + Object.keys(conteo).filter(k=>!JUGADORAS.some(j=>String(j.num)===k)).map(k=>`<option value="${esc(k)}" ${jugSel===k?"selected":""}>${esc(k)} (${conteo[k]})</option>`).join("");
+  let html = `<div class="filters"><select class="inp" id="jSel" style="min-width:240px"><option value="">— Elegí una jugadora —</option>${opciones}</select>
+    <span class="small muted">Junta las acciones de Talleres de todos los partidos taggeados.</span></div>`;
+  if (!jugSel) return html + `<p class="muted">Elegí una jugadora para ver todos sus clips, cuántas acciones salieron bien o mal y armar su lista para la devolución.</p>`;
+  const cs = clipsDeJugadora(jugSel);
+  if (!cs.length) return html + `<p class="muted">Todavía no tiene acciones taggeadas. Asignale la jugadora a los tags desde el panel de la derecha.</p>`;
+  const pos = cs.filter(c=>c.t.resultado==="pos").length, neg = cs.filter(c=>c.t.resultado==="neg").length;
+  const partidos = new Set(cs.map(c=>c.p.id)).size;
+  const acc = {}; cs.forEach(c=>{ const a = acc[c.t.nombre] = acc[c.t.nombre]||{n:0,pos:0,neg:0,color:c.t.color}; a.n++; if(c.t.resultado==="pos")a.pos++; if(c.t.resultado==="neg")a.neg++; });
+  html += `<div class="kpis">
+      <div class="kpi"><b>${cs.length}</b><span>Acciones</span></div>
+      <div class="kpi"><b>${partidos}</b><span>Partidos</span></div>
+      <div class="kpi"><b style="color:var(--ok)">${pos}</b><span>Positivas</span></div>
+      <div class="kpi"><b style="color:var(--rival)">${neg}</b><span>Negativas</span></div>
+      <div class="kpi"><b>${pos+neg?Math.round(pos/(pos+neg)*100)+"%":"—"}</b><span>Efectividad</span></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn sm solid" id="jPlay">▶︎ Ver todos sus clips</button>
+      <button class="btn sm" id="jPresent">Presentación en pantalla completa</button>
+      <button class="btn sm" id="jLista">Crear lista con sus clips</button>
+    </div>
+    <div class="statgrid">
+      <div><h3 style="font-size:15px;margin-bottom:6px">Por acción</h3>
+        <table class="t"><thead><tr><th>Acción</th><th>Total</th><th>✓ / ✗</th></tr></thead><tbody>
+        ${Object.entries(acc).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>`<tr><td><span class="tagdot" style="background:${esc(v.color)}"></span>${esc(k)}</td><td><b>${v.n}</b></td><td><span class="pill pos">${v.pos}</span> <span class="pill neg">${v.neg}</span></td></tr>`).join("")}
+        </tbody></table></div>
+      <div><h3 style="font-size:15px;margin-bottom:6px">Clips</h3><div class="scroll" style="max-height:360px">
+        <table class="t"><thead><tr><th>Partido</th><th>Min</th><th>Acción</th><th>Res.</th><th>Nota</th><th></th></tr></thead><tbody>
+        ${cs.map(c=>`<tr data-clip="${esc(c.p.id)}:${esc(c.t.id)}" style="cursor:pointer"><td class="small">${esc(c.p.nombre)}</td><td class="small" style="white-space:nowrap">${esc(minLabel(c.p,c.t.t))}</td><td><span class="tagdot" style="background:${esc(c.t.color)}"></span>${esc(c.t.nombre)}${c.t.dibujos&&c.t.dibujos.length?" ✏️":""}</td><td>${c.t.resultado==="pos"?'<span class="pill pos">✓</span>':c.t.resultado==="neg"?'<span class="pill neg">✗</span>':""}</td><td class="small">${esc(c.t.nota)}</td><td>▶︎</td></tr>`).join("")}
+        </tbody></table></div></div>
+    </div>`;
+  return html;
+}
+function minLabel(p, t){
+  if (p.ini2!=null && t>=p.ini2) return (45+Math.floor((t-p.ini2)/60)+1)+"' 2T";
+  if (p.ini1!=null && t>=p.ini1) return (Math.floor((t-p.ini1)/60)+1)+"' 1T";
+  return fmt(t);
+}
+
+/* ---------- listas de clips ---------- */
+function crearLista(nombre){ const l = {id:uid(), nombre, items:[], creada:new Date().toISOString()}; LISTAS.unshift(l); guardarListas(); return l; }
+function agregarALista(l, items){
+  let n=0; items.forEach(it=>{ if(!l.items.some(x=>x.p===it.p&&x.id===it.id)){ l.items.push(it); n++; } });
+  guardarListas(); toast(n ? n+" clip"+(n>1?"s":"")+" agregado"+(n>1?"s":"")+" a “"+l.nombre+"”" : "Ya estaba"+(items.length>1?"n":"")+" en esa lista.");
+}
+function menuListas(anchor, items){
+  if (!items.length) return;
+  document.querySelectorAll(".menu").forEach(m=>m.remove());
+  const m = document.createElement("div"); m.className="menu";
+  m.innerHTML = LISTAS.map(l=>`<button data-ml="${esc(l.id)}">${esc(l.nombre)} <small class="muted">(${l.items.length})</small></button>`).join("") + `<button data-ml="_nueva" style="color:var(--accent)">＋ Nueva lista…</button>`;
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect();
+  m.style.left = Math.min(window.innerWidth-240, r.left+window.scrollX)+"px"; m.style.top = (r.bottom+window.scrollY+4)+"px";
+  m.onclick = e=>{
+    const b = e.target.closest("[data-ml]"); if(!b) return;
+    let l;
+    if (b.dataset.ml==="_nueva"){ const n = prompt("Nombre de la lista (ej.: Presión tras pérdida – charla del martes):"); if(!n||!n.trim()) return m.remove(); l = crearLista(n.trim()); }
+    else l = LISTAS.find(x=>x.id===b.dataset.ml);
+    agregarALista(l, items); m.remove(); marcados.clear(); renderTab();
+  };
+  setTimeout(()=>document.addEventListener("mousedown", function cerrar(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener("mousedown", cerrar); } }), 0);
+}
+function infoItem(it){ const p = getProyecto(it.p); const t = p && (p.tags||[]).find(x=>x.id===it.id); return {p,t}; }
+function renderListas(){
+  const sel = LISTAS.find(x=>x.id===listaSel) || LISTAS[0];
+  if (sel) listaSel = sel.id;
+  const izq = `<div><button class="btn sm solid" id="liNueva" style="width:100%;margin-bottom:8px">＋ Nueva lista</button>
+    ${LISTAS.map(l=>`<div class="li ${sel&&l.id===sel.id?"on":""}" data-li="${esc(l.id)}"><span>${esc(l.nombre)}</span><small>${l.items.length}</small></div>`).join("") || `<p class="small muted">Todavía no hay listas. Creá una y sumale clips desde el panel del tag (“＋ A una lista”) o tildando varios en la pestaña Tags.</p>`}</div>`;
+  if (!sel) return `<div class="two">${izq}<div class="muted">Las listas juntan clips de distintos partidos para la charla con el plantel o para una jugadora.</div></div>`;
+  const filas = sel.items.map((it,i)=>{ const {p,t} = infoItem(it);
+    if (!t) return `<tr><td colspan="6" class="small muted">Clip borrado</td><td><button class="btn sm danger" data-it="rm" data-idx="${i}">✕</button></td></tr>`;
+    return `<tr><td class="small muted">${i+1}</td><td class="small">${esc(p.nombre)}</td><td class="small" style="white-space:nowrap">${esc(minLabel(p,t.t))}</td>
+      <td><span class="tagdot" style="background:${esc(t.color)}"></span>${esc(t.nombre)}${t.dibujos&&t.dibujos.length?" ✏️":""}</td><td class="small">${esc(t.jugadora)}</td>
+      <td class="small">${esc(t.nota)}</td>
+      <td style="white-space:nowrap"><button class="btn sm" data-it="play" data-idx="${i}" title="Ver">▶︎</button> <button class="btn sm" data-it="up" data-idx="${i}" title="Subir">↑</button> <button class="btn sm" data-it="down" data-idx="${i}" title="Bajar">↓</button> <button class="btn sm danger" data-it="rm" data-idx="${i}" title="Quitar de la lista">✕</button></td></tr>`; }).join("");
+  const partidos = new Set(sel.items.map(x=>x.p)).size;
+  return `<div class="two">${izq}<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div><h3 style="font-size:17px">${esc(sel.nombre)}</h3><span class="small muted">${sel.items.length} clips · ${partidos} partido${partidos===1?"":"s"}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm solid" id="liPlay">▶︎ Reproducir</button><button class="btn sm" id="liPresent">Presentación</button><button class="btn sm" id="liRen">Renombrar</button><button class="btn sm danger" id="liDel">Borrar lista</button></div>
+    </div>
+    ${partidos>1?`<p class="small muted" style="margin:0 0 8px">Tiene clips de varios partidos: al pasar de uno a otro se cambia el video solo (si es un archivo de tu compu, la primera vez te lo pide).</p>`:""}
+    <div class="scroll"><table class="t"><thead><tr><th>#</th><th>Partido</th><th>Min</th><th>Acción</th><th>Jugadora</th><th>Nota</th><th></th></tr></thead><tbody>${filas || `<tr><td colspan="7" class="muted" style="padding:12px">Lista vacía.</td></tr>`}</tbody></table></div>
+  </div></div>`;
+}
+function accionItem(acc, i){
+  const l = LISTAS.find(x=>x.id===listaSel); if(!l) return;
+  if (acc==="play"){ const it=l.items[i]; playlist = {items:l.items.slice(), i, present:false, nombre:l.nombre}; irAClip(it.p,it.id,true); return; }
+  if (acc==="rm") l.items.splice(i,1);
+  if (acc==="up" && i>0) [l.items[i-1],l.items[i]]=[l.items[i],l.items[i-1]];
+  if (acc==="down" && i<l.items.length-1) [l.items[i+1],l.items[i]]=[l.items[i],l.items[i+1]];
+  guardarListas(); renderTab();
+}
+
+/* ---------- dibujo sobre el clip ---------- */
+const cv = $("#cv"), ctx = cv.getContext("2d");
+let dibujando = false, herramienta = "flecha", colorDib = "#FFD60A", formasEd = [], trazo = null, tagDib = null, dibEditId = null;
+function ajustarCanvas(){
+  const st = $("#stage"), dpr = window.devicePixelRatio||1;
+  cv.width = Math.round(st.clientWidth*dpr); cv.height = Math.round(st.clientHeight*dpr);
+  if (dibujando) repintarEditor();
+}
+new ResizeObserver(ajustarCanvas).observe($("#stage"));
+function limpiarCanvas(){ ctx.clearRect(0,0,cv.width,cv.height); }
+function flechaPunta(x1,y1,x2,y2,tam){
+  const a = Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-tam*Math.cos(a-0.45), y2-tam*Math.sin(a-0.45));
+  ctx.lineTo(x2-tam*Math.cos(a+0.45), y2-tam*Math.sin(a+0.45));
+  ctx.closePath(); ctx.fill();
+}
+function pintarForma(f){
+  const W = cv.width, H = cv.height, k = W/1000;
+  const pts = f.pts.map(p=>[p[0]*W, p[1]*H]);
+  ctx.save();
+  ctx.strokeStyle = f.c; ctx.fillStyle = f.c; ctx.lineWidth = Math.max(2, 4*k); ctx.lineCap="round"; ctx.lineJoin="round";
+  ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 4*k;
+  const [a,b] = [pts[0], pts[pts.length-1]];
+  if (f.k==="flecha" || f.k==="punteada" || f.k==="linea"){
+    if (f.k==="punteada") ctx.setLineDash([14*k, 10*k]);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+    ctx.setLineDash([]);
+    if (f.k!=="linea") flechaPunta(a[0],a[1],b[0],b[1], 22*k);
+    if (f.k==="linea"){ [a,b].forEach(p=>{ ctx.beginPath(); ctx.arc(p[0],p[1],6*k,0,Math.PI*2); ctx.fill(); }); }
+  } else if (f.k==="circulo"){
+    const rx = Math.max(10*k, Math.hypot(b[0]-a[0], b[1]-a[1])), ry = rx*0.42;
+    ctx.beginPath(); ctx.ellipse(a[0], a[1], rx, ry, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = .18; ctx.fill();
+  } else if (f.k==="zona"){
+    const x=Math.min(a[0],b[0]), y=Math.min(a[1],b[1]), w=Math.abs(b[0]-a[0]), h=Math.abs(b[1]-a[1]);
+    ctx.globalAlpha = .25; ctx.fillRect(x,y,w,h); ctx.globalAlpha = 1; ctx.setLineDash([10*k,6*k]); ctx.strokeRect(x,y,w,h);
+  } else if (f.k==="lapiz"){
+    ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+  } else if (f.k==="texto"){
+    const fs = Math.round(30*k);
+    ctx.font = `800 ${fs}px Barlow, Arial, sans-serif`; ctx.textBaseline="middle";
+    const w = ctx.measureText(f.txt).width;
+    ctx.shadowBlur = 0; ctx.globalAlpha=.75; ctx.fillStyle="#04101F"; ctx.fillRect(a[0]-8*k, a[1]-fs*0.75, w+16*k, fs*1.5);
+    ctx.globalAlpha=1; ctx.fillStyle=f.c; ctx.fillText(f.txt, a[0], a[1]);
+  }
+  ctx.restore();
+}
+function pintarFormas(formas){ limpiarCanvas(); (formas||[]).forEach(pintarForma); }
+function repintarEditor(){ pintarFormas(trazo ? formasEd.concat([trazo]) : formasEd); }
+function abrirDibujo(tag){
+  if (!kind) return toast("Primero cargá el video.");
+  playlist = null; clipFin = null; pausar();
+  const t = player.time();
+  if (t < tag.ini-0.5 || t > tag.fin+0.5) player.seek(tag.t);
+  tagDib = tag;
+  const tt = (t < tag.ini-0.5 || t > tag.fin+0.5) ? tag.t : t;
+  const ex = (tag.dibujos||[]).find(d=>Math.abs(d.t-tt)<0.6);
+  dibEditId = ex ? ex.id : null;
+  formasEd = ex ? clone(ex.formas) : [];
+  $("#dPausa").value = ex ? String(ex.pausa) : "5";
+  dibujando = true; $("#stage").classList.add("drawing");
+  mostrarOverlay(null); ajustarCanvas(); repintarEditor();
+  if (kind==="yt") toast("Con YouTube: pausá en el momento justo antes de dibujar.");
+}
+function cerrarDibujo(guardar){
+  if (guardar && tagDib){
+    tagDib.dibujos = tagDib.dibujos || [];
+    const t = +player.time().toFixed(2);
+    if (dibEditId) tagDib.dibujos = tagDib.dibujos.filter(d=>d.id!==dibEditId);
+    if (formasEd.length) tagDib.dibujos.push({id:dibEditId||uid(), t, pausa:+$("#dPausa").value, formas:formasEd});
+    tagDib.dibujos.sort((a,b)=>a.t-b.t);
+    changed(); toast(formasEd.length ? "Dibujo guardado en el clip." : "Dibujo borrado.");
+  }
+  dibujando = false; trazo = null; tagDib = null; dibEditId = null;
+  $("#stage").classList.remove("drawing"); limpiarCanvas();
+  renderDesc(); renderTab();
+}
+function posCanvas(e){ const r = cv.getBoundingClientRect(); return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)), Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))]; }
+cv.addEventListener("pointerdown", e=>{
+  if (!dibujando) return;
+  e.preventDefault();
+  const p = posCanvas(e);
+  if (herramienta==="texto"){
+    const txt = prompt("Texto:"); if (txt && txt.trim()){ formasEd.push({k:"texto", c:colorDib, pts:[p], txt:txt.trim()}); repintarEditor(); }
+    return;
+  }
+  cv.setPointerCapture(e.pointerId);
+  trazo = {k:herramienta, c:colorDib, pts:[p, p]};
+});
+cv.addEventListener("pointermove", e=>{
+  if (!trazo) return;
+  const p = posCanvas(e);
+  if (trazo.k==="lapiz") trazo.pts.push(p); else trazo.pts[1] = p;
+  repintarEditor();
+});
+cv.addEventListener("pointerup", ()=>{
+  if (!trazo) return;
+  const [a,b] = [trazo.pts[0], trazo.pts[trazo.pts.length-1]];
+  if (trazo.k==="lapiz" ? trazo.pts.length>2 : Math.hypot(b[0]-a[0], b[1]-a[1])>0.01) formasEd.push(trazo);
+  trazo = null; repintarEditor();
+});
+$("#drawBar").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if (b.dataset.tool){ herramienta = b.dataset.tool; document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("on", x===b)); }
+  else if (b.dataset.col){ colorDib = b.dataset.col; document.querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on", x===b)); }
+  else if (b.id==="dUndo"){ formasEd.pop(); repintarEditor(); }
+  else if (b.id==="dClear"){ formasEd = []; repintarEditor(); }
+  else if (b.id==="dCancel") cerrarDibujo(false);
+  else if (b.id==="dSave") cerrarDibujo(true);
+});
 
 /* ---------- modales ---------- */
 function modal(html, onMount){
@@ -971,13 +1339,14 @@ $("#bCambiarVideo").onclick = ()=>{ const yt = confirm("¿Querés usar un link d
 $("#fileIn").onchange = e=>{ cargarArchivo(e.target.files[0]); e.target.value=""; renderTimeline._d=0; };
 $("#btnYT").onclick = ()=>{ const u = prompt("Pegá el link del partido en YouTube:", P&&P.video&&P.video.url||""); if(u){ cargarYT(u.trim()); changed(); renderTimeline._d=0; } };
 $("#jsonIn").onchange = e=>{ if(e.target.files[0]) importar(e.target.files[0]); e.target.value=""; };
-vid.addEventListener("loadedmetadata", ()=>{ renderTimeline._d=0; });
+vid.addEventListener("loadedmetadata", ()=>{ renderTimeline._d=0; intentarPendiente(); });
 $("#bPlay").onclick = ()=>{ player.paused()?player.play():player.pause(); };
 document.querySelectorAll("[data-skip]").forEach(b=>b.onclick=()=>{ clipFin=null; player.seek(player.time()+(+b.dataset.skip)); });
 document.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{ player.rate(+b.dataset.rate); toast("Velocidad "+b.textContent); });
 $("#bIni1").onclick = ()=>{ if(!kind) return toast("Primero cargá el video."); P.ini1 = +player.time().toFixed(1); changed(); render(); toast("Inicio del 1T marcado en "+fmt(P.ini1)); };
 $("#bIni2").onclick = ()=>{ if(!kind) return toast("Primero cargá el video."); P.ini2 = +player.time().toFixed(1); changed(); render(); toast("Inicio del 2T marcado en "+fmt(P.ini2)); };
 $("#bFull").onclick = ()=>pantallaCompleta();
+$("#bDibujar").onclick = ()=>{ const tag = P && P.tags.find(x=>x.id===selTagId); if(!tag) return toast("Primero elegí o marcá un tag."); abrirDibujo(tag); };
 $("#btnNuevo").onclick = ()=>nuevoProyecto(false);
 $("#btnDatos").onclick = ()=>abrirDatos();
 $("#btnBorrarProy").onclick = ()=>borrarProyecto();
@@ -992,6 +1361,9 @@ $("#descBox").addEventListener("click", e=>{
   const t = e.target.closest("button,.pz"); if(!t) return;
   if (t.id==="dVer") return verTag(tag.id);
   if (t.id==="dDel") return borrarTag(tag.id);
+  if (t.id==="dDib") return abrirDibujo(tag);
+  if (t.id==="dDibDel"){ if(confirm("¿Borrar los dibujos de este clip?")){ tag.dibujos=[]; changed(); renderDesc(); renderTab(); limpiarCanvas(); } return; }
+  if (t.id==="dLista") return menuListas(t, [{p:P.id, id:tag.id}]);
   if (t.dataset.deq){ tag.equipo=t.dataset.deq; }
   else if (t.dataset.res){ tag.resultado = tag.resultado===t.dataset.res ? "" : t.dataset.res; }
   else if (t.dataset.z){ tag.zona = tag.zona===t.dataset.z ? "" : t.dataset.z; }
@@ -1001,7 +1373,15 @@ $("#descBox").addEventListener("click", e=>{
 });
 $("#descBox").addEventListener("change", e=>{
   const tag = P.tags.find(x=>x.id===selTagId); if(!tag) return;
-  if (e.target.id==="dJug"){ tag.jugadora = e.target.value.trim(); changed(); renderTab(); }
+  if (e.target.id==="dJug"){
+    const v = e.target.value;
+    if (e.target.tagName==="SELECT"){
+      if (v==="_txt") return;
+      const j = JUGADORAS.find(x=>String(x.num)===v);
+      tag.jugNum = j ? j.num : null; tag.jugadora = j ? j.label : "";
+    } else { tag.jugadora = v.trim(); tag.jugNum = null; }
+    changed(); renderTab();
+  }
   if (e.target.id==="dNota"){ tag.nota = e.target.value.trim(); changed(); renderTab(); }
 });
 function borrarTag(id){
@@ -1017,15 +1397,30 @@ $("#tl").addEventListener("click", e=>{
 });
 $("#tabBody").addEventListener("change", e=>{
   if (e.target.dataset.f){ filtros[e.target.dataset.f]=e.target.value; renderTab(); }
+  if (e.target.id==="jSel"){ jugSel = e.target.value || null; renderTab(); }
 });
 $("#tabBody").addEventListener("click", e=>{
   const t = e.target;
   if (t.closest("[data-del]")){ e.stopPropagation(); return borrarTag(t.closest("[data-del]").dataset.del); }
+  if (t.id==="chkAll"){ const ts=tagsFiltrados(); if (t.checked) ts.forEach(x=>marcados.add(x.id)); else ts.forEach(x=>marcados.delete(x.id)); renderTab(); return; }
+  if (t.dataset.chk){ e.stopPropagation(); if (t.checked) marcados.add(t.dataset.chk); else marcados.delete(t.dataset.chk); renderTab(); return; }
+  if (t.closest("[data-li]")){ listaSel = t.closest("[data-li]").dataset.li; lsSet("va_lista", listaSel); renderTab(); return; }
+  const itb = t.closest("[data-it]");
+  if (itb){ accionItem(itb.dataset.it, +itb.dataset.idx); return; }
+  const clipJ = t.closest("[data-clip]");
+  if (clipJ){ const [pid,id]=clipJ.dataset.clip.split(":"); irAClip(pid,id,false); return; }
+  if (t.id==="jPlay" || t.id==="jPresent"){ const its = clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})); reproducirLista(its, t.id==="jPresent", nombreJug(jugSel)); return; }
+  if (t.id==="jLista"){ const its = clipsDeJugadora(jugSel).map(c=>({p:c.p.id,id:c.t.id})); if(!its.length) return; const l = crearLista("Clips de "+nombreJug(jugSel)); l.items = its; guardarListas(); listaSel=l.id; tabActual="listas"; renderTabs(); renderTab(); toast("Lista creada con "+its.length+" clips."); return; }
+  if (t.id==="lAddList"){ menuListas(t, [...marcados].map(id=>({p:P.id,id}))); return; }
+  if (t.id==="liNueva"){ const n=prompt("Nombre de la lista (ej.: Presión tras pérdida – charla del martes):"); if(n&&n.trim()){ const l=crearLista(n.trim()); listaSel=l.id; renderTab(); } return; }
+  if (t.id==="liRen"){ const l=LISTAS.find(x=>x.id===listaSel); if(!l) return; const n=prompt("Nuevo nombre:", l.nombre); if(n&&n.trim()){ l.nombre=n.trim(); guardarListas(); renderTab(); } return; }
+  if (t.id==="liDel"){ const l=LISTAS.find(x=>x.id===listaSel); if(!l) return; if(confirm("¿Borrar la lista “"+l.nombre+"”? Los tags no se borran.")){ LISTAS=LISTAS.filter(x=>x.id!==l.id); listaSel=null; guardarListas(); renderTab(); } return; }
+  if (t.id==="liPlay" || t.id==="liPresent"){ const l=LISTAS.find(x=>x.id===listaSel); if(l) reproducirLista(l.items, t.id==="liPresent", l.nombre); return; }
   const row = t.closest("tr[data-row]"); if (row) return verTag(row.dataset.row);
   switch(t.id){
     case "fLimpiar": filtros={boton:"",equipo:"",jugadora:"",resultado:"",periodo:""}; renderTab(); break;
-    case "lPlay": reproducirLista(tagsFiltrados().map(x=>x.id), false); break;
-    case "lPresent": reproducirLista(tagsFiltrados().map(x=>x.id), true); break;
+    case "lPlay": reproducirLista(tagsFiltrados().map(x=>({p:P.id,id:x.id})), false); break;
+    case "lPresent": reproducirLista(tagsFiltrados().map(x=>({p:P.id,id:x.id})), true); break;
     case "lPrev": playlist ? siguienteClip(-1) : moverSel(-1); break;
     case "lNext": playlist ? siguienteClip(1) : moverSel(1); break;
     case "xCsv": exportCsv(); break;
@@ -1046,6 +1441,11 @@ function moverSel(dir){
 document.addEventListener("keydown", e=>{
   if (!P) return;
   if (e.target.matches("input,textarea,select") || document.querySelector(".modal")) return;
+  if (dibujando){
+    if (e.key==="Escape") cerrarDibujo(false);
+    else if ((e.key==="z"||e.key==="Z")) { formasEd.pop(); repintarEditor(); }
+    return;
+  }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key;
   if (k===" "){ e.preventDefault(); player.paused()?player.play():player.pause(); return; }

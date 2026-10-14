@@ -2691,6 +2691,13 @@ function jugadoraDetalle(j){
     <div class="grid-resumen">
       ${stats.map(([l,v])=>statCard(v,l)).join("")}
     </div>
+    <div class="card" id="vaJugCard" data-num="${j.numero}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3 style="margin:0;font-size:14px">Videoanálisis</h3>
+        <button class="analisis-btn" style="border:0;cursor:pointer" onclick="abrirVideoJugadora('?jug=${j.numero}')">Ver sus clips</button>
+      </div>
+      <div class="va-body muted" style="margin-top:8px;font-size:13px">Buscando sus acciones taggeadas…</div>
+    </div>
 
     <div class="card">
       <h3 style="margin:0 0 8px;font-size:14px">Descargar perfil en PDF</h3>
@@ -5971,7 +5978,45 @@ function renderAnalisisRival(){
     <iframe class="analisis-frame" src="analisis.html" title="Análisis de rival" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
   `;
 }
+function abrirVideoJugadora(q){ window.VA_Q = q || ""; abrirModulo('video'); }
+async function cargarVideoJugadora(){
+  const el = document.getElementById('vaJugCard'); if(!el) return;
+  const num = Number(el.dataset.num);
+  const j = JUGADORAS.find(x=>x.numero===num); if(!j) return;
+  const body = el.querySelector('.va-body');
+  const norm = x => String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const dorsal = String(dorsalDe(j)), ap = norm(j.apellido);
+  try{
+    if(!window.__vaCache || Date.now()-window.__vaCache.t > 60000){
+      const snap = await firebase.firestore().collection('videoanalisis').get();
+      window.__vaCache = {t:Date.now(), docs:snap.docs.map(d=>Object.assign({id:d.id}, d.data()))};
+    }
+    const clips = [];
+    window.__vaCache.docs.forEach(p=>(p.tags||[]).forEach(t=>{
+      if(t.equipo!=='propio') return;
+      const ok = t.jugNum!=null ? t.jugNum===num : (t.jugadora && (norm(t.jugadora).startsWith(norm(dorsal)+' · ') || (ap && norm(t.jugadora).includes(ap))));
+      if(ok) clips.push({p,t});
+    }));
+    if(document.getElementById('vaJugCard')!==el) return;
+    if(!clips.length){ body.textContent = 'Todavía no tiene acciones taggeadas en Videoanálisis.'; return; }
+    const pos = clips.filter(c=>c.t.resultado==='pos').length, neg = clips.filter(c=>c.t.resultado==='neg').length;
+    const acc = {}; clips.forEach(c=>{ acc[c.t.nombre]=(acc[c.t.nombre]||0)+1; });
+    const top = Object.entries(acc).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>esc(k)+' '+v).join(' · ');
+    clips.sort((a,b)=>String(b.p.fecha||'').localeCompare(String(a.p.fecha||'')) || a.t.t-b.t.t);
+    const mm = (p,t)=> p.ini2!=null && t>=p.ini2 ? (45+Math.floor((t-p.ini2)/60)+1)+"' 2T" : p.ini1!=null && t>=p.ini1 ? (Math.floor((t-p.ini1)/60)+1)+"' 1T" : Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+    body.classList.remove('muted');
+    body.innerHTML = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px">'
+      + '<span><b style="font-size:18px">'+clips.length+'</b> acciones</span>'
+      + '<span><b style="font-size:18px;color:#1E8E5A">'+pos+'</b> ✓</span>'
+      + '<span><b style="font-size:18px;color:#B3452F">'+neg+'</b> ✗</span>'
+      + (pos+neg ? '<span><b style="font-size:18px">'+Math.round(pos/(pos+neg)*100)+'%</b> efectividad</span>' : '')
+      + '</div><div class="muted" style="font-size:12px;margin-bottom:6px">'+top+'</div>'
+      + clips.slice(0,6).map(c=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--borde);cursor:pointer" onclick="abrirVideoJugadora(\'?clip='+c.p.id+':'+c.t.id+'\')"><span>'+esc(c.t.nombre)+(c.t.resultado==='pos'?' ✓':c.t.resultado==='neg'?' ✗':'')+(c.t.nota?' <span class="muted">— '+esc(c.t.nota)+'</span>':'')+'</span><span class="muted" style="white-space:nowrap">'+esc(c.p.nombre||'')+' · '+mm(c.p,c.t.t)+' ▶</span></div>').join('')
+      + (clips.length>6 ? '<div class="muted" style="font-size:12px;margin-top:4px">y '+(clips.length-6)+' más — tocá “Ver sus clips”.</div>' : '');
+  }catch(e){ console.error(e); body.textContent = 'No se pudo leer Videoanálisis (revisá la conexión).'; }
+}
 function renderVideoanalisis(){
+  const q = window.VA_Q || ""; window.VA_Q = "";
   return `
     <div class="analisis-head">
       <div>
@@ -5980,7 +6025,7 @@ function renderVideoanalisis(){
       </div>
       <a class="analisis-btn" href="videoanalisis.html" target="_blank" rel="noopener">Abrir en pantalla completa</a>
     </div>
-    <iframe class="analisis-frame" src="videoanalisis.html" title="Videoanálisis" allow="fullscreen; autoplay; clipboard-read; clipboard-write" allowfullscreen></iframe>
+    <iframe class="analisis-frame" src="videoanalisis.html${q}" title="Videoanálisis" allow="fullscreen; autoplay; clipboard-read; clipboard-write" allowfullscreen></iframe>
   `;
 }
 function render(){
@@ -6032,6 +6077,7 @@ function render(){
     if(rendTab==="gps") setTimeout(()=>{ if(window.GpsRadar) window.GpsRadar.mount(); }, 0);
     else setTimeout(initRendimientoCharts, 0);
   }
+  if(document.getElementById('vaJugCard')) cargarVideoJugadora();
 }
 render();
 </script>
