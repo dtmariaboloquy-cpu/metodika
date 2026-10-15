@@ -942,8 +942,8 @@ function renderTab(){
         7. Con <b>✏️ Dibujar</b> pausás y marcás flechas, jugadoras y zonas: el clip se frena solo en ese momento y muestra el dibujo.<br>
         8. En <b>Listas de clips</b> juntás clips de distintos partidos (ej.: “Presión tras pérdida – charla del martes”).<br>
         9. En <b>Jugadoras</b> ves todas las acciones de cada una en la temporada, para la devolución individual.<br>
-        10. <b>⬇ PDF</b> (en Tags, Listas, Jugadoras o en un tag) arma un PDF con la imagen de cada recorte, su dibujo, minuto, jugadora y nota. La imagen sale de los videos que elegiste desde tu compu en esta sesión; con YouTube va solo el dibujo.<br>
-        11. <b>🎬 Video</b> arma un video con los recortes: cartel con la acción, el minuto y la jugadora, y los dibujos. Se graba en tiempo real, así que dejá la pestaña abierta. Sale en MP4 en Chrome/Edge actualizados (si no, en WebM). Funciona con el video cargado como archivo, no con YouTube.</div>
+        10. <b>⬇ PDF</b> (en Tags, Listas, Jugadoras o en un tag) arma un PDF con la imagen de cada recorte, su dibujo, minuto, jugadora y nota. Con YouTube, Chrome te pide permiso para compartir la pestaña y así saca la imagen de cada recorte.<br>
+        11. <b>🎬 Video</b> arma un video con los recortes: cartel con la acción, el minuto y la jugadora, y los dibujos. Se graba en tiempo real, así que dejá la pestaña abierta. Sale en MP4 en Chrome/Edge actualizados (si no, en WebM). Con YouTube también funciona: Chrome te pide permiso para compartir la pestaña y graba lo que se ve en el reproductor (no muevas el mouse sobre el video mientras graba).</div>
       <div><h3 style="font-size:15px;color:var(--ink);margin-bottom:6px">Atajos de teclado</h3>
         <kbd>Espacio</kbd> play / pausa · <kbd>←</kbd> <kbd>→</kbd> −/+ 5 s · <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> −/+ 1 s<br>
         <kbd>,</kbd> <kbd>.</kbd> cuadro a cuadro (archivo) · <kbd>Tab</kbd> cambia Talleres / Rival<br>
@@ -1221,6 +1221,110 @@ $("#drawBar").addEventListener("click", e=>{
   else if (b.id==="dSave") cerrarDibujo(true);
 });
 
+/* ---------- captura de la pestaña (para videos de YouTube) ---------- */
+const dormirMs = ms => new Promise(r=>setTimeout(r, ms));
+function enIframeSinPermiso(){
+  if (window.top === window) return false;
+  try{ if (document.featurePolicy && !document.featurePolicy.allowsFeature("display-capture")) return true; }catch(e){}
+  return false;
+}
+function abrirAparteParaGrabar(){
+  if (confirm("Para grabar desde YouTube, Videoanálisis tiene que estar abierto en su propia pestaña.\n\n¿Lo abro en una pestaña nueva? Ahí volvé a tocar el botón.")) window.open("videoanalisis.html", "_blank");
+}
+async function iniciarCapturaPestana(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error("Este navegador no permite grabar la pestaña. Usá Chrome o Edge en la compu.");
+  const opts = {video:{frameRate:30, displaySurface:"browser"}, audio:true, preferCurrentTab:true, selfBrowserSurface:"include", surfaceSwitching:"exclude", systemAudio:"exclude"};
+  let stream;
+  try{ stream = await navigator.mediaDevices.getDisplayMedia(opts); }
+  catch(e){ if (e && e.name==="NotAllowedError") throw e; opts.audio = false; stream = await navigator.mediaDevices.getDisplayMedia(opts); }
+  const track = stream.getVideoTracks()[0];
+  let recortado = false;
+  if (window.CropTarget && track.cropTo){ try{ await track.cropTo(await CropTarget.fromElement($("#stage"))); recortado = true; }catch(e){ console.warn("cropTo", e); } }
+  const sv = document.createElement("video"); sv.muted = true; sv.playsInline = true; sv.srcObject = stream;
+  await sv.play().catch(()=>{});
+  await dormirMs(400);
+  let cortado = false; track.addEventListener("ended", ()=>{ cortado = true; });
+  return {
+    stream, get cortado(){ return cortado; },
+    dibujar(g, W, H){
+      g.fillStyle="#000"; g.fillRect(0,0,W,H);
+      const vw = sv.videoWidth, vh = sv.videoHeight; if (!vw || !vh) return;
+      if (recortado){ const s=Math.min(W/vw,H/vh), dw=vw*s, dh=vh*s; g.drawImage(sv,(W-dw)/2,(H-dh)/2,dw,dh); return; }
+      const r = $("#stage").getBoundingClientRect();
+      let ox=0, oy=0, topW=window.innerWidth;
+      try{ if (window.frameElement){ const fr = window.frameElement.getBoundingClientRect(); ox=fr.left; oy=fr.top; topW = window.top.innerWidth; } }catch(e){}
+      const k = vw/topW;
+      g.drawImage(sv, (r.left+ox)*k, (r.top+oy)*k, r.width*k, r.height*k, 0, 0, W, H);
+    },
+    cerrar(){ stream.getTracks().forEach(t=>t.stop()); }
+  };
+}
+/* deja el reproductor principal listo en un clip (cambia de partido si hace falta) */
+async function prepararEnPlayer(pid){
+  if (!P || P.id!==pid) abrirProyecto(pid, true);
+  for (let i=0;i<100;i++){ if ((kind==="yt" && ytReady) || (kind==="file" && vid.readyState>=2)) return true; await dormirMs(100); }
+  return false;
+}
+function prepararPantalla(){
+  $("#stage").scrollIntoView({block:"center"});
+  try{ if (window.frameElement) window.frameElement.scrollIntoView({block:"start"}); }catch(e){}
+}
+async function grabarDesdePestana(datos, titulo, uno){
+  const usables = datos.filter(x=>x.p.video && (x.p.video.tipo==="youtube" || videoCache[x.p.id]));
+  const faltan = [...new Set(datos.filter(x=>!usables.includes(x)).map(x=>x.p.nombre))];
+  if (!usables.length) return toast("Primero cargá el video del partido.");
+  if (faltan.length && !confirm("No están cargados los videos de: "+faltan.join(", ")+".\nEsos recortes no van a salir. ¿Seguir?")) return;
+  if (!confirm("Para grabar desde YouTube, Chrome te va a pedir permiso para compartir ESTA pestaña: elegí “Compartir” (y dejá tildado “Compartir audio de la pestaña”).\n\nMientras se graba: no muevas el mouse sobre el video y no cambies de pestaña.")) return;
+  const mime = tipoGrabacion();
+  let cap;
+  try{ prepararPantalla(); cap = await iniciarCapturaPestana(); }
+  catch(e){ toast(e && e.name==="NotAllowedError" ? "No se dio permiso para grabar la pestaña." : (e.message||String(e))); return; }
+  const W=1280, H=720, c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+  const out = c.captureStream(30);
+  cap.stream.getAudioTracks().forEach(tr=>out.addTrack(tr));
+  const rec = new MediaRecorder(out, {mimeType:mime, videoBitsPerSecond:5000000});
+  const chunks=[]; rec.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+  let modo="cartel", cartel=[titulo||"Recortes"];
+  const loop = setInterval(()=>{ if (modo==="cartel") textoCartel(g,W,H,cartel); else cap.dibujar(g,W,H); }, 1000/30);
+  const pm = modalProgreso(); pm.style.background = "transparent"; pm.style.alignItems = "flex-end"; pm.querySelector(".box").style.maxWidth = "420px";
+  grabando = {cancelado:false};
+  playlist = null;
+  let hecho = 0;
+  try{
+    rec.start(1000);
+    if (!uno){ cartel=[titulo, usables.length+" recorte"+(usables.length>1?"s":""), "Talleres · Reserva Femenina"]; await dormirMs(2500); }
+    for (let i=0;i<usables.length && !grabando.cancelado && !cap.cortado;i++){
+      const {p,t} = usables[i];
+      const gt = pm.querySelector("#gTxt"); if (gt) gt.textContent = `Recorte ${i+1} de ${usables.length}: ${t.nombre} · ${minLabel(p,t.t)}`;
+      const sub = [t.resultado==="pos"?"✓ Positiva":t.resultado==="neg"?"✗ Negativa":"", t.nota].filter(Boolean).join(" — ");
+      if (!uno){ cartel=[`${i+1}. ${t.nombre}`, [minLabel(p,t.t), t.jugadora].filter(Boolean).join(" · "), sub || p.nombre]; modo="cartel"; }
+      const listo = await prepararEnPlayer(p.id);
+      if (!listo) continue;
+      player.seek(t.ini); pausar(); await dormirMs(uno?900:1800);
+      modo = "video";
+      verTag(t.id, true);
+      const t0 = Date.now(), maxMs = ((t.fin-t.ini) + (t.dibujos||[]).reduce((a,d)=>a+(+d.pausa||0),0) + 15)*1000;
+      while (!grabando.cancelado && !cap.cortado && (clipFin!=null || $("#pausaDib").style.display==="block") && Date.now()-t0 < maxMs){
+        const bar = pm.querySelector("#gBar"); if (bar){ const pr = Math.min(1, Math.max(0,(player.time()-t.ini)/Math.max(0.5,t.fin-t.ini))); bar.style.width = Math.round((i+pr)/usables.length*100)+"%"; }
+        await dormirMs(60);
+      }
+      pausar(); clipFin = null; hecho++;
+      await dormirMs(250);
+    }
+    await dormirMs(300);
+  }catch(e){ console.error(e); toast("Hubo un problema grabando: "+(e.message||e)); }
+  clearInterval(loop);
+  await new Promise(r=>{ rec.onstop = r; try{ rec.stop(); }catch(e){ r(); } });
+  const cortado = cap.cortado;
+  cap.cerrar(); pm.remove(); mostrarOverlay(null);
+  const cancel = grabando.cancelado; grabando = null;
+  if (cancel){ toast("Video cancelado."); return; }
+  if (!hecho) return toast("No se pudo grabar ningún recorte.");
+  const ext = mime.includes("mp4") ? "mp4" : "webm";
+  descargar(slug(titulo||"recortes")+"."+ext, new Blob(chunks,{type:mime.split(";")[0]}), mime.split(";")[0]);
+  toast(cortado ? "Se dejó de compartir la pestaña: el video quedó cortado." : (ext==="mp4" ? "Video descargado (MP4)." : "Video descargado (WebM)."));
+}
+
 /* ---------- descargar recortes en video ---------- */
 let grabando = null;
 function tipoGrabacion(){
@@ -1270,9 +1374,13 @@ async function grabarVideo(items, titulo, uno){
   if (!mime) return toast("Este navegador no puede grabar video. Probá con Chrome o Edge.");
   const datos = items.map(it=>Object.assign({it}, infoItem(it))).filter(x=>x.t);
   if (!datos.length) return toast("No hay recortes para el video.");
+  if (datos.some(x=>x.p.video && x.p.video.tipo==="youtube")){
+    if (enIframeSinPermiso()) return abrirAparteParaGrabar();
+    return grabarDesdePestana(datos, titulo, uno);
+  }
   const conVideo = datos.filter(x=>videoCache[x.p.id] && x.p.video && x.p.video.tipo==="archivo");
   const faltan = [...new Set(datos.filter(x=>!conVideo.includes(x)).map(x=>x.p.nombre))];
-  if (!conVideo.length) return toast(datos.some(x=>x.p.video&&x.p.video.tipo==="youtube") ? "Los videos de YouTube no se pueden recortar. Usá el archivo del partido (mp4)." : "Para descargar el video, primero elegí el archivo del partido desde tu compu.");
+  if (!conVideo.length) return toast("Para descargar el video, primero elegí el archivo del partido desde tu compu.");
   const total = conVideo.reduce((a,x)=>a + (x.t.fin-x.t.ini) + (x.t.dibujos||[]).reduce((b,d)=>b+(+d.pausa||0),0) + (uno?0:2.2), 0);
   if (faltan.length && !confirm("No están cargados los videos de: "+faltan.join(", ")+".\nEsos recortes no van a salir. ¿Seguir con los otros "+conVideo.length+"?")) return;
   if (total > 600 && !confirm("El video va a durar unos "+Math.round(total/60)+" minutos y se graba en tiempo real. ¿Seguir?")) return;
@@ -1350,6 +1458,7 @@ async function jsPDFlib(){
 const vidAux = document.createElement("video"); vidAux.muted = true; vidAux.preload = "auto"; vidAux.playsInline = true;
 function esperar(el, ev, ms){ return new Promise(res=>{ let done=false; const f=()=>{ if(done) return; done=true; el.removeEventListener(ev,f); res(true); }; el.addEventListener(ev,f); setTimeout(()=>{ if(!done){ done=true; el.removeEventListener(ev,f); res(false); } }, ms||6000); }); }
 /* captura el cuadro del video (si está cargado como archivo) + el dibujo, en 1280x720 */
+let capPDF = null;
 async function capturaClip(p, t){
   const W=1280, H=720, c = document.createElement("canvas"); c.width=W; c.height=H;
   const g = c.getContext("2d");
@@ -1367,6 +1476,15 @@ async function capturaClip(p, t){
       if (vw && vh){ const s = Math.min(W/vw, H/vh), dw = vw*s, dh = vh*s; g.drawImage(vidAux, (W-dw)/2, (H-dh)/2, dw, dh); hayImagen = true; }
     }catch(e){ console.warn(e); }
   }
+  if (!hayImagen && capPDF && !capPDF.cortado && p.video && p.video.tipo==="youtube"){
+    try{
+      if (await prepararEnPlayer(p.id)){
+        limpiarCanvas(); mostrarOverlay(null); clipFin = null;
+        player.seek(Math.max(0, momento)); player.play(); await dormirMs(700); pausar(); player.seek(Math.max(0, momento)); await dormirMs(1300);
+        capPDF.dibujar(g, W, H); hayImagen = true;
+      }
+    }catch(e){ console.warn(e); }
+  }
   if (!hayImagen){
     // fondo de cancha para que el dibujo igual se entienda
     g.fillStyle = "#1E7A46"; g.fillRect(0,0,W,H);
@@ -1374,7 +1492,7 @@ async function capturaClip(p, t){
     g.beginPath(); g.moveTo(W/2,40); g.lineTo(W/2,H-40); g.stroke();
     g.beginPath(); g.arc(W/2,H/2,90,0,Math.PI*2); g.stroke();
     g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 26px Barlow, Arial"; g.textAlign = "center";
-    g.fillText(p.video && p.video.tipo==="youtube" ? "Video de YouTube: la imagen no se puede capturar" : "Elegí el archivo del partido para incluir la imagen", W/2, H-70);
+    g.fillText(p.video && p.video.tipo==="youtube" ? "Video de YouTube: para incluir la imagen, aceptá compartir la pestaña" : "Elegí el archivo del partido para incluir la imagen", W/2, H-70);
   }
   if (d) d.formas.forEach(f=>pintarForma(f, g, W, H));
   return {img: c.toDataURL("image/jpeg", 0.82), hayImagen};
@@ -1385,6 +1503,13 @@ async function descargarPDF(items, titulo, subtitulo, jugKey){
   const datos = items.map(infoItem).filter(x=>x.t);
   if (!datos.length) return toast("No hay recortes para el PDF.");
   if (datos.length > 60 && !confirm("Son "+datos.length+" recortes. ¿Armar el PDF igual? Puede tardar un poco.")) return;
+  const hayYT = datos.some(x=>x.p.video && x.p.video.tipo==="youtube");
+  if (hayYT){
+    if (enIframeSinPermiso()){ if (!confirm("Los recortes de YouTube van a salir solo con el dibujo (sin la imagen del partido).\n\nPara que salga la imagen, abrí Videoanálisis en su propia pestaña. ¿Seguir igual?")) return abrirAparteParaGrabar(); }
+    else if (confirm("Para sacar las imágenes de YouTube, Chrome te va a pedir permiso para compartir ESTA pestaña: elegí “Compartir”.\nNo muevas el mouse sobre el video mientras se arma.\n\n(Cancelar = PDF sin imágenes de YouTube)")){
+      try{ prepararPantalla(); capPDF = await iniciarCapturaPestana(); }catch(e){ capPDF = null; toast("Sin permiso: los recortes de YouTube salen solo con el dibujo."); }
+    }
+  }
   generandoPDF = true; setStatus("saving","Armando el PDF… 0/"+datos.length);
   try{
     const JsPDF = await jsPDFlib();
@@ -1442,6 +1567,7 @@ async function descargarPDF(items, titulo, subtitulo, jugKey){
   }catch(e){
     console.error(e); setStatus("err","No se pudo armar el PDF"); toast("No se pudo armar el PDF: "+(e.message||e));
   }
+  if (capPDF){ capPDF.cerrar(); capPDF = null; }
   generandoPDF = false;
 }
 
