@@ -651,6 +651,30 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .cmp-tabla .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:5px}
 .cmp-tabla td.mejor{font-weight:800;color:var(--tinta)}
 @media (max-width:980px){.cmp,.cmp-cuerpo{grid-template-columns:minmax(0,1fr)}.cmp-lista{max-height:260px}}
+/* ===== Biblioteca de tareas ===== */
+.bib-barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.bib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.bib-card{background:var(--card);border:1px solid var(--borde);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(4,40,89,.05)}
+.bib-card:hover{border-color:var(--bronce)}
+.bib-img{aspect-ratio:16/10;background:var(--papel2);display:grid;place-items:center;cursor:pointer;overflow:hidden;border-bottom:1px solid var(--borde)}
+.bib-img img{width:100%;height:100%;object-fit:contain;background:#fff}
+.bib-img span{color:var(--sub);font-size:11px;letter-spacing:1.4px;text-transform:uppercase}
+.bib-cuerpo{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1;cursor:pointer}
+.bib-cuerpo b{font-size:14.5px;line-height:1.25}
+.bib-cuerpo .muted{font-size:12px}
+.bib-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}
+.bib-pie{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--borde);background:var(--papel2);font-size:11.5px}
+.bib-pie .muted{flex:1;min-width:0}
+.bib-fav,.bib-clon{border:1px solid var(--borde);background:var(--card);color:var(--tinta);border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+.bib-fav{font-size:16px;line-height:1;padding:3px 8px;color:var(--sub)}
+.bib-fav.on{color:#C98A1B;border-color:#C98A1B}
+.bib-clon{padding:5px 10px;font-size:12px}
+.bib-det-acc{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.btn-sec.fav-on{color:#C98A1B;border-color:#C98A1B}
+.bib-uso{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer;font-size:13px}
+.bib-uso+.bib-uso{border-top:1px dashed var(--borde)}
+.bib-uso span{color:var(--sub)}
+.bib-uso .bib-ir{margin-left:auto;color:var(--bronce);font-weight:700}
 </style>
 
 <div class="app-shell">
@@ -746,6 +770,8 @@ let editandoPerfil=false, fotoTemp=null, fotoPosTemp=null;
 let DB=null, PERFILES={};
 let UBICACIONES={}; try{ UBICACIONES = JSON.parse(localStorage.getItem('metodika-ubicaciones')||'{}')||{}; }catch(e){ UBICACIONES={}; }
 let rendFiltro={per:'all', lugar:'all', sis:'all'}, rendEditUbic=false;
+let bibFiltro={q:'', ver:'todas', orden:'usadas'}, bibAbierta=null, bibLimite=36;
+let FAV_TAREAS={}; try{ FAV_TAREAS = JSON.parse(localStorage.getItem('metodika-fav-tareas')||'{}')||{}; }catch(e){ FAV_TAREAS={}; }
 let DOWNLOADS=null;
 let CONVOCADAS = {}; // { [fechaISO del próximo partido]: [numero, numero, ...] }
 let filtroConvocatoria = "";
@@ -804,6 +830,10 @@ async function initDB(){
     snap.docs.forEach(d=>{ PERFILES[d.id] = d.data(); });
     if(vista==="plantel") render();
   }catch(e){ /* si falla la lectura inicial, se sigue sin datos de perfil extra */ }
+  try{
+    const snapF = await DB.doc('snapshot/favoritasTareas').get();
+    if(snapF.exists && snapF.data() && snapF.data().map){ FAV_TAREAS = Object.assign({}, snapF.data().map, FAV_TAREAS); if(vista==='biblioteca') render(); }
+  }catch(e){ /* sin favoritas en la nube */ }
   try{
     const snapU = await DB.doc('snapshot/ubicaciones').get();
     if(snapU.exists && snapU.data() && snapU.data().map){ UBICACIONES = Object.assign({}, snapU.data().map, UBICACIONES); if(vista==='home') render(); }
@@ -1217,7 +1247,7 @@ const MODULOS = [
   {k:"partidos", nombre:"Partidos", desc:"Resultados y estadísticas del equipo", activo:true, bg:"#E6F6EC", fg:"#1E8E5A"},
   {k:"plantel", nombre:"Plantel", desc:"Jugadoras y su presencia a lo largo del año", activo:true, bg:"var(--bronce-claro)", fg:"var(--bronce)"},
   {k:"rendimiento", nombre:"Rendimiento / Data", desc:"Carga, métricas y tendencias de rendimiento", activo:true, bg:"#FDEEDC", fg:"#C97A2B"},
-  {k:"biblioteca", nombre:"Biblioteca", desc:"Ejercicios, documentos y recursos metodológicos", bg:"#E7EEF7", fg:"#3A5A8C"},
+  {k:"biblioteca", nombre:"Biblioteca", desc:"Todas tus tareas: buscador, favoritas, cuántas veces las usaste y clonar", activo:true, bg:"#E7EEF7", fg:"#3A5A8C"},
 ];
 const _svgAttrs = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
 const ICONOS_MODULO = {
@@ -2121,7 +2151,7 @@ function exportarResumen(){
 }
 function abrirModulo(k){
   const mod = MODULOS.find(m=>m.k===k);
-  if(mod && mod.activo){ vista=k; compararAbierto=false; tab = k==='partidos' ? 'resultados' : 'sesiones'; render(); window.scrollTo(0,0); return; }
+  if(mod && mod.activo){ vista=k; compararAbierto=false; bibAbierta=null; tab = k==='partidos' ? 'resultados' : 'sesiones'; render(); window.scrollTo(0,0); return; }
   mostrarToast(`${mod.nombre}: todavía no está listo — próximamente.`);
 }
 function mostrarToast(msg){
@@ -3096,6 +3126,126 @@ function renderPlantel(){
         `;}).join("")}
       </div>
     `).join("") || `<p class="muted">No hay jugadoras que coincidan con la búsqueda.</p>`}
+  `;
+}
+
+// ===== Biblioteca de tareas (armada con las tareas de todas las sesiones) =====
+function _bibNorm(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim(); }
+function bibliotecaTareas(){
+  const grupos = {};
+  let sinNombre = 0, total = 0;
+  sesiones.forEach(s=>{
+    (s.tareas||[]).forEach((t,ti)=>{
+      const p = parseTareaFilas(t.filas);
+      let titulo = String(t.titulo || p.tituloFilas || "").trim();
+      let k = _bibNorm(titulo);
+      if(!k || k==="nombre de tarea contexto"){
+        const tieneAlgo = [p.mcpEquipoTags,p.mcpEquipoDescripcion,p.mcpJugadoraConTags,p.mcpJugadoraSinTags,p.mspTags].some(x=>x&&String(x).trim().length>3) || (t.imagenes&&t.imagenes.length);
+        if(!tieneAlgo) return;
+        sinNombre++;
+        titulo = "Tarea sin nombre · Sesión "+(s.header.sesion||"—");
+        k = "sin-nombre-"+s._idx+"-"+ti;
+      }
+      total++;
+      const g = grupos[k] = grupos[k] || {k, titulo, usos:[], tarea:null, p:null, fechaUlt:null, img:null};
+      g.usos.push({idx:s._idx, sesion:s.header.sesion, fecha:s.header.fecha, _fecha:s._fecha, micro:s.header.tipoMicro});
+      const f = s._fecha || null;
+      if(!g.tarea || (f && (!g.fechaUlt || f>g.fechaUlt))){ g.tarea=t; g.p=p; g.fechaUlt=f; g.titulo=titulo; }
+      if(!g.img && t.imagenes && t.imagenes.length) g.img = t.imagenes[0];
+    });
+  });
+  return {lista:Object.values(grupos), sinNombre, total};
+}
+function _bibGuardarFavs(){
+  try{ localStorage.setItem('metodika-fav-tareas', JSON.stringify(FAV_TAREAS)); }catch(e){}
+  if(DB) DB.doc('snapshot/favoritasTareas').set({map:FAV_TAREAS, actualizadoEn:new Date().toISOString()}).catch(()=>mostrarToast("Se guardó en este dispositivo, pero no se pudo sincronizar en la nube."));
+}
+function toggleFavTarea(k){ if(FAV_TAREAS[k]) delete FAV_TAREAS[k]; else FAV_TAREAS[k]=true; _bibGuardarFavs(); const y=window.scrollY; render(); window.scrollTo(0,y); }
+function setBibFiltro(k,v){ bibFiltro[k]=v; bibLimite=36; render(); }
+function abrirTareaBib(k){ bibAbierta=k; render(); window.scrollTo(0,0); }
+function clonarTareaASesion(k){
+  const g = bibliotecaTareas().lista.find(x=>x.k===k); if(!g) return;
+  const p = g.p;
+  vista = "planificacion"; tab = "sesiones"; sesionAbierta = null; bibAbierta = null;
+  borradorSesion = crearBorrador();
+  borradorSesion.tareas = [{ titulo:g.titulo, mcpEquipoTags:p.mcpEquipoTags||"", mcpEquipoDescripcion:p.mcpEquipoDescripcion||"", mcpJugadoraConTags:p.mcpJugadoraConTags||"", mcpJugadoraSinTags:p.mcpJugadoraSinTags||"", mspTags:p.mspTags||"", dimensiones:p.dimensiones||"", dosificacion:p.dosificacion||"", tiempoTotal:p.tiempoTotal||"", linkVideo:p.linkVideo||"" }];
+  creandoSesion = true;
+  render(); window.scrollTo(0,0);
+  mostrarToast("Tarea copiada a una sesión nueva: cambiá lo que quieras y guardala.");
+}
+function renderTabsBiblioteca(){
+  document.getElementById('tabs').innerHTML = `
+    <button class="back" onclick="irHome()">← Inicio</button>
+    <h1 class="page-title">Biblioteca de tareas</h1>
+    <p class="page-sub">Todas las tareas de tus sesiones, en un solo lugar</p>`;
+}
+function _bibFechaTxt(d){ return d ? fmtFecha(d) : "sin fecha"; }
+function renderBiblioteca(){
+  const {lista, sinNombre, total} = bibliotecaTareas();
+  if(bibAbierta){
+    const g = lista.find(x=>x.k===bibAbierta);
+    if(g){
+      const fav = !!FAV_TAREAS[g.k];
+      const usos = g.usos.slice().sort((a,b)=>(b._fecha||0)-(a._fecha||0));
+      return `<button class="backbtn" onclick="bibAbierta=null;render()">← Volver a la biblioteca</button>
+        <div class="bib-det-acc">
+          <button class="btn-sec ${fav?'fav-on':''}" onclick="toggleFavTarea('${g.k}')">${fav?'★ Favorita':'☆ Marcar favorita'}</button>
+          <button class="btn-sec pri" onclick="clonarTareaASesion('${g.k}')">⧉ Clonar a una sesión nueva</button>
+        </div>
+        ${renderTareaImportada(g.tarea)}
+        <h2 class="section">Usada ${g.usos.length} ${g.usos.length===1?'vez':'veces'}</h2>
+        <div class="card" style="padding:6px 16px">${usos.map(u=>`<div class="bib-uso" onclick="vista='planificacion';tab='sesiones';creandoSesion=false;sesionAbierta=${u.idx};bibAbierta=null;render();window.scrollTo(0,0)"><b>Sesión ${esc(u.sesion||"—")}</b><span>${esc(u.fecha||"sin fecha")}${u.micro?` · ${esc(u.micro)}`:""}</span><span class="bib-ir">Ver sesión →</span></div>`).join("")}</div>`;
+    }
+    bibAbierta = null;
+  }
+  const q = _bibNorm(bibFiltro.q);
+  let vis = lista.filter(g=>{
+    if(bibFiltro.ver==="fav" && !FAV_TAREAS[g.k]) return false;
+    if(q){ const p=g.p; const txt=_bibNorm([g.titulo,p.mcpEquipoTags,p.mcpEquipoDescripcion,p.mcpJugadoraConTags,p.mcpJugadoraSinTags,p.mspTags].join(" ")); if(!q.split(" ").every(w=>txt.includes(w))) return false; }
+    return true;
+  });
+  if(bibFiltro.orden==="usadas") vis.sort((a,b)=>b.usos.length-a.usos.length || (b.fechaUlt||0)-(a.fechaUlt||0));
+  else if(bibFiltro.orden==="recientes") vis.sort((a,b)=>(b.fechaUlt||0)-(a.fechaUlt||0));
+  else vis.sort((a,b)=>a.titulo.localeCompare(b.titulo,"es"));
+  const nFav = lista.filter(g=>FAV_TAREAS[g.k]).length;
+  const mostrar = vis.slice(0, bibLimite);
+  return `
+    <div class="stat-pill-row" style="margin-bottom:16px">
+      ${statPill(ICONOS_MODULO.biblioteca, "#E7EEF7", "#3A5A8C", lista.length, "Tareas distintas")}
+      ${statPill(ICONOS_MODULO.planificacion, "#EFE9FB", "#6D4FC9", total, "Veces usadas en sesiones")}
+      ${statPill(ICONOS_UI.trofeo, "#FFF6DA", "#B98A2E", nFav, "Favoritas")}
+    </div>
+    <div class="bib-barra">
+      <div class="segmented">
+        <button class="${bibFiltro.ver==='todas'?'active':''}" onclick="setBibFiltro('ver','todas')">Todas (${lista.length})</button>
+        <button class="${bibFiltro.ver==='fav'?'active':''}" onclick="setBibFiltro('ver','fav')">★ Favoritas (${nFav})</button>
+      </div>
+      <select class="rend-sel" onchange="setBibFiltro('orden',this.value)" aria-label="Ordenar">
+        <option value="usadas" ${bibFiltro.orden==='usadas'?'selected':''}>Más usadas</option>
+        <option value="recientes" ${bibFiltro.orden==='recientes'?'selected':''}>Usadas más recientemente</option>
+        <option value="az" ${bibFiltro.orden==='az'?'selected':''}>A – Z</option>
+      </select>
+    </div>
+    <input type="search" placeholder="Buscar por nombre o contenido (ej. tercer hombre, presión, 3vs2)…" value="${esc(bibFiltro.q)}" onchange="setBibFiltro('q',this.value)">
+    <p class="muted" style="margin:-4px 0 12px;font-size:12px">${vis.length} tarea${vis.length===1?'':'s'}${sinNombre?` · ${sinNombre} tienen contenido pero no nombre en la planilla (aparecen como "Tarea sin nombre")`:''}</p>
+    ${mostrar.length ? `<div class="bib-grid">${mostrar.map(g=>{
+      const p=g.p, fav=!!FAV_TAREAS[g.k];
+      const chips=[p.dimensiones&&`📐 ${esc(p.dimensiones)}`, p.dosificacion&&`🔁 ${esc(p.dosificacion)}`, p.tiempoTotal&&`⏱ ${esc(p.tiempoTotal)}`].filter(Boolean).slice(0,3);
+      return `<div class="bib-card">
+        <div class="bib-img" onclick="abrirTareaBib('${g.k}')">${g.img?`<img src="data:image/jpeg;base64,${g.img}" alt="" loading="lazy">`:`<span>Sin imagen</span>`}</div>
+        <div class="bib-cuerpo" onclick="abrirTareaBib('${g.k}')">
+          <b>${esc(g.titulo)}</b>
+          <span class="muted">${p.mcpEquipoTags?esc(String(p.mcpEquipoTags).split(/\n+/).filter(Boolean).slice(0,2).join(" · ")):''}</span>
+          ${chips.length?`<div class="bib-chips">${chips.map(c=>`<span class="chip">${c}</span>`).join("")}</div>`:""}
+        </div>
+        <div class="bib-pie">
+          <button class="bib-fav ${fav?'on':''}" aria-pressed="${fav}" title="${fav?'Quitar de favoritas':'Marcar como favorita'}" onclick="toggleFavTarea('${g.k}')">${fav?'★':'☆'}</button>
+          <span class="muted">Usada ${g.usos.length} ${g.usos.length===1?'vez':'veces'} · última: ${esc(_bibFechaTxt(g.fechaUlt))}</span>
+          <button class="bib-clon" onclick="clonarTareaASesion('${g.k}')">Clonar</button>
+        </div>
+      </div>`; }).join("")}</div>
+      ${vis.length>bibLimite?`<p style="text-align:center;margin:16px 0"><button class="btn-sec" onclick="bibLimite+=36;const y=window.scrollY;render();window.scrollTo(0,y)">Ver más tareas (${vis.length-bibLimite} restantes)</button></p>`:""}`
+    : `<div class="card"><p class="muted" style="margin:0">${bibFiltro.ver==='fav'?'Todavía no marcaste favoritas. Tocá la ☆ de cualquier tarea.':'No hay tareas que coincidan con la búsqueda.'}</p></div>`}
   `;
 }
 
@@ -6376,6 +6526,9 @@ function render(){
   } else if(vista==="scouting"){
     renderTabsHome();
     main.innerHTML = renderAnalisisRival();
+  } else if(vista==="biblioteca"){
+    renderTabsBiblioteca();
+    main.innerHTML = renderBiblioteca();
   } else if(vista==="rendimiento"){
     renderTabsRendimiento();
     main.innerHTML = renderRendimiento();
