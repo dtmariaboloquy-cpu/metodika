@@ -60,12 +60,14 @@ h1,h2,h3,h4,b,strong,.mark,.saludo{font-family:var(--f-display)}
 .topbar .tabs .back{background:none;border:none;color:var(--verde);opacity:.75;font-weight:700;font-size:12.5px;cursor:pointer;padding:0;margin-bottom:8px}
 .page-title{font-family:var(--f-display);font-size:22px;font-weight:800;margin:0 0 2px;color:var(--tinta)}
 .page-sub{color:var(--sub);font-size:13px;margin:0 0 14px}
-.segmented{display:inline-flex;background:var(--papel2);border-radius:10px;padding:3px;gap:2px}
+.segmented{display:inline-flex;background:var(--papel2);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.segmented button{flex:none}
 .segmented button{background:none;border:none;padding:7px 14px;border-radius:8px;font-weight:700;font-size:12.5px;color:var(--sub);cursor:pointer;font-family:var(--f-texto)}
 .segmented button.active{background:var(--card);color:var(--verde);box-shadow:0 1px 3px rgba(4,40,89,.12)}
 main{max-width:1100px;margin:0;padding:14px 24px 80px}
 @media (max-width:880px){
-  .app-shell{flex-direction:column}
+  .app-shell{flex-direction:column;align-items:stretch}
+  .app-main{width:100%;max-width:100%}
   .sidebar{width:100%;min-height:auto;position:relative;flex-direction:row;align-items:center;padding:14px 14px}
   .sidebar::before{display:none}
   .sidebar-brand{padding:0;flex:none}
@@ -695,6 +697,22 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .rank-fila b{text-align:right;font-variant-numeric:tabular-nums}
 .rank-dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 @media (max-width:860px){.rank-dos{grid-template-columns:minmax(0,1fr)}.rank-fila{grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr) 30px}}
+.av-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:0}
+.av-t{margin:0 0 2px;font-size:14px}
+.av-sub{margin:0 0 10px;font-size:12px}
+.av-fila{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--borde)}
+.av-fila>div:first-child{flex:1;min-width:0}
+.av-fila small{display:block;color:var(--sub);font-size:11.5px}
+.av-etq{display:block;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--sub);font-weight:700}
+.av-num{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.av-dif{font-weight:800;font-size:12.5px;border-radius:99px;padding:2px 8px;background:var(--papel2);color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+.av-dif.mas{background:rgba(30,142,90,.13);color:#1E8E5A}.av-dif.menos{background:rgba(179,69,47,.13);color:var(--rojo)}
+.av-rachas{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}
+.av-racha{background:var(--papel2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.av-racha span{font-size:11.5px;color:var(--sub);font-weight:700;line-height:1.25}
+.av-racha b{font-family:var(--f-display);font-size:28px;line-height:1.1}
+.av-racha small{font-size:11.5px;color:var(--sub)}
+@media (max-width:860px){.av-grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 
 <div class="app-shell">
@@ -2946,6 +2964,8 @@ function jugadoraDetalle(j){
     <h2 class="section">Valoración por partido</h2>
     <div class="card"><div class="chart-wrap"><canvas id="chart-valoracion"></canvas></div></div>
 
+    ${renderAnalisisAvanzado(j)}
+
     ${renderAsistenciaJugadora(j)}
 
     <h2 class="section">Estadísticas físicas de partidos (GPS)</h2>
@@ -3346,6 +3366,81 @@ function renderBiblioteca(){
       ${vis.length>bibLimite?`<p style="text-align:center;margin:16px 0"><button class="btn-sec" onclick="bibLimite+=36;const y=window.scrollY;render();window.scrollTo(0,y)">Ver más tareas (${vis.length-bibLimite} restantes)</button></p>`:""}`
     : `<div class="card"><p class="muted" style="margin:0">${bibFiltro.ver==='fav'?'Todavía no marcaste favoritas. Tocá la ☆ de cualquier tarea.':'No hay tareas que coincidan con la búsqueda.'}</p></div>`}
   `;
+}
+
+// ===== Ficha avanzada: dónde y con quién rinde mejor, rachas, puesto =====
+function renderAnalisisAvanzado(j){
+  const fmt = v => v.toFixed(1).replace(".",",");
+  const dif = d => `<span class="av-dif ${d>0.05?'mas':d<-0.05?'menos':''}">${d>0?'+':d<0?'−':'±'}${fmt(Math.abs(d))}</span>`;
+  const porFecha = {}; PARTIDOS.forEach(p=>{ porFecha[String(p.fechaISO||"").slice(0,10)] = p; });
+  const hist = (j.historial||[]).slice().sort((a,b)=>String(a.fechaISO||"").localeCompare(String(b.fechaISO||"")));
+  const jug = hist.filter(h=>h.minutos>0 && h.rating>0);
+  const prom = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+  if(jug.length < 3) return `<h2 class="section">Análisis avanzado</h2><div class="card"><p class="muted" style="margin:0">Hace falta que juegue al menos 3 partidos con valoración para ver este análisis.</p></div>`;
+  const media = prom(jug.map(h=>h.rating));
+  // Dónde rinde mejor
+  const grupos = [];
+  const agrupar = (titulo, fn) => { const g={}; jug.forEach(h=>{ const k=fn(h); if(k) (g[k]=g[k]||[]).push(h.rating); }); Object.entries(g).forEach(([k,v])=>{ if(v.length>=2) grupos.push({titulo,k,n:v.length,m:prom(v)}); }); };
+  agrupar("Lugar", h=>{ const p=porFecha[String(h.fechaISO||"").slice(0,10)]; return p ? condicionPartido(p) : null; });
+  agrupar("Resultado", h=>{ const p=porFecha[String(h.fechaISO||"").slice(0,10)]; return p ? ({W:"Victoria",D:"Empate",L:"Derrota"})[p.resultado] : null; });
+  agrupar("Rol", h=>({titular:"Titular",suplente:"Suplente"})[h.status]||null);
+  agrupar("Sistema", h=>{ const p=porFecha[String(h.fechaISO||"").slice(0,10)]; return p && p.sistema ? p.sistema : null; });
+  const donde = grupos.sort((a,b)=>(b.m-media)-(a.m-media));
+  // Con quién rinde mejor
+  const companeras = JUGADORAS.filter(o=>o.numero!==j.numero).map(o=>{
+    const jugo = {}; (o.historial||[]).forEach(h=>{ if(h.minutos>0) jugo[String(h.fechaISO||"").slice(0,10)] = true; });
+    const con=[], sin=[]; jug.forEach(h=>{ (jugo[String(h.fechaISO||"").slice(0,10)] ? con : sin).push(h.rating); });
+    return {o, con, sin, d: (con.length>=3 && sin.length>=2) ? prom(con)-prom(sin) : null};
+  }).filter(x=>x.d!=null);
+  const mejor = companeras.filter(x=>x.d>0.05).sort((a,b)=>b.d-a.d).slice(0,3);
+  const peor = companeras.filter(x=>x.d<-0.05).sort((a,b)=>a.d-b.d).slice(0,3);
+  const filaComp = x => `<div class="av-fila"><div><b>${esc(x.o.apellido)}</b> <span class="muted">#${dorsalDe(x.o)}</span><small>con ${fmt(prom(x.con))} (${x.con.length}) · sin ${fmt(prom(x.sin))} (${x.sin.length})</small></div>${dif(x.d)}</div>`;
+  // Rachas
+  const racha = (lista, ok) => { let act=0, mej=0; lista.forEach(h=>{ if(ok(h)){ act++; mej=Math.max(mej,act); } else act=0; }); return {act, mej}; };
+  const rVal = racha(jug, h=>h.rating>=media);
+  const rMin = racha(hist, h=>h.minutos>0);
+  const rGA = racha(hist.filter(h=>h.minutos>0), h=>(h.goles||0)+(h.asistencias||0)>0);
+  const tarjRacha = (t, r) => `<div class="av-racha"><span>${t}</span><b>${r.act}</b><small>Mejor: ${r.mej}</small></div>`;
+  // Puesto en el plantel
+  const puesto = (fn, filtro) => { const lista = JUGADORAS.filter(filtro||(()=>true)); const v = fn(j); return {pos: 1 + lista.filter(o=>fn(o) > v).length, de: lista.length}; };
+  const pts = [
+    ["Valoración", puesto(o=>o.calificacion||0, o=>o.calificacion>0)],
+    ["Goles", puesto(o=>o.goles||0)],
+    ["Asistencias", puesto(o=>o.asistencias||0)],
+    ["Minutos", puesto(o=>o.minutos||0)],
+  ];
+  return `
+    <h2 class="section">Análisis avanzado</h2>
+    <div class="av-grid">
+      <div class="card">
+        <h3 class="av-t">Dónde rinde mejor</h3>
+        <p class="muted av-sub">Valoración promedio en cada contexto, comparada con su media de la temporada (${fmt(media)}).</p>
+        ${donde.length ? donde.map(g=>`<div class="av-fila"><div><span class="av-etq">${esc(g.titulo)}</span><b>${esc(g.k)}</b><small>${g.n} partidos</small></div><div class="av-num"><b>${fmt(g.m)}</b>${dif(g.m-media)}</div></div>`).join("") : `<p class="muted" style="margin:0">Todavía no hay suficientes partidos para comparar.</p>`}
+      </div>
+      <div class="card">
+        <h3 class="av-t">Con quién rinde mejor</h3>
+        <p class="muted av-sub">Su valoración cuando juega cada compañera y cuando no juega (solo compañeras con al menos 3 partidos juntas).</p>
+        ${mejor.length ? `<div class="av-etq" style="margin-top:4px">Mejor con</div>${mejor.map(filaComp).join("")}` : ""}
+        ${peor.length ? `<div class="av-etq" style="margin-top:10px">Peor con</div>${peor.map(filaComp).join("")}` : ""}
+        ${!mejor.length && !peor.length ? `<p class="muted" style="margin:0">No hay diferencias claras todavía.</p>` : ""}
+      </div>
+    </div>
+    <div class="av-grid">
+      <div class="card">
+        <h3 class="av-t">Rachas</h3>
+        <p class="muted av-sub">Número grande: racha actual.</p>
+        <div class="av-rachas">
+          ${tarjRacha("Partidos con valoración igual o mayor a su media", rVal)}
+          ${tarjRacha("Partidos seguidos con minutos", rMin)}
+          ${tarjRacha("Partidos seguidos con gol o asistencia", rGA)}
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="av-t">Puesto en el plantel</h3>
+        <p class="muted av-sub">Dónde se ubica entre todas las jugadoras.</p>
+        <div class="av-rachas">${pts.map(([t,r])=>`<div class="av-racha"><span>${t}</span><b>#${r.pos}</b><small>de ${r.de} jugadoras</small></div>`).join("")}</div>
+      </div>
+    </div>`;
 }
 
 // ===== Comparar jugadoras =====
