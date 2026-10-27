@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses Juegan</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic-deportes.js?v=1"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel Cordobeses Juegan</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}html,body,#root{margin:0;min-width:320px;min-height:100%;font-family:'Baloo 2','Nunito',Arial,sans-serif;background:#f3f5f9}button,input,select,textarea{font:inherit}</style><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script><script src="fixture-logic-deportes.js?v=2"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
 
 const C = {
   bg: "#F3F5F9",
@@ -1100,34 +1100,60 @@ function ResumenPorDia({ jornadas, cruces, resultados, tituloRama, color }) {
   );
 }
 
-function SelectorDeportes() {
-  const ir = (d) => {
-    if (d.externo) { location.href = d.externo; return; }
-    const u = new URL(location.href);
-    u.search = "";
-    u.searchParams.set("deporte", d.k);
-    ["planilla", "anio"].forEach((p) => { const v = new URLSearchParams(location.search).get(p); if (v) u.searchParams.set(p, v); });
-    location.href = u.toString();
-  };
+function irADeporte(d) {
+  if (d === "inicio") { const u = new URL(location.href); u.search = ""; ["planilla", "anio"].forEach((p) => { const v = new URLSearchParams(location.search).get(p); if (v) u.searchParams.set(p, v); }); location.href = u.toString(); return; }
+  if (d.externo) { location.href = d.externo; return; }
+  const u = new URL(location.href);
+  u.search = "";
+  u.searchParams.set("deporte", d.k);
+  ["planilla", "anio"].forEach((p) => { const v = new URLSearchParams(location.search).get(p); if (v) u.searchParams.set(p, v); });
+  location.href = u.toString();
+}
+
+function NavDeportes() {
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12, marginBottom: 12 }}>
-      <div style={{ fontSize: 14, fontWeight: 800, color: C.ink, marginBottom: 10 }}>Elegí el deporte</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-        {DEPORTES.map((d) => {
-          const activo = d.k === DEPORTE.k;
-          return (
-            <button key={d.k} onClick={() => !activo && ir(d)} style={{ fontSize: 16, padding: "14px 10px", borderRadius: 10, border: activo ? "none" : `1px solid ${C.border}`, background: activo ? C.primario : "#fff", color: activo ? "#fff" : C.ink, fontWeight: 800, cursor: activo ? "default" : "pointer" }}>
-              <span style={{ fontSize: 22, marginRight: 6 }}>{d.icono}</span>{d.nombre}
-              {d.externo && <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, marginTop: 2 }}>abre su panel ↗</div>}
-            </button>
-          );
-        })}
-      </div>
-      <div style={{ fontSize: 12, color: C.sub, marginTop: 10, lineHeight: 1.45 }}>
-        Puntos: ganado {DEPORTE.puntos.g}{DEPORTE.empate ? ` · empatado ${DEPORTE.puntos.e}` : ""} · perdido {DEPORTE.puntos.p}. El resultado se carga en {DEPORTE.unidad.toLowerCase()}.
-        {" "}Las fechas y equipos salen de la <a href={`https://docs.google.com/spreadsheets/d/${window.__CFG.planillaId}/edit`} target="_blank" rel="noopener" style={{ color: C.primario, fontWeight: 700 }}>planilla de {ANIO}</a> (pestaña “{DEPORTE.hojas.join("”, “")}”).
-      </div>
+      <div style={{ position: "sticky", top: 0, zIndex: 50, margin: "-20px -20px 16px", padding: "10px 14px", background: "rgba(14,36,68,0.97)", boxShadow: "0 4px 14px rgba(0,0,0,0.18)", display: "flex", gap: 8, alignItems: "center", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <button onClick={() => irADeporte("inicio")} style={{ flex: "0 0 auto", fontSize: 14, padding: "9px 14px", borderRadius: 22, border: "1px solid rgba(255,255,255,0.35)", background: "transparent", color: "#fff", fontWeight: 800, cursor: "pointer" }}>🏠 Inicio</button>
+      {DEPORTES.map((d) => {
+        const activo = d.k === DEPORTE.k;
+        return (
+          <button key={d.k} onClick={() => !activo && irADeporte(d)} style={{ flex: "0 0 auto", fontSize: 14, padding: "9px 14px", borderRadius: 22, border: "none", background: activo ? d.color : "rgba(255,255,255,0.12)", color: "#fff", fontWeight: 800, cursor: activo ? "default" : "pointer", boxShadow: activo ? "0 2px 8px rgba(0,0,0,0.25)" : "none" }}>
+            {d.icono} {d.nombre}
+          </button>
+        );
+      })}
     </div>
+  );
+}
+
+function SelectorDeportes() {
+  const [reglasAbiertas, setReglasAbiertas] = useState(false);
+  const pdf = `./reglamento-cordobeses-2026.pdf${DEPORTE.paginaPdf ? "#page=" + DEPORTE.paginaPdf : ""}`;
+  return (
+    <>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `6px solid ${DEPORTE.color}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: C.ink }}>📘 Reglamento de {DEPORTE.nombre.toLowerCase()} {ANIO}</div>
+            <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>Puntos: ganado {DEPORTE.puntos.g}{DEPORTE.empate ? ` · empate ${DEPORTE.puntos.e}` : ""} · perdido {DEPORTE.puntos.p} · no presentación 0. Resultado en {DEPORTE.unidad.toLowerCase()}.</div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button onClick={() => setReglasAbiertas((v) => !v)} style={{ fontSize: 14, padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.primario}`, background: reglasAbiertas ? C.primario : "#fff", color: reglasAbiertas ? "#fff" : C.primario, fontWeight: 700, cursor: "pointer" }}>{reglasAbiertas ? "Cerrar" : "Ver resumen"}</button>
+            <a href={pdf} target="_blank" rel="noopener" style={{ fontSize: 14, padding: "10px 14px", borderRadius: 8, background: C.verde, color: "#fff", fontWeight: 700, textDecoration: "none" }}>⬇ PDF oficial</a>
+          </div>
+        </div>
+        {reglasAbiertas && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+            {(DEPORTE.reglas || []).map(([titulo, texto]) => (
+              <div key={titulo} style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", fontSize: 14, lineHeight: 1.5, color: C.ink }}>
+                <div style={{ fontWeight: 800, marginBottom: 4, color: C.primario }}>{titulo}</div>
+                {texto.split("\n").map((l, i) => <div key={i}>{l}</div>)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1135,7 +1161,7 @@ function PanelCordobeses() {
   // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
   // también cuando se entra por el link/QR de un profe: primero el inicio,
   // y recién después (al tocar o al pasar unos segundos) aparece el fixture.
-  const [intro, setIntro] = useState(true);
+  const [intro, setIntro] = useState(false);
   const [rama, setRama] = useState(() => {
     const j = jornadaPedidaPorUrl();
     if (!j) return "femenino";
@@ -1431,6 +1457,7 @@ function PanelCordobeses() {
 
   return (
     <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20, borderRadius: 12 }}>
+      <NavDeportes />
       <div style={{
         marginBottom: 18, borderRadius: 16, overflow: "hidden", position: "relative",
         background: `linear-gradient(135deg, #0E2444 0%, ${C.primario} 55%, #1F4D82 100%)`,
@@ -1447,7 +1474,7 @@ function PanelCordobeses() {
             <div style={{ fontSize: 26, fontWeight: 800, marginTop: 3, fontFamily: C.fuente }}>
               {DEPORTE.nombre} <span style={{ color: C.doradoLogo }}>Cordobeses</span> <span style={{ color: C.rojoLogo, textShadow: "0 1px 0 rgba(0,0,0,0.15)" }}>Juegan</span>
             </div>
-            <div style={{ fontSize: 12, color: "#DCE7F5", marginTop: 4 }}>Femenino y Masculino · Fixture, zonas y seguimiento de equipos en vivo</div>
+            <div style={{ fontSize: 12, color: "#DCE7F5", marginTop: 4 }}>Femenino y Masculino · Fixture, zonas, resultados y tablas en vivo</div>
           </div>
         </div>
       </div>
@@ -1635,16 +1662,40 @@ var CONFIG_PANEL = {
   anio: 2026,
   planillaId: "1yi6LNp351OL4Evv0xuYxeRs78tbrL9tIMfd-BhawlWs",
   deportes: [
-    { k: "futbol", nombre: "Fútbol", icono: "⚽", clave: "FUTBOL", hojas: ["CRONOGRAMA FUTBOL FEM", "CRONOGRAMA FUTBOL  MASC"],
-      unidad: "Goles", siglas: { f: "GF", c: "GC", d: "DG" }, puntos: { g: 3, e: 1, p: 0 }, empate: true, desempate: "Penales",
+    { k: "futbol", nombre: "Fútbol", icono: "⚽", color: "#1D8A4E", color2: "#0B4F2A", clave: "FUTBOL", hojas: ["CRONOGRAMA FUTBOL FEM", "CRONOGRAMA FUTBOL  MASC"],
+      unidad: "Goles", siglas: { f: "GF", c: "GC", d: "DG" }, puntos: { g: 3, e: 1, p: 0 }, empate: true, desempate: "Penales", paginaPdf: 22,
       // En 2026 el fútbol se maneja en su propio panel (ya tiene todo cargado).
-      externoSoloEn: { 2026: "./" } },
-    { k: "basquet", nombre: "Básquet", icono: "🏀", clave: "BASQUET", hojas: ["CRONOGRAMA BASQUET"],
-      unidad: "Tantos", siglas: { f: "TF", c: "TC", d: "Dif" }, puntos: { g: 2, e: 0, p: 1 }, empate: false, desempate: "" },
-    { k: "handball", nombre: "Handball", icono: "🤾", clave: "HANDBALL", hojas: ["CRONOGRAMA HANDBALL"],
-      unidad: "Goles", siglas: { f: "GF", c: "GC", d: "DG" }, puntos: { g: 2, e: 1, p: 0 }, empate: true, desempate: "Penales" },
-    { k: "voley", nombre: "Vóley", icono: "🏐", clave: "VOLEIBOL", hojas: ["CRONOGRAMA VOLEIBOL "],
-      unidad: "Sets", siglas: { f: "SF", c: "SC", d: "Dif" }, puntos: { g: 2, e: 0, p: 1 }, empate: false, desempate: "" },
+      externoSoloEn: { 2026: "./?desde=inicio" },
+      reglas: [
+        ["Femenino (fútbol 7)", "Sub 15 y Sub 18 · 10 jugadoras.\n7 en cancha (1 arquera y 6 de campo).\n2 tiempos de 20' (mínimo 15' en etapas previas).\nCambios ilimitados."],
+        ["Masculino (fútbol 11)", "Sub 14 y Sub 16 · 16 jugadores.\n2 tiempos de 30' (mínimo 20' en etapas previas).\n5 cambios, sin reingreso."],
+        ["Puntos y resultados", "Ganado 3 · empate 1 · perdido 0.\nNo presentación: pierde 2 a 0.\nPérdida de puntos: 1 a 0."],
+        ["Desempate", "1) Resultado entre sí. 2) Diferencia de gol entre sí. 3) Goles a favor entre sí. 4) Menos goles en contra entre sí. 5) Lo mismo con toda la zona. 6) Sorteo.\nFinal provincial: 5 penales y luego 1 y 1."],
+      ] },
+    { k: "basquet", nombre: "Básquet", icono: "🏀", color: "#D9701E", color2: "#8E3B0A", clave: "BASQUET", hojas: ["CRONOGRAMA BASQUET"],
+      unidad: "Tantos", siglas: { f: "TF", c: "TC", d: "Dif" }, puntos: { g: 2, e: 0, p: 1 }, empate: false, desempate: "", paginaPdf: 20,
+      reglas: [
+        ["Equipos", "Sub 15 y Sub 18 · Reglamento FIBA.\nHasta 10 estudiantes en planilla.\nMínimo 5 para empezar."],
+        ["Juego", "4 cuartos de 8' corridos (últimos 3' cronometrados).\nProvincial: cuartos de 10' y alargue de 5' si hay empate.\nPelota N° 7 masculino · N° 6 femenino."],
+        ["Puntos", "Ganado 2 · perdido 1 · no presentación 0."],
+        ["Desempate", "1) Resultado entre sí. 2) Diferencia de tantos entre sí. 3) Tantos a favor entre sí. 4) Menos tantos en contra entre sí. 5) Sorteo."],
+      ] },
+    { k: "handball", nombre: "Handball", icono: "🤾", color: "#2F6FB0", color2: "#123E73", clave: "HANDBALL", hojas: ["CRONOGRAMA HANDBALL"],
+      unidad: "Goles", siglas: { f: "GF", c: "GC", d: "DG" }, puntos: { g: 2, e: 1, p: 0 }, empate: true, desempate: "Penales", paginaPdf: 26,
+      reglas: [
+        ["Equipos", "Sub 15 y Sub 18 · Reglamento IHF.\n12 estudiantes por equipo."],
+        ["Juego", "2 tiempos de 20' con 5' de descanso (se pueden reducir en etapas previas).\nPelota: masc. N° 2 (Sub 15) y N° 3 (Sub 18) · fem. N° 1 (Sub 15) y N° 2 (Sub 18)."],
+        ["Puntos y resultados", "Ganado 2 · empate 1 · perdido 0 (el manual no lo detalla: confirmar).\nNo presentación: pierde 6 a 0."],
+        ["Desempate", "Dos equipos: resultado entre sí.\nTres o más: partidos entre sí, diferencia de gol, goles a favor, menos goles en contra, sorteo.\nPartido definitorio empatado: 2 alargues de 5', 3 penales y luego 1 y 1."],
+      ] },
+    { k: "voley", nombre: "Vóley", icono: "🏐", color: "#7A3FA0", color2: "#3F1A5C", clave: "VOLEIBOL", hojas: ["CRONOGRAMA VOLEIBOL "],
+      unidad: "Sets", siglas: { f: "SF", c: "SC", d: "Dif" }, puntos: { g: 2, e: 0, p: 1 }, empate: false, desempate: "", paginaPdf: 28,
+      reglas: [
+        ["Equipos", "Sub 15 y Sub 18 · Reglamento FIVB.\n10 jugadores/as por equipo · 1 líbero por partido."],
+        ["Juego", "Al mejor de 3 sets a 25 (diferencia de 2).\n3er set: tie break a 15.\nRed Sub 15: 2,38 m masc. · 2,20 m fem.\nRed Sub 18: 2,43 m masc. · 2,24 m fem."],
+        ["Puntos y resultados", "Ganado 2 · perdido 1 · no presentación 0.\nNo presentación: 2 sets a 0 (25-0, 25-0)."],
+        ["Desempate", "Dos equipos: resultado entre sí.\nTres o más (solo partidos entre ellos): más sets a favor, menos sets en contra, menos puntos en contra, más puntos a favor, sorteo."],
+      ] },
   ],
 };
 
@@ -1660,21 +1711,18 @@ var CONFIG_PANEL = {
   function aviso(html) {
     root.innerHTML = '<div style="max-width:560px;margin:60px auto;padding:22px;background:#fff;border:1px solid #E2E5EA;border-radius:14px;font-family:Nunito,Arial,sans-serif;color:#1B2333;font-size:16px;line-height:1.5;text-align:center">' + html + '</div>';
   }
-
-  // Qué deporte mostrar: ?deporte=xxx, o el que corresponde al link/QR de una jornada, o el primero.
-  var k = params.get("deporte");
-  var jornadaUrl = params.get("jornada") || "";
-  if (!k && jornadaUrl) k = jornadaUrl.split("-")[0];
-  var deporte = cfg.deportes.filter(function (d) { return d.k === k; })[0]
-    || cfg.deportes.filter(function (d) { return !d.externo; })[0];
-  if (deporte.externo) { location.href = deporte.externo; return; }
-  window.__DEPORTE = deporte;
-  document.title = deporte.nombre + " · Cordobeses Juegan " + cfg.anio;
-  aviso('<div style="font-size:44px">' + deporte.icono + '</div><b>Cargando ' + deporte.nombre + ' ' + cfg.anio + '…</b><br><span style="color:#6B7280;font-size:14px">Leyendo las fechas de la planilla</span>');
-
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function quitarTildes(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, ""); }
   function norm(t) { return quitarTildes(t).toUpperCase().replace(/\s+/g, " ").trim(); }
   function slug(t) { return quitarTildes(t).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 16); }
+  var MESES = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+  function fechaLinda(f) { var p = String(f).split("-"); return p.length === 2 ? parseInt(p[0]) + " " + (MESES[parseInt(p[1])] || "") : f; }
+  function urlDeporte(d) {
+    if (d.externo) return d.externo;
+    var u = new URL(location.href); u.search = ""; u.searchParams.set("deporte", d.k);
+    ["planilla", "anio"].forEach(function (p) { if (params.get(p)) u.searchParams.set(p, params.get(p)); });
+    return u.toString();
+  }
 
   function parseCSV(texto) {
     var filas = [], fila = [], campo = "", comillas = false;
@@ -1691,7 +1739,6 @@ var CONFIG_PANEL = {
     if (campo !== "" || fila.length) { fila.push(campo); filas.push(fila); }
     return filas;
   }
-
   function fechaNorm(t) {
     var m = String(t || "").match(/(\d{1,2})\s*[-\/.]\s*(\d{1,2})/);
     if (!m) return null;
@@ -1699,7 +1746,7 @@ var CONFIG_PANEL = {
   }
   var pareceRegion = function (t) { return /^\s*(\d+\s*-\s*\d+|TODAS|NORTE|SUR)/i.test(t || ""); };
 
-  function leerHoja(nombreHoja) {
+  function leerHoja(deporte, nombreHoja) {
     var url = "https://docs.google.com/spreadsheets/d/" + cfg.planillaId + "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent(nombreHoja);
     return fetch(url).then(function (r) {
       if (!r.ok) throw new Error("No se pudo leer la planilla (¿está compartida con el enlace?)");
@@ -1735,7 +1782,7 @@ var CONFIG_PANEL = {
           if (!lugar && sedeTxt && !pareceRegion(sedeTxt)) lugar = sedeTxt;
           if (!reg && sedeTxt && pareceRegion(sedeTxt)) reg = sedeTxt;
           var gan = parseInt(v(f, col.ganadores));
-          actual = { fechaTxt: fecha, fecha: fechaNorm(fecha) || fecha, instancia: norm(v(f, col.instancia)), categoria: norm(v(f, col.categoria)).replace(/^SUB\s*(\d)/, "SUB $1"),
+          actual = { fecha: fechaNorm(fecha) || fecha, instancia: norm(v(f, col.instancia)), categoria: norm(v(f, col.categoria)).replace(/^SUB\s*(\d)/, "SUB $1"),
             ramaTxt: norm(v(f, col.rama)), sede: lugar.replace(/\s+/g, " "), horario: v(f, col.horario), regiones: [], ganadores: isNaN(gan) ? 1 : gan, equipos: [] };
           if (reg) actual.regiones.push(reg);
           bloques.push(actual);
@@ -1749,34 +1796,103 @@ var CONFIG_PANEL = {
     });
   }
 
-  Promise.all(deporte.hojas.map(leerHoja)).then(function (listas) {
-    var datos = { femenino: [], masculino: [] }, usados = {};
-    [].concat.apply([], listas).forEach(function (b) {
-      var esFem = b.ramaTxt.indexOf("FEM") !== -1, esMasc = b.ramaTxt.indexOf("MASC") !== -1;
-      var rama = esFem || !esMasc ? "femenino" : "masculino";
-      var mixta = esFem && esMasc;
-      var grupo = b.regiones.join(" / ") || null;
-      var base = [deporte.k, cfg.anio, b.fecha.replace(/[^0-9a-z]/gi, ""), slug(b.categoria), rama.charAt(0), slug(grupo || b.instancia)].join("-");
-      usados[base] = (usados[base] || 0) + 1;
-      var id = usados[base] > 1 ? base + "-" + usados[base] : base;
-      var jornada = { id: id, fecha: b.fecha, categoria: b.categoria || "-", instancia: b.instancia || "-", grupo: grupo, sede: b.sede || "A confirmar",
-        horario: b.horario || "", ganadores: b.ganadores >= 1 && b.ganadores <= 4 ? b.ganadores : 1, equipos: b.equipos, pendiente: b.equipos.length === 0, rama: rama };
-      datos[rama].push(jornada);
-      if (mixta) datos.masculino.push(jornada); // jornada mixta: aparece en las dos ramas
+  function cargarDeporte(deporte) {
+    return Promise.all(deporte.hojas.map(function (h) { return leerHoja(deporte, h); })).then(function (listas) {
+      var datos = { femenino: [], masculino: [] }, usados = {};
+      [].concat.apply([], listas).forEach(function (b) {
+        var esFem = b.ramaTxt.indexOf("FEM") !== -1, esMasc = b.ramaTxt.indexOf("MASC") !== -1;
+        var rama = esFem || !esMasc ? "femenino" : "masculino";
+        var mixta = esFem && esMasc;
+        var grupo = b.regiones.join(" / ") || null;
+        var base = [deporte.k, cfg.anio, b.fecha.replace(/[^0-9a-z]/gi, ""), slug(b.categoria), rama.charAt(0), slug(grupo || b.instancia)].join("-");
+        usados[base] = (usados[base] || 0) + 1;
+        var id = usados[base] > 1 ? base + "-" + usados[base] : base;
+        var jornada = { id: id, fecha: b.fecha, categoria: b.categoria || "-", instancia: b.instancia || "-", grupo: grupo, sede: b.sede || "A confirmar",
+          horario: b.horario || "", ganadores: b.ganadores >= 1 && b.ganadores <= 4 ? b.ganadores : 1, equipos: b.equipos, pendiente: b.equipos.length === 0, rama: rama };
+        datos[rama].push(jornada);
+        if (mixta) datos.masculino.push(jornada); // jornada mixta: aparece en las dos ramas
+      });
+      var orden = function (a, b) {
+        var A = a.fecha.split("-"), B = b.fecha.split("-");
+        return (parseInt(A[1]) || 99) - (parseInt(B[1]) || 99) || (parseInt(A[0]) || 99) - (parseInt(B[0]) || 99);
+      };
+      datos.femenino.sort(orden); datos.masculino.sort(orden);
+      return datos;
     });
-    var orden = function (a, b) {
-      var A = a.fecha.split("-"), B = b.fecha.split("-");
-      return (parseInt(A[1]) || 99) - (parseInt(B[1]) || 99) || (parseInt(A[0]) || 99) - (parseInt(B[0]) || 99);
-    };
-    datos.femenino.sort(orden); datos.masculino.sort(orden);
+  }
+
+  // ---------------- Pantalla de inicio: un botón grande por deporte ----------------
+  function mostrarInicio() {
+    document.title = "Cordobeses Juegan " + cfg.anio + " · Panel de deportes";
+    var css = '<style>' +
+      '#abrir-vista-profes{display:none!important}' +
+      'body{background:#050B1A}' +
+      '.ini{position:relative;min-height:100vh;overflow:hidden;font-family:"Baloo 2",Nunito,Arial,sans-serif;color:#fff;' +
+        'background:radial-gradient(ellipse 60% 35% at 12% 8%,rgba(160,200,255,.35),transparent 60%),radial-gradient(ellipse 60% 35% at 88% 8%,rgba(160,200,255,.35),transparent 60%),' +
+        'radial-gradient(ellipse 90% 40% at 50% 30%,rgba(40,90,170,.35),transparent 70%),linear-gradient(180deg,#040A18 0%,#0A1A3A 55%,#0B2A2A 78%,#0E4A2A 100%)}' +
+      '.ini:before{content:"";position:absolute;left:0;right:0;top:0;height:46%;pointer-events:none;opacity:.8;' +
+        'background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 2px,transparent 3px),radial-gradient(circle,rgba(255,255,255,.7) 0 1.5px,transparent 3px);' +
+        'background-size:46px 46px,29px 29px;background-position:0 0,13px 17px;-webkit-mask-image:radial-gradient(ellipse 45% 30% at 10% 12%,#000 0,transparent 70%),radial-gradient(ellipse 45% 30% at 90% 12%,#000 0,transparent 70%);' +
+        'mask-image:radial-gradient(ellipse 45% 30% at 10% 12%,#000 0,transparent 70%),radial-gradient(ellipse 45% 30% at 90% 12%,#000 0,transparent 70%)}' +
+      '.ini:after{content:"";position:absolute;left:0;right:0;bottom:0;height:22%;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 70px,transparent 70px 140px),linear-gradient(180deg,transparent,#0E5A30 85%)}' +
+      '.ini-in{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:40px 18px 56px}' +
+      '.ini-k{font-size:12px;letter-spacing:1.5px;font-weight:700;color:#9FC2EE}' +
+      '.ini-t{font-size:clamp(34px,7vw,56px);font-weight:800;line-height:1.05;margin-top:6px;text-shadow:0 4px 18px rgba(0,0,0,.5)}' +
+      '.ini-t span{background:linear-gradient(90deg,#F5C451,#E9A23B);-webkit-background-clip:text;background-clip:text;color:transparent}' +
+      '.ini-s{font-size:17px;color:#C9D8EE;margin-top:10px;max-width:560px}' +
+      '.ini-grid{margin-top:30px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}' +
+      '@media(min-width:820px){.ini-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}}' +
+      '.dep{position:relative;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;color:#fff;border-radius:24px;padding:18px;overflow:hidden;' +
+        'background:linear-gradient(150deg,var(--c) 0%,var(--c2) 100%);box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .18s,box-shadow .18s}' +
+      '.dep:before{content:"";position:absolute;right:-30%;top:-30%;width:90%;height:90%;border-radius:50%;background:rgba(255,255,255,.12)}' +
+      '.dep:hover,.dep:focus-visible{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 44px rgba(0,0,0,.55),0 0 0 3px rgba(255,255,255,.6)}' +
+      '.dep-i{position:relative;font-size:clamp(46px,11vw,66px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}' +
+      '.dep-n{position:relative;font-size:clamp(22px,5vw,30px);font-weight:800;line-height:1.05}' +
+      '.dep-d{position:relative;font-size:clamp(12px,3.2vw,14px);color:rgba(255,255,255,.88);margin-top:4px;line-height:1.35}' +
+      '.ini-pie{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}' +
+      '.ini-pie a{font-size:15px;font-weight:700;text-decoration:none;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;backdrop-filter:blur(6px)}' +
+      '</style>';
+    var tarjetas = cfg.deportes.map(function (d) {
+      return '<a class="dep" style="--c:' + d.color + ';--c2:' + d.color2 + '" href="' + esc(urlDeporte(d)) + '" data-k="' + d.k + '">' +
+        '<div class="dep-i">' + d.icono + '</div><div><div class="dep-n">' + esc(d.nombre) + '</div>' +
+        '<div class="dep-d" id="info-' + d.k + '">Cargando fechas…</div></div></a>';
+    }).join("");
+    root.innerHTML = css + '<div class="ini"><div class="ini-in"><div class="ini-k">CORDOBESES JUEGAN · TEMPORADA ' + cfg.anio + '</div>' +
+      '<div class="ini-t">Panel de <span>Competencia</span></div><div class="ini-s">Tocá un deporte para ver sus fechas, zonas, resultados, tablas, planillas y reglamento.</div>' +
+      '<div class="ini-grid">' + tarjetas + '</div>' +
+      '<div class="ini-pie"><a href="./reglamento-cordobeses-2026.pdf" target="_blank" rel="noopener">📘 Reglamento oficial (PDF)</a>' +
+      '<a href="https://docs.google.com/spreadsheets/d/' + esc(cfg.planillaId) + '/edit" target="_blank" rel="noopener">📄 Planilla de fechas ' + cfg.anio + '</a></div></div></div>';
+    cfg.deportes.forEach(function (d) {
+      cargarDeporte(d).then(function (datos) {
+        var todas = datos.femenino.concat(datos.masculino.filter(function (j) { return datos.femenino.indexOf(j) === -1; }));
+        var equipos = todas.reduce(function (s, j) { return s + j.equipos.length; }, 0);
+        var fechas = todas.map(function (j) { return j.fecha; }).filter(function (f) { return /^\d\d-\d\d$/.test(f); }).sort(function (a, b) { return a.slice(3).localeCompare(b.slice(3)) || a.localeCompare(b); });
+        var hoy = new Date(), hoyTxt = ("0" + (hoy.getMonth() + 1)).slice(-2) + ("0" + hoy.getDate()).slice(-2);
+        var proxima = fechas.filter(function (f) { return f.slice(3) + f.slice(0, 2) >= hoyTxt; })[0];
+        var linea = todas.length + " fechas · " + equipos + " equipos<br>" +
+          (fechas.length ? (proxima && hoy.getFullYear() === cfg.anio ? "Próxima: <b>" + fechaLinda(proxima) + "</b>" : "Del " + fechaLinda(fechas[0]) + " al " + fechaLinda(fechas[fechas.length - 1])) : "Sin fechas cargadas");
+        document.getElementById("info-" + d.k).innerHTML = linea;
+      }).catch(function () { document.getElementById("info-" + d.k).textContent = "Ver fechas y resultados"; });
+    });
+  }
+
+  // Qué mostrar: ?deporte=xxx, o el deporte del link/QR de una jornada, o la pantalla de inicio.
+  var k = params.get("deporte");
+  var jornadaUrl = params.get("jornada") || "";
+  if (!k && jornadaUrl) k = jornadaUrl.split("-")[0];
+  var deporte = cfg.deportes.filter(function (d) { return d.k === k; })[0];
+  if (!deporte) { mostrarInicio(); return; }
+  if (deporte.externo) { location.href = deporte.externo; return; }
+  window.__DEPORTE = deporte;
+  document.title = deporte.nombre + " · Cordobeses Juegan " + cfg.anio;
+  aviso('<div style="font-size:44px">' + deporte.icono + '</div><b>Cargando ' + esc(deporte.nombre) + ' ' + cfg.anio + '…</b><br><span style="color:#6B7280;font-size:14px">Leyendo las fechas de la planilla</span>');
+
+  cargarDeporte(deporte).then(function (datos) {
     window.__DATOS = datos;
     root.innerHTML = "";
     (0, eval)(Babel.transform(document.getElementById("app-code").textContent, { presets: [["env", { modules: false }], ["react", { runtime: "classic" }]] }).code);
   }).catch(function (e) {
-    var otros = cfg.deportes.map(function (d) {
-      return '<a href="?deporte=' + d.k + '" style="display:inline-block;margin:4px;padding:8px 12px;border:1px solid #E2E5EA;border-radius:8px;color:#17365D;font-weight:700;text-decoration:none">' + d.icono + " " + d.nombre + "</a>";
-    }).join("");
-    aviso("<b>No se pudieron cargar las fechas de " + deporte.nombre + ".</b><br><span style=\"color:#C0392B\">" + e.message + "</span><br><br>Probá recargar la página.<br><br>" + otros);
+    aviso("<b>No se pudieron cargar las fechas de " + esc(deporte.nombre) + ".</b><br><span style=\"color:#C0392B\">" + esc(e.message) + "</span><br><br>Probá recargar la página.<br><br><a href=\"?\" style=\"display:inline-block;padding:10px 14px;border-radius:8px;background:#17365D;color:#fff;font-weight:700;text-decoration:none\">🏠 Volver al inicio</a>");
   });
 })();
 </script><script>(function(){var originalFetch=window.fetch.bind(window),history=[],working=false,auth='';function getId(url){var p=url.split('/panelCordobeses/jornadas/')[1];return p?p.split('/')[0]:''}window.fetch=async function(input,options){var url=typeof input==='string'?input:(input&&input.url)||'',method=((options&&options.method)||'GET').toUpperCase();var am=url.match(/[?&]auth=([^&]+)/);if(am)auth=am[1];var isFixture=url.indexOf('/panelCordobeses/jornadas/')!==-1&&(url.indexOf('/cruces.json')!==-1||url.indexOf('/resultados.json')!==-1);if(!working&&method==='PUT'&&isFixture){try{var before=await originalFetch(url);var previous=before.ok?await before.json():null;var response=await originalFetch(input,options);if(response.ok){history.push({id:getId(url),url:url,previous:previous});if(history.length>20)history.shift();refresh()}return response}catch(e){return originalFetch(input,options)}}return originalFetch(input,options)};function isCoordinator(){return (document.body.innerText||'').indexOf('Modo coordinador/a')!==-1}function refresh(){document.querySelectorAll('.boton-deshacer-fixture').forEach(function(b){var hasLocal=history.some(function(h){return h.id===b.dataset.id});var enabled=!working&&(hasLocal||(isCoordinator()&&auth));b.disabled=!enabled;b.style.opacity=enabled?'1':'.55';b.style.cursor=enabled?'pointer':'not-allowed';b.textContent=working?'Recuperando...':'↶ Deshacer / recuperar fixture anterior'})}async function restoreServer(id){if(!auth)return false;var r=await originalFetch('https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelHistorial/'+id+'.json?auth='+auth);if(!r.ok)return false;var data=await r.json()||{};var keys=Object.keys(data).sort(function(a,b){return Number(b)-Number(a)});var previous=null;for(var i=0;i<keys.length;i++){if(data[keys[i]]&&(data[keys[i]].cruces||data[keys[i]].resultados)){previous=data[keys[i]];break}}if(!previous){alert('Todavía no hay una versión anterior guardada para este fixture.');return false}if(!confirm('¿Querés recuperar la última versión anterior guardada de este fixture?'))return false;var base='https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelCordobeses/jornadas/'+id;await originalFetch(base+'/cruces.json?auth='+auth,{method:previous.cruces?'PUT':'DELETE',headers:{'Content-Type':'application/json'},body:previous.cruces?JSON.stringify(previous.cruces):undefined});await originalFetch(base+'/resultados.json?auth='+auth,{method:previous.resultados?'PUT':'DELETE',headers:{'Content-Type':'application/json'},body:previous.resultados?JSON.stringify(previous.resultados):undefined});alert('Fixture anterior recuperado.');location.reload();return true}async function undo(id){if(working)return;working=true;refresh();var pos=-1;for(var i=history.length-1;i>=0;i--){if(history[i].id===id){pos=i;break}}try{if(pos>=0){var item=history.splice(pos,1)[0];await originalFetch(item.url,{method:item.previous===null?'DELETE':'PUT',headers:{'Content-Type':'application/json'},body:item.previous===null?undefined:JSON.stringify(item.previous)});setTimeout(function(){location.reload()},700)}else if(isCoordinator()){await restoreServer(id)}}finally{working=false;refresh()}}async function clearFixture(id){if(working||!auth)return;if(!confirm('¿Seguro que querés borrar completamente este fixture y todos sus resultados?'))return;working=true;refresh();var base='https://metodika-dt-multijugador-default-rtdb.firebaseio.com/panelCordobeses/jornadas/'+id;try{await originalFetch(base+'/cruces.json?auth='+auth,{method:'DELETE'});await originalFetch(base+'/resultados.json?auth='+auth,{method:'DELETE'});history=history.filter(function(h){return h.id!==id});alert('Fixture borrado. Ya podés armarlo nuevamente.');location.reload()}finally{working=false;refresh()}}function mount(){document.querySelectorAll('[data-jornada-id]').forEach(function(card){var title=Array.from(card.querySelectorAll('div')).find(function(el){return el.children.length===0&&el.textContent.trim()==='Armar cruces (sorteo) y resultados'});if(!title)return;var section=title.parentElement;if(section.querySelector('.boton-deshacer-fixture'))return;var wrap=document.createElement('div');wrap.style.cssText='display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid #e1e4e8';var b=document.createElement('button');b.className='boton-deshacer-fixture';b.dataset.id=card.getAttribute('data-jornada-id');b.onclick=function(){undo(b.dataset.id)};b.title='Recupera el fixture anterior de esta jornada';b.style.cssText='font-size:11px;padding:8px 12px;border-radius:7px;border:1px solid #17365d;background:#fff;color:#17365d;font-weight:700';wrap.appendChild(b);if(isCoordinator()){var del=document.createElement('button');del.textContent='🗑 Borrar fixture';del.onclick=function(){clearFixture(b.dataset.id)};del.title='Borra el sorteo y todos los resultados de este fixture';del.style.cssText='font-size:11px;padding:8px 12px;border-radius:7px;border:1px solid #d9273e;background:#fff;color:#d9273e;font-weight:700;cursor:pointer';wrap.appendChild(del)}section.appendChild(wrap)});refresh()}setInterval(mount,700);setTimeout(mount,1000)})();</script><script>(function(){var overlay=null,selected='';var entroComoProfeDirecto=(function(){try{return new URL(location.href).searchParams.get('vista')==='profes'}catch(e){return false}})();function cards(){return Array.from(document.querySelectorAll('[data-jornada-id]'))}function label(card){var lines=(card.innerText||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);return lines.slice(0,5).join(' · ')}function findFixture(card){return Array.from(card.querySelectorAll('div')).find(function(el){return el.children.length===0&&el.textContent.trim()==='Armar cruces (sorteo) y resultados'})}function ensureOpen(card){if(!findFixture(card)&&card.firstElementChild)card.firstElementChild.click()}function render(){if(!overlay||!selected)return;var card=cards().find(function(c){return c.dataset.jornadaId===selected});var target=overlay.querySelector('#vista-profes-contenido');if(!card){target.innerHTML='<div style="padding:20px">No se encontró esta jornada.</div>';return}ensureOpen(card);setTimeout(function(){var title=findFixture(card);if(!title){target.innerHTML='<div style="padding:20px">Esta jornada todavía no tiene un fixture armado.</div>';return}var section=title.parentElement.cloneNode(true);section.querySelectorAll('button').forEach(function(b){b.remove()});section.querySelectorAll('.solo-coordinador').forEach(function(el){el.remove()});section.querySelectorAll('input,select,textarea').forEach(function(el){el.disabled=true;el.style.opacity='1';el.style.color='#17213a'});target.innerHTML='';var head=document.createElement('div');head.style.cssText='font-size:15px;font-weight:800;color:#17213a;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #dfe3e8';head.textContent=label(card);target.appendChild(head);target.appendChild(section)},250)}function closeView(){if(overlay){overlay.remove();overlay=null}var u=new URL(location.href);u.searchParams.delete('vista');u.searchParams.delete('jornada');history.replaceState({},'',u)}function openView(){if(overlay)return;overlay=document.createElement('div');overlay.id='vista-profes-overlay';overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#f4f5f7;overflow:auto;font-family:Inter,Arial,sans-serif;color:#17213a';var top=document.createElement('div');top.style.cssText='position:sticky;top:0;z-index:2;background:#17365d;color:#fff;padding:14px 18px;box-shadow:0 2px 8px #0002';top.innerHTML='<div style="max-width:1200px;margin:auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div><div style="font-size:17px;font-weight:800">⚽ Vista para profes</div><div style="font-size:11px;opacity:.85;margin-top:2px">Fixture, resultados y tabla · actualización automática</div></div>'+(entroComoProfeDirecto?'':'<button id="cerrar-vista-profes" style="border:1px solid #ffffff80;background:transparent;color:#fff;border-radius:7px;padding:7px 11px;font-weight:700;cursor:pointer">Volver al panel</button>')+'</div>';overlay.appendChild(top);var body=document.createElement('div');body.style.cssText='max-width:1200px;margin:auto;padding:16px';var select=document.createElement('select');select.id='selector-vista-profes';select.style.cssText='width:100%;padding:11px 12px;border:1px solid #cfd5dd;border-radius:8px;background:#fff;font-size:13px;margin-bottom:14px';select.innerHTML='<option value="">Elegí la fecha y categoría</option>';cards().forEach(function(card){var o=document.createElement('option');o.value=card.dataset.jornadaId;o.textContent=label(card);select.appendChild(o)});body.appendChild(select);var content=document.createElement('div');content.id='vista-profes-contenido';content.style.cssText='background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:14px;overflow-x:auto';content.innerHTML='<div style="padding:24px;text-align:center;color:#596579">Elegí una jornada para ver su fixture.</div>';body.appendChild(content);var note=document.createElement('div');note.style.cssText='font-size:11px;color:#596579;text-align:center;margin:12px';note.textContent='Vista de solo lectura. Los datos se actualizan automáticamente.';body.appendChild(note);overlay.appendChild(body);document.body.appendChild(overlay);var btnCerrarVistaProfes=top.querySelector('#cerrar-vista-profes');if(btnCerrarVistaProfes)btnCerrarVistaProfes.onclick=closeView;select.onchange=function(){selected=this.value;var u=new URL(location.href);if(selected)u.searchParams.set('jornada',selected);history.replaceState({},'',u);render()};var requested=new URL(location.href).searchParams.get('jornada');if(requested&&select.querySelector('option[value="'+requested+'"]')){select.value=requested;selected=requested;render()}}function addButton(){if(document.getElementById('abrir-vista-profes'))return;var root=document.querySelector('#root>div');if(!root)return;var b=document.createElement('button');b.id='abrir-vista-profes';b.textContent='👁 Vista para profes';b.onclick=openView;b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;border:none;border-radius:24px;padding:11px 16px;background:#17365d;color:#fff;font-size:12px;font-weight:800;box-shadow:0 4px 14px #0003;cursor:pointer';root.appendChild(b)}setInterval(function(){if(entroComoProfeDirecto)return;addButton();if(overlay&&selected)render()},10000);setTimeout(function(){if(entroComoProfeDirecto)return;addButton();if(new URL(location.href).searchParams.get('vista')==='profes')openView()},1200)})();</script></body></html>

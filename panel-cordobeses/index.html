@@ -1122,7 +1122,7 @@ function PanelCordobeses() {
   // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
   // también cuando se entra por el link/QR de un profe: primero el inicio,
   // y recién después (al tocar o al pasar unos segundos) aparece el fixture.
-  const [intro, setIntro] = useState(true);
+  const [intro, setIntro] = useState(() => new URLSearchParams(location.search).get("desde") !== "inicio");
   const [rama, setRama] = useState(() => {
     const j = jornadaPedidaPorUrl();
     if (!j) return "femenino";
@@ -1418,6 +1418,13 @@ function PanelCordobeses() {
 
   return (
     <div data-panel-uid={sesion?.uid || ""} style={{ background: C.bg, minHeight: "100%", fontFamily: C.fuente, padding: 20, borderRadius: 12 }}>
+      {/*NAV-FUTBOL-INICIO*/}
+      <div style={{ position: "sticky", top: 0, zIndex: 50, margin: "-20px -20px 16px", padding: "10px 14px", background: "rgba(14,36,68,0.97)", boxShadow: "0 4px 14px rgba(0,0,0,0.18)", display: "flex", gap: 8, alignItems: "center", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        {[["./deportes.html", "🏠 Inicio", null], [null, "⚽ Fútbol", "#1D8A4E"], ["./deportes.html?deporte=basquet", "🏀 Básquet", null], ["./deportes.html?deporte=handball", "🤾 Handball", null], ["./deportes.html?deporte=voley", "🏐 Vóley", null]].map(([href, txt, color]) => href
+          ? <a key={txt} href={href} style={{ flex: "0 0 auto", fontSize: 14, padding: "9px 14px", borderRadius: 22, border: txt.includes("Inicio") ? "1px solid rgba(255,255,255,0.35)" : "none", background: txt.includes("Inicio") ? "transparent" : "rgba(255,255,255,0.12)", color: "#fff", fontWeight: 800, textDecoration: "none" }}>{txt}</a>
+          : <span key={txt} style={{ flex: "0 0 auto", fontSize: 14, padding: "9px 14px", borderRadius: 22, background: color, color: "#fff", fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}>{txt}</span>)}
+      </div>
+      {/*NAV-FUTBOL-FIN*/}
       <div style={{
         marginBottom: 18, borderRadius: 16, overflow: "hidden", position: "relative",
         background: `linear-gradient(135deg, #0E2444 0%, ${C.primario} 55%, #1F4D82 100%)`,
