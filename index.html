@@ -699,6 +699,54 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .mr-hito b{font-family:var(--f-display);font-size:20px}.mr-hito span:last-child{font-size:12.5px}
 .mr-marcar{align-self:center}
 .mrend .rend-ubic{margin:16px -20px -18px}
+/* --- cuerpo profesional del panel --- */
+.mrend .mr-cuerpo{padding:18px 22px 20px}
+.mr-fila1{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.mr-fila3{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+.mr-bloque{border:1px solid var(--borde);border-radius:14px;padding:14px 16px;background:var(--card);min-width:0}
+.mr-bloque header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.mr-bloque h4{margin:0;font-family:var(--f-display);font-size:13px;letter-spacing:1.1px;text-transform:uppercase;color:var(--sb-tit,#042859)}
+.mr-ley{font-size:11.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.mr-ley i{display:inline-block;width:14px;height:0;border-top:2.5px solid var(--oro)}.mr-ley i.id{border-top:1.5px dashed var(--sub);margin-left:8px}
+.mr-evol{width:100%;height:auto;display:block;overflow:visible}
+.mr-evol .g,.mr-mini-svg .g{stroke:var(--borde);stroke-width:1;vector-effect:non-scaling-stroke}
+.mr-evol .ax{font-size:10px;fill:var(--sub);font-family:var(--f-texto)}
+.mr-evol .ideal{stroke:var(--sub);stroke-dasharray:4 4;stroke-width:1.2;opacity:.7;vector-effect:non-scaling-stroke}
+.mr-evol .ln{fill:none;stroke:var(--oro);stroke-width:2.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.mr-evol .pt{stroke:var(--card);stroke-width:1.5}.mr-evol .pt.G{fill:var(--mg)}.mr-evol .pt.E{fill:var(--me)}.mr-evol .pt.P{fill:var(--mp)}
+.mr-forma{display:grid}
+.mr-f{display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0}
+.mr-f+.mr-f{border-top:1px solid var(--borde)}
+.mr-f-r{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px}
+.mr-f-r.G{background:var(--mg)}.mr-f-r.E{background:var(--me)}.mr-f-r.P{background:var(--mp)}
+.mr-f-m{min-width:0}.mr-f-m b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mr-f-m small{font-size:11.5px;color:var(--sub)}
+.mr-f-s{font-family:var(--f-display);font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}.mr-f-s i{font-style:normal;color:var(--sub);margin:0 2px}
+.mr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--borde);border-radius:14px;margin-bottom:16px;overflow:hidden;background:var(--card)}
+.mr-k{padding:14px 16px;min-width:0}.mr-k+.mr-k{border-left:1px solid var(--borde)}
+.mr-k-t{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--sub)}
+.mr-ico svg{width:16px;height:16px;fill:none;stroke:var(--oro);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+.mr-k-n{font-family:var(--f-display);font-weight:800;font-size:30px;line-height:1.1;margin:6px 0 2px;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.mr-k-n small{font-size:14px;color:var(--sub);font-weight:700}.mr-k-n em{font-style:normal;color:var(--sub);margin:0 3px}
+.mr-k-s{font-size:12px;color:var(--sub)}
+.mr-mini-svg{width:100%;height:40px;display:block;margin-top:10px}
+.mr-mini-svg .gf{fill:var(--oro)}.mr-mini-svg .gc{fill:var(--mp);opacity:.85}.mr-mini-svg .am{fill:#E2B42B}.mr-mini-svg .ro{fill:var(--mp)}
+.mr-mini-svg .sp{fill:none;stroke:var(--oro);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.mr-prog{height:8px;border-radius:99px;background:var(--papel2);overflow:hidden;margin-top:26px}.mr-prog span{display:block;height:100%;background:var(--oro);border-radius:99px}
+.mr-c{display:grid;grid-template-columns:52px minmax(0,1fr) 150px minmax(0,1fr) 52px;align-items:center;gap:10px;padding:6px 0;font-size:13px}
+.mr-c-v{font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums;color:var(--sub)}.mr-c-v.on{color:var(--tinta)}
+.mr-c>span:first-child{text-align:right}
+.mr-c-t{text-align:center;font-size:12px;color:var(--sub)}
+.mr-c-b{height:8px;border-radius:99px;background:var(--papel2);overflow:hidden;display:flex}.mr-c-b span{display:block;height:100%;background:var(--oro);border-radius:99px}
+.mr-c-b.izq{justify-content:flex-end}.mr-c-b.izq span{background:var(--sb-tit,#042859)}
+.mr-c-cab,.mr-c-pie{font-size:11px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--sub)}
+.mr-c-cab{border-bottom:1px solid var(--borde);padding-bottom:8px;margin-bottom:2px}.mr-c-pie{border-top:1px solid var(--borde);padding-top:8px;margin-top:2px}
+.mr-hitos2{display:grid;gap:10px;align-content:start}
+.mr-h{border:1px solid var(--borde);border-radius:14px;padding:12px 14px;background:var(--card);display:grid;gap:2px;position:relative;overflow:hidden}
+.mr-h::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mg)}.mr-h.d::before{background:var(--mp)}.mr-h.n::before{background:var(--oro)}
+.mr-h span{font-size:11px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--sub)}
+.mr-h b{font-family:var(--f-display);font-size:22px;color:var(--tinta)}.mr-h small{font-size:12px;color:var(--sub)}
+@media (max-width:980px){.mr-fila1,.mr-fila3{grid-template-columns:1fr}.mr-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mr-k:nth-child(3){border-left:0}.mr-k:nth-child(n+3){border-top:1px solid var(--borde)}}
+@media (max-width:560px){.mr-evol .ax{font-size:21px}.mr-evol .pt{r:5}.mrend .mr-cuerpo{padding:14px}.mr-c{grid-template-columns:40px minmax(0,1fr) 86px minmax(0,1fr) 40px;gap:6px}.mr-c-t{font-size:10.5px}.mr-k{padding:12px}.mr-k-n{font-size:25px}}
 @media (max-width:860px){.mr-pizarra{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.mr-hero{flex-direction:column;align-items:flex-start;padding:18px 16px}.mr-efect{align-self:center}
   .mr-tablero>div{min-width:0;flex:1}.mr-tablero{width:100%}.mr-cuerpo{padding:14px 14px 16px}.mrend .rend-ubic{margin:16px -14px -16px}
@@ -2513,15 +2561,54 @@ function renderPanelRendimiento(){
   const extremo = (tit,o,c) => `<div class="rend-fila"><b>${tit}</b><div class="der">${o?`<span class="rend-res ${c}">${o.p.golesFavor}–${o.p.golesContra}</span><span>${esc(o.p.rival||"")}</span>`:`<span class="rend-mini">—</span>`}</div></div>`;
   const efect = Math.round(100*pts/(t.n*3));
   const R = 34, C = 2*Math.PI*R;
-  const letra = p => p.resultado==="W"?"G":(p.resultado==="L"?"P":"E");
-  const corto = s => { s=String(s||""); return s.length>14 ? s.slice(0,13)+"…" : s; };
-  const ultR = jug.slice(-6);
   const foto = FOTOS_EQUIPO.length ? FOTOS_EQUIPO[mrendFoto % FOTOS_EQUIPO.length] : "";
-  const pctGf = (t.gf+t.gc) ? Math.round(100*t.gf/(t.gf+t.gc)) : 50;
-  const escudos = Array.from({length:Math.min(t.n,20)},(_,i)=>`<i class="${i<vallas?"on":""}"></i>`).join("");
-  const nota = califs.length ? califs.reduce((a,b)=>a+b,0)/califs.length : 0;
-  const lado = (tit,sub,o) => `<div class="mr-lado"><div class="mr-lado-tit">${tit}<small>${sub}</small></div>${o.n?`<div class="mr-gep"><span class="g">${o.v}</span><span class="e">${o.e}</span><span class="p">${o.d}</span></div><div class="mr-lado-pie">${o.n} partido${o.n===1?"":"s"} · goles ${o.gf}–${o.gc}</div>`:`<div class="mr-lado-pie">Sin partidos marcados</div>`}</div>`;
-  const hito = (tit,o,c) => `<div class="mr-hito ${c}"><span class="mr-hito-tit">${tit}</span>${o?`<b>${o.p.golesFavor}–${o.p.golesContra}</b><span>vs ${esc(o.p.rival||"")}</span>`:`<b>—</b><span>Todavía no hubo</span>`}</div>`;
+  const letra = p => p.resultado==="W"?"G":(p.resultado==="L"?"P":"E");
+  const ptsDe = p => p.resultado==="W"?3:(p.resultado==="L"?0:1);
+  const fx = n => String(n).replace(".",",");
+  const ico = {
+    gol:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/></svg>',
+    valla:'<svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    tarjeta:'<svg viewBox="0 0 24 24"><rect x="7" y="3.5" width="10" height="15" rx="1.5" transform="rotate(8 12 11)"/></svg>',
+    nota:'<svg viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg>',
+  };
+  // --- Evolución de puntos (acumulado vs. ideal) ---
+  const W=640,Hh=200,pl=30,pr=10,pt=12,pb=22, n=jug.length;
+  let acum=0; const serie = jug.map(p=>acum+=ptsDe(p));
+  const maxY = Math.max(3*n,3);
+  const X = i => pl + (n<=1?0:(W-pl-pr)*i/(n-1));
+  const Y = v => pt + (Hh-pt-pb)*(1-v/maxY);
+  const linea = serie.map((v,i)=>`${i?"L":"M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const area = n ? `${linea}L${X(n-1).toFixed(1)},${Y(0)}L${X(0).toFixed(1)},${Y(0)}Z` : "";
+  const gridY = [0,.25,.5,.75,1].map(f=>Math.round(maxY*f));
+  const evol = `<svg class="mr-evol" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Puntos acumulados: ${pts} de ${3*n} posibles">
+    <defs><linearGradient id="mrArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--oro)" stop-opacity=".28"/><stop offset="1" stop-color="var(--oro)" stop-opacity="0"/></linearGradient></defs>
+    ${gridY.map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${pl-6}" y="${Y(v)+3.5}" class="ax" text-anchor="end">${v}</text>`).join("")}
+    <line x1="${X(0)}" y1="${Y(0)}" x2="${X(n-1)}" y2="${Y(3*n)}" class="ideal"/>
+    <path d="${area}" fill="url(#mrArea)"/><path d="${linea}" class="ln"/>
+    ${jug.map((p,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(serie[i]).toFixed(1)}" r="3.4" class="pt ${letra(p)}"><title>${esc(p.fecha||"")} · ${esc(p.rival||"")} ${p.golesFavor}-${p.golesContra} · ${serie[i]} pts</title></circle>`).join("")}
+    <text x="${X(0)}" y="${Hh-6}" class="ax">${esc(jug[0].fecha||"")}</text><text x="${X(n-1)}" y="${Hh-6}" class="ax" text-anchor="end">${esc(jug[n-1].fecha||"")}</text>
+  </svg>`;
+  // --- Forma reciente ---
+  const ultR = jug.slice(-5).reverse();
+  const forma = ultR.map(p=>{ const c=condicionPartido(p); return `<div class="mr-f"><span class="mr-f-r ${letra(p)}">${letra(p)}</span><div class="mr-f-m"><b>${esc(p.rival||"")}</b><small>${esc(p.fecha||"")}${c?` · ${c==="Local"?"Local":"Visitante"}`:""}</small></div><span class="mr-f-s">${p.golesFavor}<i>–</i>${p.golesContra}</span></div>`; }).join("");
+  // --- Goles por partido (barras divergentes) ---
+  const maxG = Math.max(1,...jug.map(p=>Math.max(p.golesFavor||0,p.golesContra||0)));
+  const bw = 100/Math.max(n,1);
+  const golesSvg = `<svg class="mr-mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="100" y1="26" y2="26" class="g"/>${jug.map((p,i)=>`<rect x="${(i*bw+bw*.18).toFixed(2)}" width="${(bw*.64).toFixed(2)}" y="${(26-24*(p.golesFavor||0)/maxG).toFixed(2)}" height="${(24*(p.golesFavor||0)/maxG).toFixed(2)}" class="gf"/><rect x="${(i*bw+bw*.18).toFixed(2)}" width="${(bw*.64).toFixed(2)}" y="26" height="${(13*(p.golesContra||0)/maxG).toFixed(2)}" class="gc"/>`).join("")}</svg>`;
+  // --- Valoración (sparkline) ---
+  const cal = jug.map(p=>p.calificacionProm).filter(v=>typeof v==="number"&&v>0);
+  const cmin = Math.min(...cal,6), cmax = Math.max(...cal,8);
+  const spark = cal.length>1 ? `<svg class="mr-mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path class="sp" d="${cal.map((v,i)=>`${i?"L":"M"}${(100*i/(cal.length-1)).toFixed(2)},${(36-32*(v-cmin)/(cmax-cmin||1)).toFixed(2)}`).join("")}"/></svg>` : "";
+  // --- Tarjetas por partido ---
+  const maxT = Math.max(1,...jug.map(p=>(p.amarillas||0)+(p.rojas||0)));
+  const tarjSvg = `<svg class="mr-mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">${jug.map((p,i)=>{const a=p.amarillas||0,r=p.rojas||0,h1=34*a/maxT,h2=34*r/maxT;return `<rect x="${(i*bw+bw*.18).toFixed(2)}" width="${(bw*.64).toFixed(2)}" y="${(38-h1).toFixed(2)}" height="${h1.toFixed(2)}" class="am"/><rect x="${(i*bw+bw*.18).toFixed(2)}" width="${(bw*.64).toFixed(2)}" y="${(38-h1-h2).toFixed(2)}" height="${h2.toFixed(2)}" class="ro"/>`;}).join("")}</svg>`;
+  const pv = Math.round(100*vallas/t.n);
+  const kpi = (ic,tit,num,sub,viz) => `<div class="mr-k"><div class="mr-k-t"><span class="mr-ico">${ic}</span>${tit}</div><div class="mr-k-n">${num}</div><div class="mr-k-s">${sub}</div>${viz}</div>`;
+  // --- Local vs visitante (comparativa en espejo) ---
+  const stat = o => ({pts:o.v*3+o.e, ef:o.n?Math.round(100*(o.v*3+o.e)/(o.n*3)):0, gfp:o.n?o.gf/o.n:0, gcp:o.n?o.gc/o.n:0, n:o.n, rec:`${o.v}-${o.e}-${o.d}`});
+  const L = stat(loc), V = stat(vis);
+  const comp = (tit,a,b,fmt,maxv,inv) => { const m=Math.max(maxv||0,a,b)||1; const mejorA = inv? a<b : a>b, mejorB = inv? b<a : b>a; return `<div class="mr-c"><span class="mr-c-v ${mejorA?"on":""}">${fmt(a)}</span><div class="mr-c-b izq"><span style="width:${(100*a/m).toFixed(1)}%"></span></div><span class="mr-c-t">${tit}</span><div class="mr-c-b"><span style="width:${(100*b/m).toFixed(1)}%"></span></div><span class="mr-c-v ${mejorB?"on":""}">${fmt(b)}</span></div>`; };
+  const hito = (tit,o,c) => `<div class="mr-h ${c}"><span>${tit}</span>${o?`<b>${o.p.golesFavor}–${o.p.golesContra}</b><small>vs ${esc(o.p.rival||"")} · ${esc(o.p.fecha||"")}</small>`:`<b>—</b><small>Sin derrotas en el período</small>`}</div>`;
   return `
   <div class="card mrend">
     <div class="mr-hero"${foto?` style="--mr-foto:url('${foto}')"`:""}>
@@ -2541,25 +2628,33 @@ function renderPanelRendimiento(){
       </div>
     </div>
     <div class="mr-cuerpo">
-    ${filtrosHtml}
-    <div class="mr-sec">El camino reciente <small>del más viejo al último</small></div>
-    <div class="mr-camino">${ultR.map(p=>`<div class="mr-paso" title="${esc(p.fecha||"")}"><span class="mr-nodo ${cl(p)}">${letra(p)}</span><b>${p.golesFavor}–${p.golesContra}</b><span>${esc(corto(p.rival))}</span></div>`).join("")}</div>
-    <div class="mr-pizarra">
-      <div class="mr-tiza"><div class="mr-tiza-tit">⚽ Goles</div><div class="mr-tiza-num">${t.gf}<small> a favor</small> · ${t.gc}<small> en contra</small></div><div class="mr-dual"><span style="width:${pctGf}%"></span></div><div class="mr-mini">${dif>=0?"+":""}${dif} de diferencia</div></div>
-      <div class="mr-tiza"><div class="mr-tiza-tit">🧤 Vallas invictas</div><div class="mr-tiza-num">${vallas}<small> de ${t.n}</small></div><div class="mr-escudos">${escudos}</div><div class="mr-mini">partidos sin recibir goles</div></div>
-      <div class="mr-tiza"><div class="mr-tiza-tit">🟨 Tarjetas</div><div class="mr-tiza-num">${ama}<small> amarillas</small> · ${roj}<small> roja${roj===1?"":"s"}</small></div><div class="mr-cartas">${"<i class='a'></i>".repeat(Math.min(ama,24))}${"<i class='r'></i>".repeat(Math.min(roj,6))}</div><div class="mr-mini">${(ama/t.n).toFixed(1).replace(".",",")} por partido</div></div>
-      <div class="mr-tiza"><div class="mr-tiza-tit">⭐ Nota del equipo</div><div class="mr-tiza-num">${valor}<small> / 10</small></div><div class="mr-dual nota"><span style="width:${Math.round(nota*10)}%"></span></div><div class="mr-mini">promedio de valoración</div></div>
-    </div>
-    <div class="mr-sec">En casa y afuera</div>
-    <div class="mr-cancha">
-      ${lado("🏟️ En casa","de local",loc)}
-      <div class="mr-medio" aria-hidden="true"><span></span></div>
-      ${lado("🚌 Afuera","de visitante",vis)}
-    </div>
-    ${sinDato?`<div class="mr-mini" style="margin-top:6px">${sinDato} partido${sinDato===1?"":"s"} sin dato de local/visitante.</div>`:""}
-    <div class="mr-hitos">${hito("Mayor goleada",mejor,"v")}${hito("El más duro",peor,"d")}
-      <button class="rend-limpiar mr-marcar" onclick="rendEditUbic=!rendEditUbic;render()">${rendEditUbic?"Cerrar":"Marcar local / visitante"}</button></div>
-    ${editorUbic}
+      ${filtrosHtml}
+      <div class="mr-fila1">
+        <section class="mr-bloque"><header><h4>Evolución de puntos</h4><span class="mr-ley"><i class="ln"></i>Sumados <i class="id"></i>Ideal (todo ganado)</span></header>${evol}</section>
+        <section class="mr-bloque"><header><h4>Forma reciente</h4><span class="mr-ley">último arriba</span></header><div class="mr-forma">${forma}</div></section>
+      </div>
+      <div class="mr-kpis">
+        ${kpi(ico.gol,"Goles",`${t.gf}<em>:</em>${t.gc}`,`${dif>=0?"+":""}${dif} diferencia · ${fx((t.gf/t.n).toFixed(1))} por partido`,golesSvg)}
+        ${kpi(ico.valla,"Vallas invictas",`${vallas}<small>/${t.n}</small>`,`${pv}% de los partidos`,`<div class="mr-prog"><span style="width:${pv}%"></span></div>`)}
+        ${kpi(ico.tarjeta,"Disciplina",`${ama}<small> TA</small> ${roj}<small> TR</small>`,`${fx((ama/t.n).toFixed(1))} amarillas por partido`,tarjSvg)}
+        ${kpi(ico.nota,"Valoración media",`${valor}<small>/10</small>`,cal.length?`mín. ${fx(Math.min(...cal).toFixed(1))} · máx. ${fx(Math.max(...cal).toFixed(1))}`:"sin datos",spark)}
+      </div>
+      <div class="mr-fila3">
+        <section class="mr-bloque"><header><h4>Local vs. visitante</h4>${sinDato?`<span class="mr-ley">${sinDato} sin dato</span>`:""}</header>
+          ${(loc.n+vis.n)?`<div class="mr-c mr-c-cab"><span style="grid-column:1/3;text-align:left">Local · ${L.n} PJ</span><span class="mr-c-t"></span><span style="grid-column:4/6;text-align:right">${V.n} PJ · Visitante</span></div>
+          ${comp("Efectividad",L.ef,V.ef,v=>v+"%",100)}
+          ${comp("Puntos",L.pts,V.pts,v=>v)}
+          ${comp("Goles a favor x PJ",L.gfp,V.gfp,v=>fx(v.toFixed(1)))}
+          ${comp("Goles en contra x PJ",L.gcp,V.gcp,v=>fx(v.toFixed(1)),0,true)}
+          <div class="mr-c mr-c-pie"><span style="grid-column:1/3;text-align:left">${L.rec}</span><span class="mr-c-t">G-E-P</span><span style="grid-column:4/6;text-align:right">${V.rec}</span></div>`
+          :`<p class="mr-k-s" style="margin:6px 0 0">Marcá qué partidos fueron de local y cuáles de visitante para ver la comparación.</p>`}
+          <button class="rend-limpiar" style="margin-top:12px" onclick="rendEditUbic=!rendEditUbic;render()">${rendEditUbic?"Cerrar":"Marcar local / visitante"}</button>
+        </section>
+        <section class="mr-hitos2">${hito("Mayor goleada",mejor,"v")}${hito("Derrota más amplia",peor,"d")}
+          <div class="mr-h n"><span>Racha actual</span><b>${(()=>{let k=0;const r=jug[n-1]?letra(jug[n-1]):"";for(let i=n-1;i>=0&&letra(jug[i])===r;i--)k++;return k+" "+(r==="G"?"ganado"+(k>1?"s":""):r==="E"?"empate"+(k>1?"s":""):"derrota"+(k>1?"s":""));})()}</b><small>${(()=>{let k=0;for(let i=n-1;i>=0&&letra(jug[i])!=="P";i--)k++;return k+" partidos sin perder";})()}</small></div>
+        </section>
+      </div>
+      ${editorUbic}
     </div>
   </div>`;
 }
