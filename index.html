@@ -633,6 +633,17 @@ input[type=text],input[type=number]{padding:9px 10px;border-radius:9px;border:1p
 .rend-ubic-rival{flex:1;min-width:0}.rend-ubic-rival small{display:block;color:var(--sub);font-size:11.5px}
 .rend-ubic .rend-seg button{min-width:38px}
 @media (max-width:860px){.rend-top,.rend-bot{grid-template-columns:1fr}.rend-bot>div+div{border-left:0;border-top:1px solid var(--borde)}.rend-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.rend-kpis>div:nth-child(3){border-left:0}.rend-kpis>div:nth-child(n+3){border-top:1px solid var(--borde)}}
+.cont-cab{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.cont-barra{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--papel2);margin-bottom:14px}
+.cont-lista{display:grid;gap:9px}
+.cont-fila{display:grid;grid-template-columns:12px minmax(130px,190px) minmax(0,1fr) 44px 150px;align-items:center;gap:10px;font-size:14px}
+.cont-punto{width:12px;height:12px;border-radius:4px}
+.cont-pista{height:10px;border-radius:99px;background:var(--papel2);overflow:hidden}.cont-pista span{display:block;height:100%;border-radius:99px}
+.cont-pc{font-family:var(--f-display);font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.cont-det{font-size:12px;color:var(--sub);white-space:nowrap;text-align:right}
+.cont-nota{margin:14px 0 6px;font-size:13.5px;padding:10px 12px;border-radius:10px;background:var(--papel2);border-left:4px solid var(--oro)}
+.cont-micro summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--oro)}
+@media (max-width:560px){.cont-fila{grid-template-columns:12px minmax(0,1fr) 44px;grid-template-areas:"pt nm pc" ". pi pi" ". de de";row-gap:4px}.cont-punto{grid-area:pt}.cont-fila>b{grid-area:nm}.cont-pc{grid-area:pc}.cont-pista{grid-area:pi}.cont-det{grid-area:de;text-align:left}}
 /* ===== Panel "Cómo viene la temporada" — estilo Metodika ===== */
 .mrend{padding:0;overflow:hidden;--mg:#1E8E5A;--me:#D59A1E;--mp:#D2453B}
 .mr-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;color:#fff;
@@ -2608,6 +2619,57 @@ function renderHome(){
   `;
 }
 
+// ===== Contenidos trabajados (Planificación → Resumen del año) =====
+let contPeriodo = "all";
+const CONT_CATS = [
+  {k:"ESTRUCTURA DEFENSIVA", c:"#042859", rx:/ESTRUCTURA DEF|ESTRUCTUTA|E\. ?DEF|COORDINACIONES DEF|REPLIEGUE|COBERTURA/},
+  {k:"ATAQUE DIRECTO", c:"#D2453B", rx:/ATAQUE DIRECTO|A\. ?DIRECTO|JUEGO DIRECTO/},
+  {k:"ATAQUE POSICIONAL", c:"#005AA7", rx:/ATAQUE POSICI|A\. ?POSICIONAL|JUEGO DE POSICI/},
+  {k:"ESPECÍFICO POR PUESTO", c:"#7A5BC7", rx:/ESPECIFICO POR PUESTO|ESPECIFICOS POR PUESTO/},
+  {k:"TENENCIA", c:"#2F9C95", rx:/TENENCIA|RONDO|POSESION|CIRCUITO DE PASES|CUADRADO DE PASES|RUEDA DE PASES/},
+  {k:"COMPETENCIA", c:"#D59A1E", rx:/COMPETENCIA|COMPENTECIA|PARTIDO|FUTBOL|11 ?VS ?11|ABP|PELOTA PARADA|BALON PARADO/},
+];
+function _contNorm(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase(); }
+function categoriaTarea(t){
+  const f = {}; (t.filas||[]).forEach(r=>{ f[r.r]=r; });
+  const textos = [t.titulo, (f[1]||{}).B];
+  for(const tx of textos){ const n=_contNorm(tx); for(const c of CONT_CATS){ if(c.rx.test(n)) return c.k; } }
+  return "OTRAS";
+}
+function minutosTarea(t){ const r=(t.filas||[]).find(x=>x.r===15); const m=String((r&&r.H)||"").match(/\d+/); return m?+m[0]:0; }
+function renderContenidos(){
+  let ses = sesiones.slice();
+  if(contPeriodo!=="all"){ const desde=new Date(); desde.setDate(desde.getDate()-(+contPeriodo)); ses = ses.filter(s=>s._fecha && s._fecha>=desde); }
+  const cuenta = {}, mins = {}; let total = 0, totMin = 0;
+  ses.forEach(s=>(s.tareas||[]).forEach(t=>{
+    const tit = String(t.titulo||"").trim(); if(!tit || /NOMBRE DE TAREA/i.test(tit)) return;
+    const k = categoriaTarea(t), m = minutosTarea(t);
+    cuenta[k]=(cuenta[k]||0)+1; mins[k]=(mins[k]||0)+m; total++; totMin+=m;
+  }));
+  const micro = {};
+  ses.forEach(s=>{ const p=_contNorm(s.header.tipoMicro).replace("COMPTENCIA","COMPETENCIA").split(" CON ")[0].trim(); if(p) micro[p]=(micro[p]||0)+1; });
+  const color = k => (CONT_CATS.find(c=>c.k===k)||{c:"#9AA6B2"}).c;
+  const nombre = k => k.charAt(0)+k.slice(1).toLowerCase();
+  const filas = Object.keys(cuenta).sort((a,b)=>(a==="OTRAS")-(b==="OTRAS") || cuenta[b]-cuenta[a]);
+  const seg = `<div class="rend-seg" role="group">${[["all","Toda la temporada"],["60","Últimos 2 meses"],["30","Último mes"]].map(([v,l])=>`<button aria-pressed="${contPeriodo===v}" onclick="contPeriodo='${v}';const y=scrollY;render();scrollTo(0,y)">${l}</button>`).join("")}</div>`;
+  const top = filas.filter(k=>k!=="OTRAS")[0];
+  const topMicro = Object.entries(micro).sort((a,b)=>b[1]-a[1])[0];
+  return `
+    <div class="card cont">
+      <div class="cont-cab"><div><h2 class="section" style="margin:0">Qué trabajamos más</h2>
+        <p class="muted" style="margin:2px 0 0">${total} tareas de ${ses.length} sesiones · se actualiza solo con cada sesión nueva</p></div>${seg}</div>
+      ${total ? `
+      <div class="cont-barra" role="img" aria-label="Distribución de contenidos">${filas.map(k=>`<span style="width:${(100*cuenta[k]/total).toFixed(2)}%;background:${color(k)}" title="${esc(nombre(k))} ${Math.round(100*cuenta[k]/total)}%"></span>`).join("")}</div>
+      <div class="cont-lista">${filas.map(k=>{ const pc=Math.round(100*cuenta[k]/total); return `
+        <div class="cont-fila"><span class="cont-punto" style="background:${color(k)}"></span><b>${esc(nombre(k))}</b>
+          <div class="cont-pista"><span style="width:${pc}%;background:${color(k)}"></span></div>
+          <span class="cont-pc">${pc}%</span><span class="cont-det">${cuenta[k]} tareas · ${mins[k]} min</span></div>`; }).join("")}</div>
+      ${top ? `<p class="cont-nota">Lo que más trabajaron en cancha: <b>${esc(nombre(top))}</b> (${Math.round(100*cuenta[top]/total)}% de las tareas).${topMicro?` El contenido principal más elegido en los microciclos fue <b>${esc(nombre(topMicro[0]))}</b> (${topMicro[1]} sesiones).`:""}</p>` : ""}
+      <details class="cont-micro"><summary>Contenido principal de los microciclos</summary>
+        <div class="chips" style="margin-top:8px">${Object.entries(micro).sort((a,b)=>b[1]-a[1]).map(([p,n])=>`<span class="chip">${esc(nombre(p))}: ${n} sesiones</span>`).join("")}</div>
+      </details>` : `<p class="muted">No hay sesiones en este período.</p>`}
+    </div>`;
+}
 function renderResumen(){
   const totalSesiones = sesiones.length;
   const totalAsistencias = sesiones.reduce((a,s)=>a+s.asistencia.filter(x=>x.condicion==='A tiempo'||x.condicion==='Presente').length,0);
@@ -2616,6 +2678,7 @@ function renderResumen(){
   sesiones.forEach(s=>{ const p=(s.header.periodo||"?").trim(); periodos[p]=(periodos[p]||0)+1; });
   const rango = sesiones.filter(s=>s._fecha).length ? `${fmtFecha(sesiones.find(s=>s._fecha)._fecha)} — ${fmtFecha([...sesiones].reverse().find(s=>s._fecha)._fecha)}` : "";
   return `
+    ${renderContenidos()}
     <div class="card">
       <h2 class="section" style="margin-top:0">Resumen general</h2>
       <p class="muted">Sesiones cargadas desde <b>${esc(rango)}</b>.</p>
