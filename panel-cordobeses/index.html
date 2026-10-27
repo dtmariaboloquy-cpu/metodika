@@ -945,6 +945,178 @@ function nombreJornada(id) {
 function clavesActivas(p) { return Object.keys(p || {}).filter((k) => k !== "_nombre" && p[k] === true); }
 const TIPOS_PEDIDO = { todas: "Coordinador/a de sede (todas las fechas)", jornada: "Editar una sola fecha" };
 
+// ---------- Resumen de partidos por día (cantidad, jugados, pendientes y porcentajes) ----------
+const MESES_CORTOS = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+function fechaLegible(f) {
+  const [dd, mm] = (f || "").split("-");
+  return `${dd} ${MESES_CORTOS[parseInt(mm)] || ""}`.trim();
+}
+function resumenPartidosPorDia(jornadas, cruces, resultados) {
+  const porDia = {};
+  jornadas.forEach((j) => {
+    const datos = (cruces && cruces[j.id]) || {};
+    const config = datos.config || { numZonas: 1, numCanchas: parseCanchas(j.sede) };
+    const sorteo = datos.sorteo || { bolsa: null, orden: [] };
+    const tieneFixture = (sorteo.orden || []).length > 0 || (sorteo.zonas || []).some((z) => (z || []).length);
+    const partidos = tieneFixture ? partidosParaPlanillas(j, config, sorteo, (resultados && resultados[j.id]) || {}) : [];
+    const d = (porDia[j.fecha] = porDia[j.fecha] || { fecha: j.fecha, total: 0, jugados: 0, sinFixture: 0, detalle: [] });
+    const jugados = partidos.filter((p) => p.r).length;
+    d.total += partidos.length;
+    d.jugados += jugados;
+    if (!tieneFixture) d.sinFixture++;
+    d.detalle.push(`${j.rama === "masculino" ? "Masc." : "Fem."} ${j.categoria} ${j.grupo || j.instancia}${tieneFixture ? ` (${partidos.length})` : " (sin fixture)"}`);
+  });
+  const dias = Object.values(porDia).sort((a, b) => {
+    const [da, ma] = a.fecha.split("-").map(Number), [db, mb] = b.fecha.split("-").map(Number);
+    return ma - mb || da - db;
+  });
+  const total = dias.reduce((s, d) => s + d.total, 0);
+  const jugados = dias.reduce((s, d) => s + d.jugados, 0);
+  dias.forEach((d) => {
+    d.pendientes = d.total - d.jugados;
+    d.pctJugados = d.total ? Math.round((d.jugados / d.total) * 100) : 0;
+    d.pctDelTotal = total ? Math.round((d.total / total) * 1000) / 10 : 0;
+  });
+  return { dias, total, jugados, pendientes: total - jugados, pctJugados: total ? Math.round((jugados / total) * 100) : 0 };
+}
+
+async function descargarResumenPdf(resumen, tituloRama) {
+  await cargarScriptPlanillas("https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js", () => !!window.jspdf);
+  const pdf = new window.jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  const W = 210, H = 297, M = 12, AZUL = [23, 54, 93], GRIS = [90, 100, 120], VERDE = [29, 138, 78];
+  const texto = (t, x, y, size, bold, color, opts) => { pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(size); pdf.setTextColor(...(color || [0, 0, 0])); pdf.text(String(t), x, y, opts || {}); };
+  const encabezado = () => {
+    const hG = 12, wG = hG / LOGOS_PLANILLA.gob.r;
+    pdf.addImage(LOGOS_PLANILLA.gob.d, "JPEG", M, 8, wG, hG, "logoGob", "FAST");
+    const hC = 12, wC = hC / LOGOS_PLANILLA.cj.r;
+    pdf.addImage(LOGOS_PLANILLA.cj.d, "JPEG", W - M - wC, 8, wC, hC, "logoCJ", "FAST");
+    const cx = (M + wG + W - M - wC) / 2;
+    texto("PARTIDOS POR DÍA", cx, 14, 15, true, AZUL, { align: "center" });
+    texto(`Fútbol ${tituloRama} · 2026`, cx, 20, 10, true, GRIS, { align: "center" });
+  };
+  // columnas: Día | Partidos | Jugados | Pendientes | % jugado | % del total
+  const cols = [{ t: "Día", w: 30 }, { t: "Partidos", w: 26 }, { t: "Jugados", w: 26 }, { t: "Pendientes", w: 28 }, { t: "% jugado", w: 46 }, { t: "% del total", w: 30 }];
+  encabezado();
+  // Totales arriba
+  let y = 28;
+  const cajas = [["Partidos", resumen.total], ["Jugados", resumen.jugados], ["Pendientes", resumen.pendientes], ["Avance", resumen.pctJugados + "%"]];
+  const wc = (W - 2 * M - 9) / 4;
+  cajas.forEach(([t, v], i) => {
+    const x = M + i * (wc + 3);
+    pdf.setDrawColor(210); pdf.setFillColor(243, 245, 249); pdf.roundedRect(x, y, wc, 16, 2, 2, "FD");
+    texto(t.toUpperCase(), x + wc / 2, y + 5.5, 7.5, true, GRIS, { align: "center" });
+    texto(v, x + wc / 2, y + 12.5, 13, true, AZUL, { align: "center" });
+  });
+  y += 22;
+  // texto blanco en la cabecera
+  const filaCabecera = () => {
+    pdf.setFillColor(...AZUL); pdf.rect(M, y, W - 2 * M, 8, "F");
+    let x = M; cols.forEach((c, i) => { texto(c.t, i === 0 ? x + 2 : x + c.w / 2, y + 5.4, 9, true, [255, 255, 255], i === 0 ? {} : { align: "center" }); x += c.w; });
+    y += 8;
+  };
+  filaCabecera();
+  resumen.dias.forEach((d, i) => {
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(8.5);
+    const det = pdf.splitTextToSize(d.detalle.join(" · "), W - 2 * M - 4);
+    const h = 9 + det.length * 4.2;
+    if (y + h > H - 16) { pdf.addPage(); encabezado(); y = 28; filaCabecera(); }
+    if (i % 2) { pdf.setFillColor(248, 249, 251); pdf.rect(M, y, W - 2 * M, h, "F"); }
+    let x = M;
+    const vals = [fechaLegible(d.fecha), d.total, d.jugados, d.pendientes, d.pctJugados, d.pctDelTotal + "%"];
+    vals.forEach((v, k) => {
+      const c = cols[k];
+      if (k === 4) {
+        pdf.setFillColor(226, 229, 234); pdf.rect(x + 2, y + 2.5, 28, 3.6, "F");
+        pdf.setFillColor(...VERDE); pdf.rect(x + 2, y + 2.5, 28 * v / 100, 3.6, "F");
+        texto(v + "%", x + 33, y + 5.6, 9, true, [0, 0, 0]);
+      } else texto(v, k === 0 ? x + 2 : x + c.w / 2, y + 5.6, 9.5, k === 0, [0, 0, 0], k === 0 ? {} : { align: "center" });
+      x += c.w;
+    });
+    texto(det, M + 2, y + 10, 8.5, false, GRIS);
+    pdf.setDrawColor(215); pdf.line(M, y + h, W - M, y + h);
+    y += h;
+  });
+  // Fila total
+  if (y + 9 > H - 16) { pdf.addPage(); encabezado(); y = 28; }
+  pdf.setFillColor(233, 240, 249); pdf.rect(M, y, W - 2 * M, 9, "F");
+  let x = M;
+  ["TOTAL", resumen.total, resumen.jugados, resumen.pendientes, resumen.pctJugados + "%", resumen.total ? "100%" : "0%"].forEach((v, k) => {
+    texto(v, k === 0 ? x + 2 : x + cols[k].w / 2, y + 6, 10, true, AZUL, k === 0 ? {} : { align: "center" }); x += cols[k].w;
+  });
+  y += 14;
+  texto("% jugado = partidos con resultado cargado sobre los partidos de ese día. % del total = parte del total de partidos que se juega ese día.", M, Math.min(y, H - 14), 7, false, GRIS, { maxWidth: W - 2 * M });
+  const hoy = new Date();
+  texto(`Generado el ${hoy.toLocaleDateString("es-AR")} ${hoy.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`, W - M, H - 8, 7, false, GRIS, { align: "right" });
+  pdf.save(`Partidos_por_dia_${tituloRama}_${hoy.toISOString().slice(0, 10)}`.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "_") + ".pdf");
+}
+
+function ResumenPorDia({ jornadas, cruces, resultados, tituloRama, color }) {
+  const [abierto, setAbierto] = useState(false);
+  const [bajando, setBajando] = useState(false);
+  const r = resumenPartidosPorDia(jornadas, cruces, resultados);
+  const bajar = async () => {
+    setBajando(true);
+    try { await descargarResumenPdf(r, tituloRama); }
+    catch (e) { alert("No se pudo generar el PDF. Revisá la conexión y volvé a intentarlo."); }
+    finally { setBajando(false); }
+  };
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 18, overflow: "hidden" }}>
+      <div onClick={() => setAbierto(!abierto)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "12px 14px", cursor: "pointer", flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink }}>📊 Partidos por día</div>
+          <div style={{ fontSize: 14, color: C.sub, marginTop: 2 }}>{r.total} partidos · {r.jugados} jugados ({r.pctJugados}%) · {r.pendientes} pendientes</div>
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 700, color: C.primario }}>{abierto ? "Ocultar ▲" : "Ver detalle ▼"}</span>
+      </div>
+      {abierto && (
+        <div style={{ padding: "0 14px 14px" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+            <button onClick={bajar} disabled={bajando} style={{ fontSize: 15, padding: "12px 18px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer", opacity: bajando ? 0.6 : 1 }}>{bajando ? "Generando…" : "⬇ Descargar resumen en PDF"}</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+            {r.dias.map((d) => (
+              <div key={d.fecha} style={{ border: `1px solid ${C.border}`, borderLeft: `6px solid ${color}`, borderRadius: 12, padding: 14, background: "#fff" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{fechaLegible(d.fecha)}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.sub }}>{d.pctDelTotal}% del total</div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, margin: "12px 0" }}>
+                  {[["Partidos", d.total, C.ink], ["Jugados", d.jugados, C.verde], ["Pendientes", d.pendientes, d.pendientes ? C.rojo : C.sub]].map(([t, v, col]) => (
+                    <div key={t} style={{ background: C.bg, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: col, lineHeight: 1.1 }}>{v}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.sub }}>{t}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: 1, height: 14, background: C.border, borderRadius: 7, overflow: "hidden" }}><div style={{ width: d.pctJugados + "%", height: "100%", background: C.verde }} /></div>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.verde, minWidth: 52, textAlign: "right" }}>{d.pctJugados}%</span>
+                </div>
+                <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>jugado</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                  {d.detalle.map((t, k) => (
+                    <span key={k} style={{ fontSize: 13, fontWeight: 600, color: C.ink, background: C.primarioClaro, borderRadius: 8, padding: "4px 9px" }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginTop: 12, background: C.primarioClaro, borderRadius: 12, padding: 12 }}>
+            {[["Total partidos", r.total], ["Jugados", r.jugados], ["Pendientes", r.pendientes], ["Avance", r.pctJugados + "%"]].map(([t, v]) => (
+              <div key={t} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: C.primario }}>{v}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.sub }}>{t}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: C.sub, marginTop: 10, lineHeight: 1.4 }}>% jugado: partidos con resultado cargado sobre los de ese día. % del total: qué parte de todos los partidos se juega ese día. Los días "sin fixture" todavía no tienen sorteo armado.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PanelCordobeses() {
   // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
   // también cuando se entra por el link/QR de un profe: primero el inicio,
@@ -1442,6 +1614,8 @@ function PanelCordobeses() {
           <div style={{ fontSize: 20, fontWeight: 800, color: totalBajas ? C.rojo : C.ink }}>{totalBajas}</div>
         </div>
       </div>
+
+      <ResumenPorDia jornadas={jornadas} cruces={cruces} resultados={resultados} tituloRama={rama === "provinciales" ? "Provinciales" : rama === "masculino" ? "Masculino" : "Femenino"} color={ramaColor} />
 
       {filtradas.length === 0 && <div style={{ fontSize: 13, color: C.sub, fontStyle: "italic" }}>No hay resultados para "{busqueda}".</div>}
 
