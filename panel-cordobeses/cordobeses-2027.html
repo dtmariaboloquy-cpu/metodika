@@ -81,6 +81,66 @@ html,body,#root{background:var(--fondo)!important;font-family:var(--f-texto)!imp
 #abrir-vista-profes{background:var(--noche)!important;border:1px solid var(--oro)!important}
 .cj-j-acc button{background:#fff!important;color:var(--texto)!important;border:1px solid var(--borde-fuerte)!important;font-weight:600!important;padding:0 12px!important}
 @media(max-width:600px){.cj-j-cab{grid-template-columns:minmax(0,1fr)}.cj-j-acc{padding-left:66px}}
+/* ===== Fase 3: módulo de cruces, zonas, marcadores y tabla ===== */
+.cj-btn-chico{min-height:36px;padding:0 12px;font-size:14px}
+.cj-btn-grande{min-height:52px;padding:0 22px;font-size:16px}
+.cj-btn:disabled{opacity:.5;cursor:not-allowed}
+.cj-seccion-fixture{margin-top:12px;border-top:1px solid var(--borde);padding-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0}
+.cj-sec-tit{font:800 18px var(--f-titulo);color:var(--texto);flex:1 1 220px}
+.cj-ayuda{flex-basis:100%;font-size:14px;color:var(--texto-2);background:#F7F9FC;border-radius:10px;padding:10px 12px}
+.cj-menu{position:relative}
+.cj-menu>summary{list-style:none}
+.cj-menu>summary::-webkit-details-marker{display:none}
+.cj-menu-lista{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:1px solid var(--borde);border-radius:12px;box-shadow:0 12px 32px rgba(15,27,45,.16);padding:6px;z-index:60}
+.cj-menu-lista button{display:flex;width:100%;gap:10px;align-items:center;border:0;background:none;text-align:left;padding:12px;border-radius:8px;font:500 15px var(--f-texto);cursor:pointer;color:var(--texto)}
+.cj-menu-lista button:hover{background:#F2F5F9}
+@media(max-width:600px){.cj-menu-lista{right:auto;left:0}}
+/* botones que agregan los scripts (PDF, ganadores, deshacer) con el estilo secundario */
+.boton-descargar-pdf,.boton-ver-ganadores,.boton-deshacer-fixture{margin:0!important;min-height:44px!important;padding:0 16px!important;border-radius:10px!important;border:1px solid var(--borde-fuerte)!important;background:#fff!important;color:var(--texto)!important;font:600 15px var(--f-texto)!important;box-shadow:none!important}
+.boton-ver-ganadores:not(:disabled){border-color:#A9D6BC!important;color:var(--exito)!important}
+.cj-cruces{background:#F7F9FC;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-top:4px;min-width:0}
+.cj-cruces input[type=number]:not(.cj-lado input),.cj-cruces select{min-height:40px;font-size:15px!important;border-radius:8px!important;border:1px solid var(--borde-fuerte)!important;padding:4px 8px!important}
+.cj-cruces label{font-size:14px!important;color:var(--texto-2)!important}
+.cj-zonas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:14px;margin-top:12px}
+.cj-zona{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:0 0 6px;overflow:hidden;min-width:0;box-shadow:0 1px 2px rgba(15,27,45,.04)}
+.cj-zona-tit{font:800 16px var(--f-titulo);color:var(--texto);background:#F2F5F9;border-bottom:1px solid var(--borde);padding:12px 14px;margin-bottom:6px;letter-spacing:.02em}
+.cj-zona-eq{display:flex;align-items:center;gap:8px;font-size:15px;padding:5px 14px}
+.cj-zona-eq select,.cj-zona-eq button{min-height:34px!important;font-size:13px!important;border-radius:8px!important}
+.cj-zona>select{margin:6px 14px 0!important;width:calc(100% - 28px)!important;min-height:40px;font-size:14px!important;border-radius:10px!important}
+.cj-bloque{border-top:1px solid var(--borde);margin-top:10px;padding-top:8px}
+.cj-bloque-tit{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto-3);padding:0 14px 4px}
+.cj-partido{padding:8px 14px 10px;border-bottom:1px solid var(--borde)}
+.cj-partido:last-child{border-bottom:0}
+.cj-lado{display:grid;grid-template-columns:minmax(0,1fr) 60px;gap:10px;align-items:center;padding:3px 0}
+.cj-lado .eq{font-weight:600;font-size:15px;line-height:1.25;color:var(--texto);overflow-wrap:anywhere}
+.cj-lado.ganador .eq{color:var(--exito);font-weight:800}
+.cj-lado input{width:60px;height:46px;text-align:center;font:800 22px var(--f-titulo);border:1.5px solid var(--borde-fuerte);border-radius:10px;background:#fff;color:var(--texto);padding:0;-moz-appearance:textfield;opacity:1}
+.cj-lado input::-webkit-outer-spin-button,.cj-lado input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cj-lado input:focus{outline:3px solid #CFE0F5;border-color:var(--primario)}
+.cj-lado input:disabled,.cj-lado input[readonly]{background:#F7F9FC;border-color:transparent;color:var(--texto);-webkit-text-fill-color:var(--texto)}
+.cj-lado.ganador input{color:var(--exito);-webkit-text-fill-color:var(--exito)}
+.cj-pie{font-size:13px;color:var(--texto-3);margin-top:4px}
+.cj-pie b{color:var(--aviso);font-weight:600}
+.cj-tabla{width:100%;border-collapse:collapse;font-size:15px;table-layout:fixed;font-variant-numeric:tabular-nums}
+.cj-tabla th{font-size:11px;font-weight:700;color:var(--texto-3);text-transform:uppercase;padding:8px 2px;text-align:center;width:34px}
+.cj-tabla th.eq{width:auto;text-align:left;padding-left:14px}
+.cj-tabla th:last-child:empty{width:40px}
+.cj-tabla td{padding:9px 2px;text-align:center;border-top:1px solid var(--borde)}
+.cj-tabla td.eq{text-align:left;padding-left:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.cj-tabla td.pts{font-weight:800}
+.cj-tabla tr.clasifica td{background:var(--exito-claro)}
+.cj-tabla tr.clasifica td.eq{box-shadow:inset 4px 0 0 var(--exito);font-weight:700}
+.cj-tabla tr.manual td{background:#F2E9F7}
+.cj-tabla td button{min-height:30px;border-radius:6px!important}
+@media(max-width:480px){.cj-tabla .opt{display:none}.cj-tabla th{width:30px}.cj-tabla{font-size:14px}}
+.fase-final-automatica{border-radius:14px!important;background:#fff!important;border:1px solid var(--borde)!important;padding:14px!important;flex-basis:100%;min-width:0}
+.fase-final-automatica>div:first-child{font:800 15px var(--f-titulo)!important;color:var(--texto)!important;letter-spacing:.02em}
+.fase-final-automatica input{width:52px!important;height:42px;font:800 20px var(--f-titulo)!important;border-radius:9px!important}
+.fase-final-automatica div{font-size:14px}
+.cj-seccion-fixture>div:last-child{min-width:0}
+.cj-cruces .cj-btn{white-space:normal;text-align:center;line-height:1.2;max-width:100%}
+.cj-cruces>div{max-width:100%}
+@media(max-width:480px){.cj-cruces{padding:10px}.cj-cruces .cj-btn{width:100%}.cj-tabla th{width:28px}}
 </style></head><body><div id="root"></div><script type="text/plain" id="app-code">const { useEffect, useRef, useState } = React;
 
 const C = {
@@ -306,7 +366,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
   const ultimoSacado = orden[orden.length - 1];
 
   return (
-    <div style={{ background: "#F7F8FA", borderRadius: 8, padding: 12, marginTop: 8 }}>
+    <div className="cj-cruces">
       {!soloLectura && <>
       <div className="solo-coordinador" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
         <label style={{ fontSize: 13, color: C.sub, display: "flex", alignItems: "center", gap: 6 }}>
@@ -329,10 +389,10 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
 
       {!bolsa ? (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} style={{ fontSize: 14, padding: "8px 16px", borderRadius: 8, border: "none", background: C.primario, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={iniciarSorteo} disabled={equiposActivos.length === 0} className="cj-btn cj-btn-exito">
             🎱 Sorteo en vivo, uno por uno
           </button>
-          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} style={{ fontSize: 14, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={distribuirAutomatico} disabled={equiposActivos.length === 0} className="cj-btn cj-btn-secundario">
             ⚡ Distribuir automáticamente, todo junto
           </button>
         </div>
@@ -343,7 +403,7 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
             {pendientesDeBolsa.length > 0 && (
               <span style={{ fontSize: 13, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin asignar</span>
             )}
-            <button onClick={reiniciar} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Volver a armar</button>
+            <button onClick={reiniciar} className="cj-btn cj-btn-secundario cj-btn-chico">↺ Volver a armar</button>
           </div>
           {pendientesDeBolsa.length > 0 && (
             <button onClick={() => setSorteo({ bolsa: pendientesDeBolsa, orden })} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, border: "none", background: C.amarillo, color: "#fff", cursor: "pointer", marginBottom: 12 }}>
@@ -354,14 +414,14 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
       ) : (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-            <button onClick={sacarEquipo} disabled={bolsa.length === 0} style={{ fontSize: 13, padding: "10px 20px", borderRadius: 8, border: "none", background: bolsa.length ? C.verde : "#C9CDD3", color: "#fff", fontWeight: 800, cursor: bolsa.length ? "pointer" : "default" }}>
+            <button onClick={sacarEquipo} disabled={bolsa.length === 0} className="cj-btn cj-btn-exito cj-btn-grande">
               🎱 Sacar el próximo equipo
             </button>
             <span style={{ fontSize: 14, color: C.sub }}>Quedan {bolsa.length} en la bolsa</span>
             {pendientesDeBolsa.length > 0 && (
               <span style={{ fontSize: 13, color: C.amarillo }}>+ {pendientesDeBolsa.length} equipo{pendientesDeBolsa.length > 1 ? "s" : ""} nuevo(s) sin meter en la bolsa</span>
             )}
-            <button onClick={reiniciar} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Reiniciar sorteo</button>
+            <button onClick={reiniciar} className="cj-btn cj-btn-secundario cj-btn-chico">↺ Reiniciar sorteo</button>
           </div>
 
           {pendientesDeBolsa.length > 0 && (
@@ -386,20 +446,20 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
       )}
 
       {zonas.some((z) => z.length > 0) && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 10, marginTop: 4, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 6 }}>
+        <div className="cj-zonas">
           {zonas.map((equipos, zi) => {
             const partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
             const tabla = tablaPosiciones(equipos, partidos, resultados, manual[zi], true);
             const clasificacionManualActiva = manual[zi] && manual[zi].length > 0;
             const otrasZonas = zonas.map((_, i) => i).filter((i) => i !== zi);
             return (
-              <div key={zi} style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: 10 }}>
+              <div key={zi} className="cj-zona">
                 {/* El título "ZONA N (x)" tiene que ser hijo DIRECTO del recuadro de la zona: los scripts de
                     "Ganadores" y "Fase final" buscan ese texto y leen los resultados de su contenedor. */}
-                <div style={{ fontSize: 13, fontWeight: 800, color: C.primario, marginBottom: 6 }}>ZONA {zi + 1} ({equipos.length})</div>
+                <div className="cj-zona-tit">ZONA {zi + 1} ({equipos.length})</div>
                 {clasificacionManualActiva && <div style={{ marginBottom: 6 }}><Badge color="#fff" bg={C.provincial}>✋ Clasificación manual</Badge></div>}
                 {equipos.map((eq, i) => (
-                  <div key={eq} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: eq === ultimoSacado ? C.verde : C.ink, fontWeight: eq === ultimoSacado ? 700 : 400, marginBottom: 3 }}>
+                  <div key={eq} className="cj-zona-eq" style={{ color: eq === ultimoSacado ? C.verde : C.ink, fontWeight: eq === ultimoSacado ? 700 : 500 }}>
                     <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i + 1}. {eq}</span>
                     {!soloLectura && numZonas > 1 && (
                       <select
@@ -440,33 +500,33 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
 
                 {equipos.length >= 2 && (
                   <>
-                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
-                      <div style={{ fontSize: 14, color: C.sub, fontWeight: 700, marginBottom: 4 }}>PARTIDOS Y RESULTADO</div>
+                    <div className="cj-bloque">
+                      <div className="cj-bloque-tit">Partidos y resultados</div>
                       {partidos.map((p) => {
                         const r = resultados[p.key] || resultados[p.legacyKey] || resultados[p.legacyReverseKey] || {};
+                        const jugado = r.gl !== undefined && r.gl !== "" && r.gl !== null && r.gv !== undefined && r.gv !== "" && r.gv !== null;
+                        const gana = jugado ? (Number(r.gl) > Number(r.gv) ? "l" : Number(r.gv) > Number(r.gl) ? "v" : "") : "";
                         return (
-                          <div key={p.key} style={{ fontSize: 13, color: C.ink, marginBottom: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.local} <span style={{ color: C.sub }}>vs</span> {p.visitante}</span>
-                            <input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, "gl", e.target.value)} readOnly={soloLectura} disabled={soloLectura} style={{ width: 44, fontSize: 13, padding: "3px 4px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center", color: C.ink, opacity: 1, background: soloLectura ? "#F7F8FA" : "#fff" }} />
-                            <span style={{ color: C.sub }}>-</span>
-                            <input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, "gv", e.target.value)} readOnly={soloLectura} disabled={soloLectura} style={{ width: 44, fontSize: 13, padding: "3px 4px", borderRadius: 4, border: `1px solid ${C.border}`, textAlign: "center", color: C.ink, opacity: 1, background: soloLectura ? "#F7F8FA" : "#fff" }} />
-                            <span style={{ color: C.primario, fontWeight: 700, fontSize: 14, whiteSpace: "nowrap" }}>R{p.ronda} · C{p.cancha}</span>
+                          <div key={p.key} className={"cj-partido" + (jugado ? " jugado" : "")}>
+                            <div className={"cj-lado" + (gana === "l" ? " ganador" : "")}><span className="eq">{p.local}</span><input type="number" min="0" value={r.gl ?? ""} onChange={(e) => setResultado(p.key, "gl", e.target.value)} readOnly={soloLectura} disabled={soloLectura} inputMode="numeric" aria-label="Resultado" /></div>
+                            <div className={"cj-lado" + (gana === "v" ? " ganador" : "")}><span className="eq">{p.visitante}</span><input type="number" min="0" value={r.gv ?? ""} onChange={(e) => setResultado(p.key, "gv", e.target.value)} readOnly={soloLectura} disabled={soloLectura} inputMode="numeric" aria-label="Resultado" /></div>
+                            <div className="cj-pie">Ronda {p.ronda} · Cancha {p.cancha}{jugado ? "" : <b> · Por jugar</b>}</div>
                           </div>
                         );
                       })}
                     </div>
-                    <div style={{ marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>
+                    <div className="cj-bloque">
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 4 }}>
-                        <div style={{ fontSize: 14, color: C.sub, fontWeight: 700 }}>TABLA DE POSICIONES</div>
+                        <div className="cj-bloque-tit">Tabla de posiciones</div>
                         {!soloLectura && clasificacionManualActiva && (
                           <button onClick={() => restablecerAutomatico(zi)} style={{ fontSize: 14, padding: "2px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: "#fff", color: C.sub, cursor: "pointer" }}>↺ Automático</button>
                         )}
                       </div>
-                      <table style={{ width: "100%", fontSize: 14, color: C.ink, borderCollapse: "collapse" }}>
+                      <table className="cj-tabla">
                         <thead>
                           <tr style={{ color: C.sub, textAlign: "center" }}>
-                            <th style={{ textAlign: "left", fontWeight: 600 }}>Equipo</th>
-                            <th>PJ</th><th>G</th><th>E</th><th>P</th><th>{UNI.f}</th><th>{UNI.c}</th><th>{UNI.d}</th><th>Pts</th>{!soloLectura && <th></th>}
+                            <th className="eq">Equipo</th>
+                            <th>PJ</th><th>G</th><th className={DEPORTE.empate ? "" : "opt"}>E</th><th>P</th><th className="opt">{UNI.f}</th><th className="opt">{UNI.c}</th><th>{UNI.d}</th><th>Pts</th>{!soloLectura && <th></th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -474,9 +534,9 @@ function CrucesPanel({ jornada, equiposActivos, config, setConfig, sorteo, setSo
                             const clasifica = ti < (jornada.ganadores || 1);
                             const esManual = manual[zi]?.includes(t.equipo);
                             return (
-                              <tr key={t.equipo} style={{ textAlign: "center", background: clasifica ? (esManual ? C.provincialClaro : "#EAF6EE") : "transparent" }}>
-                                <td style={{ textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 90, fontWeight: clasifica ? 700 : 400 }}>{t.equipo}</td>
-                                <td>{t.pj}</td><td>{t.g}</td><td>{t.e}</td><td>{t.p}</td><td>{t.gf}</td><td>{t.gc}</td><td>{t.dg}</td><td style={{ fontWeight: 800 }}>{t.pts}</td>
+                              <tr key={t.equipo} className={clasifica ? (esManual ? "clasifica manual" : "clasifica") : ""}>
+                                <td className="eq" title={t.equipo}>{t.equipo}</td>
+                                <td>{t.pj}</td><td>{t.g}</td><td className={DEPORTE.empate ? "" : "opt"}>{t.e}</td><td>{t.p}</td><td className="opt">{t.gf}</td><td className="opt">{t.gc}</td><td>{t.dg > 0 ? "+" + t.dg : t.dg}</td><td className="pts">{t.pts}</td>
                                 {!soloLectura && (
                                   <td>
                                     <button
@@ -834,26 +894,26 @@ function JornadaCard({ jornada, estados, setEstado, ramaColor, ramaLabel, extras
             <button onClick={agregarEquipo} disabled={!nuevoEquipo.trim()} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, border: "none", background: C.verde, color: "#fff", fontWeight: 700, cursor: nuevoEquipo.trim() ? "pointer" : "not-allowed", opacity: nuevoEquipo.trim() ? 1 : 0.5 }}>＋ Agregar</button>
           </div>}
 
-          <div style={{ marginTop: 10, borderTop: `1px solid ${C.border}`, paddingTop: 10, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div className="cj-seccion-fixture">
             {/* IMPORTANTE: "Armar cruces (sorteo) y resultados" tiene que seguir siendo hijo DIRECTO
                 de este mismo div (el que también contiene la descripción y el CrucesPanel), porque
                 el script de "vista para profes" busca ese texto exacto y clona TODO su padre para
                 armar la vista de solo lectura. Si se lo envuelve en un div nuevo (por ejemplo para
                 ponerle el botón de QR al lado), esa vista deja de mostrar el fixture. Por eso el
                 botón de QR se agrega acá como hermano, no como envoltorio. */}
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Armar cruces (sorteo) y resultados</div>
-            {(sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
-              <button onClick={abrirQr} style={{ fontSize: 13, padding: "7px 12px", borderRadius: 7, border: `1px solid ${ramaColor}`, background: "#fff", color: ramaColor, fontWeight: 700, cursor: "pointer" }}>
-                📱 Código QR para profes
-              </button>
+            <div className="cj-sec-tit">Armar cruces (sorteo) y resultados</div>
+            {editable && (sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
+              <details className="cj-menu">
+                <summary className="cj-btn cj-btn-secundario">Más acciones ▾</summary>
+                <div className="cj-menu-lista">
+                  <button onClick={(e) => { e.currentTarget.closest("details").open = false; abrirQr(); }}>📱 Código QR para profes</button>
+                  <button onClick={(e) => { e.currentTarget.closest("details").open = false; generarPlanillasArbitros(jornada, config, sorteo, ramaLabel, resultados).catch(() => alert("No se pudieron generar las planillas. Revisá la conexión e intentá de nuevo.")); }}>🖨 Planillas para árbitros</button>
+                </div>
+              </details>
             )}
-            {(sorteo?.orden?.length > 0 || sorteo?.zonas?.some((z) => z.length > 0)) && (
-              <button onClick={() => generarPlanillasArbitros(jornada, config, sorteo, ramaLabel, resultados).catch(() => alert("No se pudieron generar las planillas. Revisá la conexión e intentá de nuevo."))} style={{ fontSize: 13, padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.primario}`, background: "#fff", color: C.primario, fontWeight: 700, cursor: "pointer" }}>
-                🖨 Planillas para árbitros
-              </button>
-            )}
-            <div style={{ fontSize: 13, color: C.sub, marginBottom: 6, flexBasis: "100%" }}>Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, {UNI.f}, {UNI.c}, {UNI.d}, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>
-            <div style={{ pointerEvents: editable ? "auto" : "none", opacity: editable ? 1 : 0.88, flexBasis: "100%" }}><CrucesPanel
+            {editable && <div className="cj-ayuda">Armá las zonas, cargá el resultado de cada partido, y la tabla de posiciones (PJ, G, E, P, {UNI.f}, {UNI.c}, {UNI.d}, Puntos) se calcula sola. Los puestos que clasifican quedan resaltados en verde.</div>}
+            <div style={{ pointerEvents: editable ? "auto" : "none", flexBasis: "100%", minWidth: 0 }}><CrucesPanel
+              soloLectura={!editable}
               jornada={jornada}
               equiposActivos={equiposActivos}
               config={config}
