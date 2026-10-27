@@ -958,7 +958,8 @@ function resumenPartidosPorDia(jornadas, cruces, resultados) {
     const config = datos.config || { numZonas: 1, numCanchas: parseCanchas(j.sede) };
     const sorteo = datos.sorteo || { bolsa: null, orden: [] };
     const tieneFixture = (sorteo.orden || []).length > 0 || (sorteo.zonas || []).some((z) => (z || []).length);
-    const partidos = tieneFixture ? partidosParaPlanillas(j, config, sorteo, (resultados && resultados[j.id]) || {}) : [];
+    // Los partidos de fase final (final, semis, cruces) solo se cuentan cuando ya tienen resultado cargado.
+    const partidos = tieneFixture ? partidosParaPlanillas(j, config, sorteo, (resultados && resultados[j.id]) || {}).filter((p) => p.ronda != null || p.r) : [];
     const d = (porDia[j.fecha] = porDia[j.fecha] || { fecha: j.fecha, total: 0, jugados: 0, sinFixture: 0, detalle: [] });
     const jugados = partidos.filter((p) => p.r).length;
     d.total += partidos.length;
@@ -1110,7 +1111,7 @@ function ResumenPorDia({ jornadas, cruces, resultados, tituloRama, color }) {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 13, color: C.sub, marginTop: 10, lineHeight: 1.4 }}>% jugado: partidos con resultado cargado sobre los de ese día. % del total: qué parte de todos los partidos se juega ese día. Los días "sin fixture" todavía no tienen sorteo armado.</div>
+          <div style={{ fontSize: 13, color: C.sub, marginTop: 10, lineHeight: 1.4 }}>% jugado: partidos con resultado cargado sobre los de ese día. % del total: qué parte de todos los partidos se juega ese día. Los días "sin fixture" todavía no tienen sorteo armado. Las finales, semis y cruces se suman recién cuando tienen resultado cargado.</div>
         </div>
       )}
     </div>
