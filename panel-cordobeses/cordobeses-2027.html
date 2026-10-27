@@ -160,6 +160,7 @@ html,body,#root{background:var(--fondo)!important;font-family:var(--f-texto)!imp
 .cj-eq-fila .res{flex:1;min-width:0}
 .cj-eq-fila .res input{width:100%;max-width:none;min-height:34px;border-radius:8px}
 .cj-eq-fila .res{flex:1 1 120px}
+.boton-descargar-pdf{display:none!important}
 </style></head><body><div id="root"></div><script type="text/plain" id="app-code">function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
@@ -1215,11 +1216,11 @@ function _generarPlanillasArbitros() {
             var cols = [["Día", dia, 38], ["Instancia", instancia, 38], ["Predio", jornada.sede, 60], ["Cancha", pt.cancha ? String(pt.cancha) : "", 17], ["Zona", pt.zona, 26], ["Hora", "", 22], ["Partido", esFinal ? pt.zona : "N° " + nro, 26], ["Categoría", jornada.categoria, 25], ["Sexo", sexo, 25]];
             var x = M;
             var y0 = 26;
-            cols.forEach(function (_ref25) {
-              var _ref26 = _slicedToArray(_ref25, 3),
-                t = _ref26[0],
-                v = _ref26[1],
-                w = _ref26[2];
+            cols.forEach(function (_ref26) {
+              var _ref27 = _slicedToArray(_ref26, 3),
+                t = _ref27[0],
+                v = _ref27[1],
+                w = _ref27[2];
               caja(x, y0, w, 7);
               caja(x, y0 + 7, w, 11);
               texto(t, x + w / 2, y0 + 5, 8, true, GRIS, {
@@ -1239,10 +1240,10 @@ function _generarPlanillasArbitros() {
             // Equipos
             var yE = 50,
               anchoE = (W - 2 * M - 8) / 2;
-            [["LOCAL", pt.local], ["VISITA", pt.visitante]].forEach(function (_ref27, k) {
-              var _ref28 = _slicedToArray(_ref27, 2),
-                rot = _ref28[0],
-                eq = _ref28[1];
+            [["LOCAL", pt.local], ["VISITA", pt.visitante]].forEach(function (_ref28, k) {
+              var _ref29 = _slicedToArray(_ref28, 2),
+                rot = _ref29[0],
+                eq = _ref29[1];
               var ex = M + k * (anchoE + 8);
               caja(ex, yE, anchoE, 12);
               texto(rot + ":", ex + 2, yE + 7.5, 9, true, GRIS);
@@ -1297,10 +1298,10 @@ function _generarPlanillasArbitros() {
             // Árbitros
             var yA = 162,
               tercio = (W - 2 * M) / 3;
-            [["Árbitro/a:", 0], ["Asistente N° 1:", 1], ["Asistente N° 2:", 2]].forEach(function (_ref29) {
-              var _ref30 = _slicedToArray(_ref29, 2),
-                t = _ref30[0],
-                k = _ref30[1];
+            [["Árbitro/a:", 0], ["Asistente N° 1:", 1], ["Asistente N° 2:", 2]].forEach(function (_ref30) {
+              var _ref31 = _slicedToArray(_ref30, 2),
+                t = _ref31[0],
+                k = _ref31[1];
               caja(M + k * tercio, yA, tercio, 9);
               texto(t, M + k * tercio + 2, yA + 6, 8.5, true, GRIS);
             });
@@ -1744,7 +1745,26 @@ function JornadaCard(_ref5) {
     className: "cj-seccion-fixture"
   }, /*#__PURE__*/React.createElement("div", {
     className: "cj-sec-tit"
-  }, "Armar cruces (sorteo) y resultados"), editable && ((sorteo === null || sorteo === void 0 || (_sorteo$orden = sorteo.orden) === null || _sorteo$orden === void 0 ? void 0 : _sorteo$orden.length) > 0 || (sorteo === null || sorteo === void 0 || (_sorteo$zonas = sorteo.zonas) === null || _sorteo$zonas === void 0 ? void 0 : _sorteo$zonas.some(function (z) {
+  }, "Armar cruces (sorteo) y resultados"), /*#__PURE__*/React.createElement("button", {
+    className: "cj-btn cj-btn-secundario",
+    onClick: function onClick(e) {
+      var b = e.currentTarget;
+      b.disabled = true;
+      descargarPdfFecha({
+        jornada: jornada,
+        config: config,
+        sorteo: sorteo,
+        resultados: resultados,
+        equiposCompletos: equiposCompletos,
+        estados: estados,
+        responsables: responsables
+      })["catch"](function () {
+        return alert("No se pudo generar el PDF. Revisá la conexión e intentá de nuevo.");
+      })["finally"](function () {
+        b.disabled = false;
+      });
+    }
+  }, "\u2B07 PDF de la fecha"), editable && ((sorteo === null || sorteo === void 0 || (_sorteo$orden = sorteo.orden) === null || _sorteo$orden === void 0 ? void 0 : _sorteo$orden.length) > 0 || (sorteo === null || sorteo === void 0 || (_sorteo$zonas = sorteo.zonas) === null || _sorteo$zonas === void 0 ? void 0 : _sorteo$zonas.some(function (z) {
     return z.length > 0;
   }))) && /*#__PURE__*/React.createElement("details", {
     className: "cj-menu"
@@ -2276,10 +2296,10 @@ function _descargarResumenPdf() {
           y = 28;
           cajas = [["Partidos", resumen.total], ["Jugados", resumen.jugados], ["Pendientes", resumen.pendientes], ["Avance", resumen.pctJugados + "%"]];
           wc = (W - 2 * M - 9) / 4;
-          cajas.forEach(function (_ref31, i) {
-            var _ref32 = _slicedToArray(_ref31, 2),
-              t = _ref32[0],
-              v = _ref32[1];
+          cajas.forEach(function (_ref32, i) {
+            var _ref33 = _slicedToArray(_ref32, 2),
+              t = _ref33[0],
+              v = _ref33[1];
             var x = M + i * (wc + 3);
             pdf.setDrawColor(210);
             pdf.setFillColor(243, 245, 249);
@@ -3046,6 +3066,344 @@ function CabeceraJornada(_ref15) {
     className: "cj-chip cj-chip-reg"
   }, "Clasifica", jornada.ganadores > 1 ? "n ".concat(jornada.ganadores) : " 1") : null)));
 }
+
+// ---------------- PDF de la fecha (texto nítido, armado con los datos, no con una foto de la pantalla) ----------------
+function descargarPdfFecha(_x8) {
+  return _descargarPdfFecha.apply(this, arguments);
+}
+function _descargarPdfFecha() {
+  _descargarPdfFecha = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee15(_ref16) {
+    var jornada, config, sorteo, resultados, equiposCompletos, estados, responsables, pdf, W, H, M, ANCHO, NOCHE, ORO, GRIS, TENUE, VERDE, VERDE_CLARO, BORDE, FONDO, ROJO, res, _split7, _split8, dd, mm, rama, titulo, t, corto, y, cabecera, espacio, seccion, datos, activos, bajas, colW, filas, numZonas, numCanchas, formato, orden, zonas, manual, resDe, cargado, finales, total, hoy, i, nombre;
+    return _regenerator().w(function (_context15) {
+      while (1) switch (_context15.n) {
+        case 0:
+          jornada = _ref16.jornada, config = _ref16.config, sorteo = _ref16.sorteo, resultados = _ref16.resultados, equiposCompletos = _ref16.equiposCompletos, estados = _ref16.estados, responsables = _ref16.responsables;
+          _context15.n = 1;
+          return cargarScriptPlanillas("https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js", function () {
+            return !!window.jspdf;
+          });
+        case 1:
+          pdf = new window.jspdf.jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+            compress: true
+          });
+          W = 210, H = 297, M = 12, ANCHO = W - 2 * M;
+          NOCHE = [11, 25, 44], ORO = [212, 167, 60], GRIS = [91, 103, 121], TENUE = [138, 148, 166], VERDE = [22, 128, 74], VERDE_CLARO = [230, 244, 236], BORDE = [227, 232, 239], FONDO = [244, 246, 250], ROJO = [194, 65, 45];
+          res = resultados || {};
+          _split7 = (jornada.fecha || "").split("-"), _split8 = _slicedToArray(_split7, 2), dd = _split8[0], mm = _split8[1];
+          rama = jornada.rama === "masculino" ? "Masculino" : "Femenino";
+          titulo = "".concat(DEPORTE.nombre, " ").concat(rama, " \xB7 ").concat(jornada.categoria, " \xB7 ").concat(jornada.instancia === "PROVINCIAL" ? "Provincial" : jornada.instancia).concat(jornada.grupo ? " " + jornada.grupo : "");
+          t = function t(txt, x, y, tam, negrita, color, opts) {
+            pdf.setFont("helvetica", negrita ? "bold" : "normal");
+            pdf.setFontSize(tam);
+            pdf.setTextColor.apply(pdf, _toConsumableArray(color || [15, 27, 45]));
+            pdf.text(String(txt == null ? "" : txt), x, y, opts || {});
+          };
+          corto = function corto(txt, ancho, tam, negrita) {
+            pdf.setFont("helvetica", negrita ? "bold" : "normal");
+            pdf.setFontSize(tam);
+            var s = String(txt || "");
+            if (pdf.getTextWidth(s) <= ancho) return s;
+            while (s.length > 1 && pdf.getTextWidth(s + "…") > ancho) s = s.slice(0, -1);
+            return s + "…";
+          };
+          y = 0;
+          cabecera = function cabecera(primera) {
+            pdf.setFillColor.apply(pdf, NOCHE);
+            pdf.rect(0, 0, W, primera ? 40 : 18, "F");
+            pdf.setFillColor.apply(pdf, ORO);
+            pdf.rect(0, primera ? 40 : 18, W, 1.2, "F");
+            if (primera) {
+              var hL = 9,
+                wG = hL / LOGOS_PLANILLA.gob.r,
+                wC = hL / LOGOS_PLANILLA.cj.r;
+              pdf.setFillColor(255, 255, 255);
+              pdf.roundedRect(M, 7, wG + hL + wC + 14, 15, 2, 2, "F");
+              pdf.addImage(LOGOS_PLANILLA.gob.d, "JPEG", M + 3, 10, wG, hL, "lg", "FAST");
+              pdf.addImage(LOGOS_PLANILLA.agencia.d, "JPEG", M + 7 + wG, 10, hL, hL, "la", "FAST");
+              pdf.addImage(LOGOS_PLANILLA.cj.d, "JPEG", M + 11 + wG + hL, 10, wC, hL, "lc", "FAST");
+              t("CORDOBESES JUEGAN \xB7 TEMPORADA ".concat(ANIO), W - M, 12, 8, true, ORO, {
+                align: "right"
+              });
+              t(dd && mm ? "".concat(dd, "/").concat(mm, "/").concat(ANIO) : jornada.fecha, W - M, 20, 14, true, [255, 255, 255], {
+                align: "right"
+              });
+              t(corto(titulo, ANCHO, 15, true), M, 32, 15, true, [255, 255, 255]);
+              y = 50;
+            } else {
+              t(corto(titulo, ANCHO - 30, 10, true), M, 11.5, 10, true, [255, 255, 255]);
+              t(dd && mm ? "".concat(dd, "/").concat(mm, "/").concat(ANIO) : "", W - M, 11.5, 10, true, ORO, {
+                align: "right"
+              });
+              y = 28;
+            }
+          };
+          espacio = function espacio(alto) {
+            if (y + alto > H - 16) {
+              pdf.addPage();
+              cabecera(false);
+            }
+          };
+          seccion = function seccion(txt) {
+            espacio(16);
+            t(txt.toUpperCase(), M, y, 10, true, NOCHE);
+            pdf.setDrawColor.apply(pdf, ORO);
+            pdf.setLineWidth(0.6);
+            pdf.line(M, y + 1.8, M + 18, y + 1.8);
+            pdf.setLineWidth(0.2);
+            y += 7;
+          };
+          cabecera(true);
+          // Datos de la fecha
+          datos = [["Sede", jornada.sede || "-"], ["Horario", jornada.horario || "-"], ["Clasifican", String(jornada.ganadores || 1)]];
+          if (responsables && responsables.nombre) datos.push(["Responsable", responsables.nombre]);
+          pdf.setFillColor.apply(pdf, FONDO);
+          pdf.setDrawColor.apply(pdf, BORDE);
+          pdf.roundedRect(M, y - 5, ANCHO, 8 + datos.length * 6, 2, 2, "FD");
+          datos.forEach(function (_ref34, i) {
+            var _ref35 = _slicedToArray(_ref34, 2),
+              k = _ref35[0],
+              v = _ref35[1];
+            t(k, M + 4, y + 1 + i * 6, 9, true, GRIS);
+            t(corto(v, ANCHO - 40, 10, false), M + 32, y + 1 + i * 6, 10, false);
+          });
+          y += datos.length * 6 + 9;
+
+          // Equipos
+          activos = equiposCompletos.filter(function (_, i) {
+            var _estados6;
+            return !((_estados6 = estados[jornada.id + "-" + i]) !== null && _estados6 !== void 0 && _estados6.bajo);
+          });
+          bajas = equiposCompletos.filter(function (_, i) {
+            var _estados7;
+            return (_estados7 = estados[jornada.id + "-" + i]) === null || _estados7 === void 0 ? void 0 : _estados7.bajo;
+          });
+          seccion("Equipos (".concat(activos.length, " activos").concat(bajas.length ? " \xB7 ".concat(bajas.length, " bajas") : "", ")"));
+          colW = ANCHO / 2, filas = Math.ceil(activos.length / 2);
+          activos.forEach(function (eq, i) {
+            var c = i < filas ? 0 : 1,
+              f = c ? i - filas : i;
+            espacio(0);
+            t("".concat(i + 1, "."), M + c * colW, y + f * 5.6, 9, true, TENUE);
+            t(corto(eq, colW - 10, 9.5, false), M + 7 + c * colW, y + f * 5.6, 9.5, false);
+          });
+          y += filas * 5.6 + 2;
+          if (bajas.length) {
+            espacio(8);
+            t(corto("Bajas: " + bajas.join(" · "), ANCHO, 9, false), M, y, 9, false, ROJO);
+            y += 7;
+          }
+
+          // Zonas
+          numZonas = Math.max(1, parseInt(config === null || config === void 0 ? void 0 : config.numZonas) || 1);
+          numCanchas = Math.max(1, parseInt(config === null || config === void 0 ? void 0 : config.numCanchas) || parseCanchas(jornada.sede));
+          formato = (config === null || config === void 0 ? void 0 : config.formato) || "todos";
+          orden = (sorteo === null || sorteo === void 0 ? void 0 : sorteo.orden) || [];
+          zonas = (sorteo === null || sorteo === void 0 ? void 0 : sorteo.zonas) || Array.from({
+            length: numZonas
+          }, function (_, zi) {
+            return orden.filter(function (_, i) {
+              return i % numZonas === zi;
+            });
+          });
+          manual = (sorteo === null || sorteo === void 0 ? void 0 : sorteo.manual) || {};
+          resDe = function resDe(p) {
+            return resultados && (res[p.key] || res[p.legacyKey] || res[p.legacyReverseKey]);
+          };
+          cargado = function cargado(r) {
+            return r && r.gl !== undefined && r.gl !== "" && r.gl !== null && r.gv !== undefined && r.gv !== "" && r.gv !== null;
+          };
+          if (!zonas.some(function (z) {
+            return z.length;
+          })) {
+            seccion("Fixture");
+            t("Todavía no se armó el sorteo de esta fecha.", M, y, 10, false, GRIS);
+            y += 8;
+          }
+          zonas.forEach(function (equipos, zi) {
+            if (!equipos.length) return;
+            var partidos = partidosDeZona(equipos, zi, numZonas, numCanchas, formato);
+            seccion(numZonas > 1 ? "Zona ".concat(zi + 1) : "Zona única");
+            // partidos
+            var cols = [{
+              t: "R",
+              w: 9
+            }, {
+              t: "C",
+              w: 9
+            }, {
+              t: "Local",
+              w: 66
+            }, {
+              t: DEPORTE.unidad,
+              w: 30
+            }, {
+              t: "Visitante",
+              w: 72
+            }];
+            var fila = function fila(vals, alto, opciones) {
+              espacio(alto);
+              if (opciones && opciones.fondo) {
+                pdf.setFillColor.apply(pdf, _toConsumableArray(opciones.fondo));
+                pdf.rect(M, y - 4.2, ANCHO, alto, "F");
+              }
+              var x = M;
+              vals.forEach(function (v, i) {
+                var c = cols[i],
+                  centrado = i !== 2 && i !== 4;
+                var neg = opciones && (opciones.cabecera || opciones.ganador === "l" && i === 2 || opciones.ganador === "v" && i === 4 || i === 3);
+                var color = opciones && opciones.cabecera ? TENUE : opciones && (opciones.ganador === "l" && i === 2 || opciones.ganador === "v" && i === 4) ? VERDE : undefined;
+                t(centrado ? v : corto(v, c.w - 3, opciones && opciones.cabecera ? 7.5 : 9.5, neg), centrado ? x + c.w / 2 : x + 1.5, y, opciones && opciones.cabecera ? 7.5 : i === 3 ? 10.5 : 9.5, neg, color, centrado ? {
+                  align: "center"
+                } : {});
+                x += c.w;
+              });
+              pdf.setDrawColor.apply(pdf, BORDE);
+              pdf.line(M, y + alto - 4.2, M + ANCHO, y + alto - 4.2);
+              y += alto;
+            };
+            fila(cols.map(function (c) {
+              return c.t.toUpperCase();
+            }), 6, {
+              cabecera: true
+            });
+            partidos.forEach(function (p) {
+              var r = resDe(p),
+                ok = cargado(r);
+              var gl = ok ? Number(r.gl) : null,
+                gv = ok ? Number(r.gv) : null;
+              var marcador = ok ? "".concat(gl, "  -  ").concat(gv) : "por jugar";
+              if (ok && gl === gv && r.pl !== undefined && r.pl !== "" && r.pv !== undefined && r.pv !== "") marcador += " (".concat(r.pl, "-").concat(r.pv, ")");
+              fila([p.ronda, p.cancha, p.local, marcador, p.visitante], 7, {
+                ganador: ok ? gl > gv ? "l" : gv > gl ? "v" : "" : ""
+              });
+            });
+            y += 3;
+            // tabla
+            var tabla = tablaPosiciones(equipos, partidos, res, manual[zi], true);
+            var tc = [{
+              t: "#",
+              w: 8
+            }, {
+              t: "Equipo",
+              w: 92
+            }, {
+              t: "PJ",
+              w: 11
+            }, {
+              t: "G",
+              w: 11
+            }, {
+              t: "E",
+              w: 11
+            }, {
+              t: "P",
+              w: 11
+            }, {
+              t: DEPORTE.siglas.f,
+              w: 11
+            }, {
+              t: DEPORTE.siglas.c,
+              w: 11
+            }, {
+              t: DEPORTE.siglas.d,
+              w: 10
+            }, {
+              t: "Pts",
+              w: 10
+            }];
+            var filaT = function filaT(vals, alto, op) {
+              espacio(alto);
+              if (op.fondo) {
+                pdf.setFillColor.apply(pdf, _toConsumableArray(op.fondo));
+                pdf.rect(M, y - 4.2, ANCHO, alto, "F");
+                if (op.barra) {
+                  pdf.setFillColor.apply(pdf, VERDE);
+                  pdf.rect(M, y - 4.2, 1.2, alto, "F");
+                }
+              }
+              var x = M;
+              vals.forEach(function (v, i) {
+                var c = tc[i];
+                var izq = i === 1;
+                t(izq ? corto(v, c.w - 3, op.cab ? 7.5 : 9.5, op.neg) : v, izq ? x + 1.5 : x + c.w / 2, y, op.cab ? 7.5 : 9.5, op.cab || op.neg || i === 9, op.cab ? TENUE : undefined, izq ? {} : {
+                  align: "center"
+                });
+                x += c.w;
+              });
+              pdf.setDrawColor.apply(pdf, BORDE);
+              pdf.line(M, y + alto - 4.2, M + ANCHO, y + alto - 4.2);
+              y += alto;
+            };
+            espacio(14);
+            t("Tabla de posiciones", M, y, 9, true, GRIS);
+            y += 5;
+            filaT(tc.map(function (c) {
+              return c.t.toUpperCase();
+            }), 6, {
+              cab: true
+            });
+            tabla.forEach(function (f, i) {
+              var clas = i < (jornada.ganadores || 1);
+              filaT([i + 1, f.equipo, f.pj, f.g, f.e, f.p, f.gf, f.gc, f.dg > 0 ? "+" + f.dg : f.dg, f.pts], 7, clas ? {
+                fondo: VERDE_CLARO,
+                barra: true,
+                neg: true
+              } : {});
+            });
+            y += 5;
+          });
+
+          // Fase final
+          finales = partidosParaPlanillas(jornada, config || {}, sorteo || {}, res).filter(function (p) {
+            return p.ronda == null;
+          });
+          if (finales.length) {
+            seccion("Fase final");
+            finales.forEach(function (p) {
+              espacio(12);
+              var ok = p.r && cargado(p.r);
+              pdf.setFillColor.apply(pdf, FONDO);
+              pdf.setDrawColor.apply(pdf, BORDE);
+              pdf.roundedRect(M, y - 4.5, ANCHO, 10, 1.5, 1.5, "FD");
+              t(p.zona, M + 3, y + 1.8, 8.5, true, GRIS);
+              var g = ok ? ganadorDe(p.local, p.visitante, p.r) : "";
+              t(corto(p.local || "a definir", 62, 9.5, g === p.local), M + 52, y + 1.8, 9.5, g === p.local, g === p.local ? VERDE : undefined);
+              var m = ok ? "".concat(p.r.gl, " - ").concat(p.r.gv) : "-";
+              if (ok && Number(p.r.gl) === Number(p.r.gv) && p.r.pl !== undefined && p.r.pl !== "") m += " (".concat(p.r.pl, "-").concat(p.r.pv, ")");
+              t(m, M + 125, y + 1.8, 10.5, true, undefined, {
+                align: "center"
+              });
+              t(corto(p.visitante || "a definir", 50, 9.5, g === p.visitante), M + 140, y + 1.8, 9.5, g === p.visitante, g === p.visitante ? VERDE : undefined);
+              y += 12;
+            });
+          }
+
+          // Pie en todas las hojas
+          total = pdf.getNumberOfPages(), hoy = new Date();
+          for (i = 1; i <= total; i++) {
+            pdf.setPage(i);
+            pdf.setDrawColor.apply(pdf, BORDE);
+            pdf.line(M, H - 11, W - M, H - 11);
+            t("Cordobeses Juegan ".concat(ANIO, " \xB7 ").concat(DEPORTE.nombre, " \xB7 generado el ").concat(hoy.toLocaleDateString("es-AR"), " ").concat(hoy.toLocaleTimeString("es-AR", {
+              hour: "2-digit",
+              minute: "2-digit"
+            })), M, H - 6.5, 7.5, false, TENUE);
+            t("Hoja ".concat(i, " de ").concat(total), W - M, H - 6.5, 7.5, true, TENUE, {
+              align: "right"
+            });
+          }
+          nombre = "".concat(DEPORTE.nombre, "_").concat(rama, "_").concat(jornada.categoria, "_").concat((jornada.fecha || "").replace("-", "_"), "_").concat(jornada.grupo || jornada.instancia).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "_");
+          pdf.save(nombre + ".pdf");
+        case 2:
+          return _context15.a(2);
+      }
+    }, _callee15);
+  }));
+  return _descargarPdfFecha.apply(this, arguments);
+}
 function PanelCordobeses() {
   // La intro grande ("Fútbol Cordobeses Juegan") se muestra siempre primero,
   // también cuando se entra por el link/QR de un profe: primero el inicio,
@@ -3260,7 +3618,7 @@ function PanelCordobeses() {
         }
       }, _callee3);
     }));
-    function peticionDb(_x8) {
+    function peticionDb(_x9) {
       return _peticionDb.apply(this, arguments);
     }
     return peticionDb;
@@ -3373,7 +3731,7 @@ function PanelCordobeses() {
                     }
                   }, _callee5);
                 }));
-                function leer(_x9) {
+                function leer(_x0) {
                   return _leer.apply(this, arguments);
                 }
                 return leer;
@@ -3390,10 +3748,10 @@ function PanelCordobeses() {
             case 2:
               datos = _t4;
               est = {}, ext = {}, cru = {}, res = {}, resp = {};
-              Object.entries(datos).forEach(function (_ref17) {
-                var _ref18 = _slicedToArray(_ref17, 2),
-                  id = _ref18[0],
-                  d = _ref18[1];
+              Object.entries(datos).forEach(function (_ref18) {
+                var _ref19 = _slicedToArray(_ref18, 2),
+                  id = _ref19[0],
+                  d = _ref19[1];
                 Object.assign(est, d.estados || {});
                 ext[id] = d.extras || [];
                 cru[id] = d.cruces || {};
@@ -3517,7 +3875,7 @@ function PanelCordobeses() {
         }
       }, _callee7);
     }));
-    function guardarJornada(_x0, _x1, _x10) {
+    function guardarJornada(_x1, _x10, _x11) {
       return _guardarJornada.apply(this, arguments);
     }
     return guardarJornada;
@@ -3547,7 +3905,7 @@ function PanelCordobeses() {
         }
       }, _callee8, null, [[0, 2]]);
     }));
-    function guardarResultado(_x11, _x12, _x13, _x14) {
+    function guardarResultado(_x12, _x13, _x14, _x15) {
       return _guardarResultado.apply(this, arguments);
     }
     return guardarResultado;
@@ -3718,7 +4076,7 @@ function PanelCordobeses() {
         }
       }, _callee1, null, [[2, 10, 11, 12]]);
     }));
-    function confirmarPermiso(_x15, _x16, _x17) {
+    function confirmarPermiso(_x16, _x17, _x18) {
       return _confirmarPermiso.apply(this, arguments);
     }
     return confirmarPermiso;
@@ -3802,7 +4160,7 @@ function PanelCordobeses() {
         }
       }, _callee10, null, [[3, 9, 10, 11]]);
     }));
-    function quitarAcceso(_x18) {
+    function quitarAcceso(_x19) {
       return _quitarAcceso.apply(this, arguments);
     }
     return quitarAcceso;
@@ -4256,10 +4614,10 @@ function PanelCordobeses() {
       border: "1px solid ".concat(C.border),
       fontSize: 14
     }
-  }, Object.entries(TIPOS_PEDIDO).map(function (_ref20) {
-    var _ref21 = _slicedToArray(_ref20, 2),
-      k = _ref21[0],
-      v = _ref21[1];
+  }, Object.entries(TIPOS_PEDIDO).map(function (_ref21) {
+    var _ref22 = _slicedToArray(_ref21, 2),
+      k = _ref22[0],
+      v = _ref22[1];
     return /*#__PURE__*/React.createElement("option", {
       key: k,
       value: k
@@ -4307,10 +4665,10 @@ function PanelCordobeses() {
       fontWeight: 800,
       marginBottom: 6
     }
-  }, "Solicitudes pendientes"), Object.entries(solicitudes).map(function (_ref22) {
-    var _ref23 = _slicedToArray(_ref22, 2),
-      uid = _ref23[0],
-      s = _ref23[1];
+  }, "Solicitudes pendientes"), Object.entries(solicitudes).map(function (_ref23) {
+    var _ref24 = _slicedToArray(_ref23, 2),
+      uid = _ref24[0],
+      s = _ref24[1];
     var guardando = aprobandoUid === uid;
     return /*#__PURE__*/React.createElement("div", {
       key: uid,
