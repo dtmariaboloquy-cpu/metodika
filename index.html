@@ -1418,6 +1418,7 @@ const MODULOS = [
   {k:"partidos", nombre:"Partidos", desc:"Resultados y estadísticas del equipo", activo:true, bg:"#E6F6EC", fg:"#1E8E5A"},
   {k:"plantel", nombre:"Plantel", desc:"Jugadoras y su presencia a lo largo del año", activo:true, bg:"var(--bronce-claro)", fg:"var(--bronce)"},
   {k:"rendimiento", nombre:"Rendimiento / Data", desc:"Carga, métricas y tendencias de rendimiento", activo:true, bg:"#FDEEDC", fg:"#C97A2B"},
+  {k:"pizarra", nombre:"Pizarra táctica", desc:"Cancha con fichas de Talleres, flechas y textos para descargar como imagen", activo:true, bg:"#E4EAF1", fg:"#042859"},
   {k:"biblioteca", nombre:"Biblioteca", desc:"Todas tus tareas: buscador, favoritas, cuántas veces las usaste y clonar", activo:true, bg:"#E7EEF7", fg:"#3A5A8C"},
 ];
 const _svgAttrs = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
@@ -1430,6 +1431,7 @@ const ICONOS_MODULO = {
   partidos: `<svg ${_svgAttrs}><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a3 3 0 0 0 3 5"/><path d="M17 5h3a3 3 0 0 1-3 5"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="9" y1="20.5" x2="15" y2="20.5"/><line x1="9.5" y1="17" x2="14.5" y2="17"/></svg>`,
   plantel: `<svg ${_svgAttrs}><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15.8 14.2c2.2.3 3.9 2.1 3.9 4.3"/></svg>`,
   rendimiento: `<svg ${_svgAttrs}><polyline points="3,17 9.5,10.5 13.5,14.5 21,6"/><polyline points="15,6 21,6 21,12"/></svg>`,
+  pizarra: `<svg ${_svgAttrs}><rect x="2.5" y="5" width="19" height="14" rx="1.5"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="2.6"/></svg>`,
   biblioteca: `<svg ${_svgAttrs}><path d="M4 5.5c2-1 5-1 8 0v13c-3-1-6-1-8 0v-13Z"/><path d="M20 5.5c-2-1-5-1-8 0v13c3-1 6-1 8 0v-13Z"/></svg>`,
 };
 const ICONOS_UI = {
@@ -6934,6 +6936,238 @@ function renderVideoanalisis(){
     <iframe class="analisis-frame" src="videoanalisis.html${q}" title="Videoanálisis" allow="fullscreen; autoplay; display-capture; clipboard-read; clipboard-write" allowfullscreen></iframe>
   `;
 }
+// =====================================================================================
+// ---- Pizarra táctica: cancha horizontal, fichas a rayas de Talleres con el puesto, ----
+// ---- rivales, flechas de pase y desplazamiento, textos y descarga en PNG.           ----
+// =====================================================================================
+const PZ_SISTEMAS = {
+  "1-4-1-3-2": [["Arquera",5,34],["Lateral derecha",27,60],["Central derecha",19,44],["Central izquierda",19,24],["Lateral izquierda",27,8],
+                ["Volante central",33,34],["Interior derecha",46,48],["Interior izquierda",46,20],["Enganche",56,34],["9 derecha",69,42],["9 izquierda",69,26]],
+  "1-4-2-3-1": [["Arquera",5,34],["Lateral derecha",27,60],["Central derecha",19,44],["Central izquierda",19,24],["Lateral izquierda",27,8],
+                ["Volante central derecha",37,43],["Volante central izquierda",37,25],["Extrema derecha",58,59],["Enganche",57,34],["Extrema izquierda",58,9],["9",71,34]],
+  "1-4-3-3":   [["Arquera",5,34],["Lateral derecha",27,60],["Central derecha",19,44],["Central izquierda",19,24],["Lateral izquierda",27,8],
+                ["Volante central",34,34],["Interior derecha",46,47],["Interior izquierda",46,21],["Extrema derecha",66,58],["9",71,34],["Extrema izquierda",66,10]],
+  "1-4-4-2":   [["Arquera",5,34],["Lateral derecha",27,60],["Central derecha",19,44],["Central izquierda",19,24],["Lateral izquierda",27,8],
+                ["Volante derecha",45,58],["Volante central derecha",40,42],["Volante central izquierda",40,26],["Volante izquierda",45,10],["9 derecha",66,42],["9 izquierda",66,26]],
+  "1-4-5-1":   [["Arquera",5,34],["Lateral derecha",27,60],["Central derecha",19,44],["Central izquierda",19,24],["Lateral izquierda",27,8],
+                ["Volante derecha",44,59],["Volante central",36,34],["Interior derecha",45,44],["Interior izquierda",45,24],["Volante izquierda",44,9],["9",64,34]],
+};
+let PZ = null;
+let pzHerr = "mover";
+function pzNuevo(sistema){
+  return { titulo: "", sistema, rivalSis: "", fichas: PZ_SISTEMAS[sistema].map(([l,x,y],i)=>({id:"f"+i, l, x, y})),
+           rivales: [], flechas: [], textos: [], pelota: null };
+}
+function pzCargar(){
+  if(PZ) return;
+  try{ PZ = JSON.parse(localStorage.getItem('metodika-pizarra')||'null'); }catch(e){ PZ = null; }
+  if(!PZ || !PZ.fichas) PZ = pzNuevo("1-4-1-3-2");
+}
+function pzGuardar(){ try{ localStorage.setItem('metodika-pizarra', JSON.stringify(PZ)); }catch(e){} }
+let pzHist = [];
+function pzSnap(){ pzHist.push(JSON.stringify(PZ)); if(pzHist.length>40) pzHist.shift(); }
+function pzDeshacer(){ if(!pzHist.length){ mostrarToast("No hay nada para deshacer."); return; } PZ = JSON.parse(pzHist.pop()); pzGuardar(); pzDibujar(); }
+
+function pzCanchaSVG(){
+  const L = 'fill="none" stroke="#fff" stroke-width="0.4"';
+  let s = '';
+  for(let i=0;i<12;i++) s += `<rect x="${-6+i*117/12}" y="-4" width="${117/12+0.05}" height="76" fill="${i%2?'#6E9B2B':'#5F9500'}"/>`;
+  const esc_ = obtenerEscudoClub();
+  if(esc_) s += `<image href="${esc_}" x="40.5" y="16" width="24" height="36" opacity="0.13" preserveAspectRatio="xMidYMid meet"/>`;
+  s += `<rect x="0" y="0" width="105" height="68" ${L}/><line x1="52.5" y1="0" x2="52.5" y2="68" ${L}/>
+    <circle cx="52.5" cy="34" r="9.15" ${L}/><circle cx="52.5" cy="34" r="0.45" fill="#fff"/>
+    <rect x="0" y="13.85" width="16.5" height="40.3" ${L}/><rect x="0" y="24.85" width="5.5" height="18.3" ${L}/>
+    <rect x="88.5" y="13.85" width="16.5" height="40.3" ${L}/><rect x="99.5" y="24.85" width="5.5" height="18.3" ${L}/>
+    <circle cx="11" cy="34" r="0.45" fill="#fff"/><circle cx="94" cy="34" r="0.45" fill="#fff"/>
+    <path d="M16.5 26.7 A9.15 9.15 0 0 1 16.5 41.3" ${L}/><path d="M88.5 26.7 A9.15 9.15 0 0 0 88.5 41.3" ${L}/>
+    <rect x="-2" y="30.34" width="2" height="7.32" fill="#fff" fill-opacity="0.35" stroke="#fff" stroke-width="0.3"/>
+    <rect x="105" y="30.34" width="2" height="7.32" fill="#fff" fill-opacity="0.35" stroke="#fff" stroke-width="0.3"/>`;
+  return s;
+}
+function pzEsc(t){ return String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function pzContenidoSVG(){
+  let s = `<defs>
+    <pattern id="pzRayas" patternContentUnits="objectBoundingBox" width="1" height="1">
+      <rect width="1" height="1" fill="#fff"/>
+      <rect x="0" width="0.143" height="1" fill="#04285C"/><rect x="0.286" width="0.143" height="1" fill="#04285C"/>
+      <rect x="0.571" width="0.143" height="1" fill="#04285C"/><rect x="0.857" width="0.143" height="1" fill="#04285C"/>
+    </pattern>
+    <marker id="pzPunta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fff"/></marker>
+  </defs>`;
+  s += pzCanchaSVG();
+  PZ.flechas.forEach(f=>{
+    s += `<line data-tipo="flecha" data-id="${f.id}" x1="${f.x1}" y1="${f.y1}" x2="${f.x2}" y2="${f.y2}" stroke="#fff" stroke-width="0.55"
+      ${f.t==='desp'?'stroke-dasharray="1.6 1.1"':''} marker-end="url(#pzPunta)" style="cursor:pointer"/>`;
+  });
+  PZ.rivales.forEach(r=>{
+    s += `<g data-tipo="rival" data-id="${r.id}" transform="translate(${r.x} ${r.y})" style="cursor:grab">
+      <circle r="1.9" fill="#D3302F" stroke="#fff" stroke-width="0.35"/>
+      ${r.l?`<text y="0.62" text-anchor="middle" font-family="Arial" font-weight="700" font-size="1.7" fill="#fff">${pzEsc(r.l)}</text>`:''}</g>`;
+  });
+  PZ.fichas.forEach(f=>{
+    const w = Math.max(5, f.l.length*0.95+1.6);
+    s += `<g data-tipo="ficha" data-id="${f.id}" transform="translate(${f.x} ${f.y})" style="cursor:grab">
+      <circle r="2.3" fill="url(#pzRayas)" stroke="#04285C" stroke-width="0.45"/>
+      <rect x="${-w/2}" y="2.9" width="${w}" height="2.6" rx="1.3" fill="#04285C"/>
+      <text y="4.75" text-anchor="middle" font-family="Arial" font-weight="700" font-size="1.65" fill="#fff">${pzEsc(f.l)}</text></g>`;
+  });
+  if(PZ.pelota) s += `<g data-tipo="pelota" data-id="pelota" transform="translate(${PZ.pelota.x} ${PZ.pelota.y})" style="cursor:grab">
+      <circle r="1" fill="#fff" stroke="#111" stroke-width="0.25"/></g>`;
+  PZ.textos.forEach(t=>{
+    const w = Math.max(4, t.t.length*1.05+2);
+    s += `<g data-tipo="texto" data-id="${t.id}" transform="translate(${t.x} ${t.y})" style="cursor:grab">
+      <rect x="${-w/2}" y="-1.8" width="${w}" height="3.4" rx="0.6" fill="#fff"/>
+      <text y="0.65" text-anchor="middle" font-family="Arial" font-weight="700" font-size="1.9" fill="#04285C">${pzEsc(t.t)}</text></g>`;
+  });
+  return s;
+}
+function pzDibujar(){
+  const svg = document.getElementById('pzSvg');
+  if(svg) svg.innerHTML = pzContenidoSVG();
+  const tit = document.getElementById('pzTitulo'); if(tit && document.activeElement!==tit) tit.value = PZ.titulo||"";
+}
+function renderPizarra(){
+  pzCargar();
+  const herr = [["mover","Mover"],["pase","Flecha de pase"],["desp","Desplazamiento"],["rival","+ Rival"],["texto","+ Texto"],["nombre","Cambiar nombre"],["borrar","Borrar"]];
+  setTimeout(pzActivar, 0);
+  return `
+  <div class="card" style="margin-bottom:12px">
+    <div class="filtros" style="align-items:flex-end;gap:10px;flex-wrap:wrap">
+      <div class="filtro-group"><label>Nuestro sistema</label>
+        <select onchange="pzSistema(this.value)">${Object.keys(PZ_SISTEMAS).map(k=>`<option ${PZ.sistema===k?'selected':''}>${k}</option>`).join('')}</select></div>
+      <div class="filtro-group"><label>Rival</label>
+        <select onchange="pzRival(this.value)"><option value="">Sin rival</option>${Object.keys(PZ_SISTEMAS).map(k=>`<option ${PZ.rivalSis===k?'selected':''}>${k}</option>`).join('')}</select></div>
+      <div class="filtro-group" style="flex:1;min-width:180px"><label>Título (sale en la imagen)</label>
+        <input id="pzTitulo" type="text" placeholder="Ej.: Inicio vs 1-4-3-3" value="${esc(PZ.titulo||'')}" oninput="PZ.titulo=this.value;pzGuardar()"></div>
+    </div>
+    <div class="segmented" style="margin-top:12px;flex-wrap:wrap">
+      ${herr.map(([k,l])=>`<button class="${pzHerr===k?'active':''}" onclick="pzHerr='${k}';render()">${l}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="chip" style="cursor:pointer" onclick="pzPelota()">${PZ.pelota?'Quitar pelota':'+ Pelota'}</button>
+      <button class="chip" style="cursor:pointer" onclick="pzDeshacer()">Deshacer</button>
+      <button class="chip" style="cursor:pointer" onclick="pzLimpiar()">Borrar flechas y textos</button>
+      <button class="chip" style="cursor:pointer" onclick="pzReiniciar()">Volver al parado inicial</button>
+      <button class="chip" style="cursor:pointer;border:none;background:var(--verde);color:#fff" onclick="pzDescargar()">Descargar imagen</button>
+    </div>
+    <p class="muted" style="margin:8px 0 0;font-size:11.5px">${({
+      mover:"Arrastrá jugadoras, rivales, la pelota o los textos.",
+      pase:"Arrastrá sobre la cancha para dibujar una flecha de pase (línea llena).",
+      desp:"Arrastrá sobre la cancha para dibujar un desplazamiento (línea punteada).",
+      rival:"Tocá la cancha para agregar una rival.",
+      texto:"Tocá la cancha donde querés el cartel y escribí el texto.",
+      nombre:"Tocá una jugadora o rival para cambiar lo que dice.",
+      borrar:"Tocá una flecha, rival, texto o jugadora para borrarla."})[pzHerr]}</p>
+  </div>
+  <div class="card" style="padding:8px">
+    <svg id="pzSvg" viewBox="-6 -4 117 76" style="width:100%;display:block;touch-action:none;border-radius:8px;user-select:none">${pzContenidoSVG()}</svg>
+  </div>`;
+}
+function pzPunto(ev){
+  const svg = document.getElementById('pzSvg');
+  const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY;
+  const q = p.matrixTransform(svg.getScreenCTM().inverse());
+  return {x: Math.round(q.x*10)/10, y: Math.round(q.y*10)/10};
+}
+function pzBuscar(tipo, id){
+  if(tipo==='ficha') return PZ.fichas.find(f=>f.id===id);
+  if(tipo==='rival') return PZ.rivales.find(f=>f.id===id);
+  if(tipo==='texto') return PZ.textos.find(f=>f.id===id);
+  if(tipo==='pelota') return PZ.pelota;
+  return null;
+}
+function pzActivar(){
+  const svg = document.getElementById('pzSvg');
+  if(!svg || svg._pzOk) return; svg._pzOk = true;
+  let arr = null, linea = null;
+  svg.addEventListener('pointerdown', ev=>{
+    const g = ev.target.closest('[data-tipo]');
+    const p = pzPunto(ev);
+    const tipo = g && g.dataset.tipo, id = g && g.dataset.id;
+    if(pzHerr==='borrar' && g){
+      pzSnap();
+      if(tipo==='flecha') PZ.flechas = PZ.flechas.filter(f=>f.id!==id);
+      if(tipo==='rival') PZ.rivales = PZ.rivales.filter(f=>f.id!==id);
+      if(tipo==='texto') PZ.textos = PZ.textos.filter(f=>f.id!==id);
+      if(tipo==='ficha') PZ.fichas = PZ.fichas.filter(f=>f.id!==id);
+      if(tipo==='pelota') PZ.pelota = null;
+      pzGuardar(); pzDibujar(); return;
+    }
+    if(pzHerr==='nombre' && g && (tipo==='ficha'||tipo==='rival'||tipo==='texto')){
+      const o = pzBuscar(tipo,id); const actual = tipo==='texto'?o.t:o.l;
+      const nuevo = prompt("Escribí lo que tiene que decir:", actual||"");
+      if(nuevo!==null){ pzSnap(); if(tipo==='texto') o.t = nuevo; else o.l = nuevo.trim(); pzGuardar(); pzDibujar(); }
+      return;
+    }
+    if(pzHerr==='rival' && !g){ pzSnap(); PZ.rivales.push({id:"r"+Date.now(), x:p.x, y:p.y, l:""}); pzGuardar(); pzDibujar(); return; }
+    if(pzHerr==='texto' && !g){
+      const t = prompt("Texto del cartel:", ""); if(t){ pzSnap(); PZ.textos.push({id:"t"+Date.now(), x:p.x, y:p.y, t}); pzGuardar(); pzDibujar(); }
+      return;
+    }
+    if((pzHerr==='pase'||pzHerr==='desp')){
+      linea = {x1:p.x, y1:p.y};
+      const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l.setAttribute('x1',p.x); l.setAttribute('y1',p.y); l.setAttribute('x2',p.x); l.setAttribute('y2',p.y);
+      l.setAttribute('stroke','#fff'); l.setAttribute('stroke-width','0.55'); l.setAttribute('marker-end','url(#pzPunta)');
+      if(pzHerr==='desp') l.setAttribute('stroke-dasharray','1.6 1.1');
+      svg.appendChild(l); linea.el = l; svg.setPointerCapture(ev.pointerId); return;
+    }
+    if(pzHerr==='mover' && g && tipo!=='flecha'){
+      const o = pzBuscar(tipo,id); if(!o) return;
+      pzSnap(); arr = {o, g, dx:p.x-o.x, dy:p.y-o.y}; svg.setPointerCapture(ev.pointerId); g.style.cursor='grabbing';
+    }
+  });
+  svg.addEventListener('pointermove', ev=>{
+    const p = pzPunto(ev);
+    if(arr){ arr.o.x = Math.round((p.x-arr.dx)*10)/10; arr.o.y = Math.round((p.y-arr.dy)*10)/10; arr.g.setAttribute('transform',`translate(${arr.o.x} ${arr.o.y})`); }
+    if(linea){ linea.el.setAttribute('x2',p.x); linea.el.setAttribute('y2',p.y); linea.x2=p.x; linea.y2=p.y; }
+  });
+  const fin = ()=>{
+    if(arr){ arr = null; pzGuardar(); pzDibujar(); }
+    if(linea){
+      if(linea.x2!=null && Math.hypot(linea.x2-linea.x1, linea.y2-linea.y1) > 1.5){
+        pzSnap(); PZ.flechas.push({id:"a"+Date.now(), t:pzHerr, x1:linea.x1, y1:linea.y1, x2:linea.x2, y2:linea.y2}); pzGuardar();
+      }
+      linea = null; pzDibujar();
+    }
+  };
+  svg.addEventListener('pointerup', fin); svg.addEventListener('pointercancel', fin);
+}
+function pzSistema(k){ pzSnap(); const r = PZ.rivales, rs = PZ.rivalSis; PZ = Object.assign(pzNuevo(k), {titulo:PZ.titulo, rivales:r, rivalSis:rs, pelota:PZ.pelota}); pzGuardar(); render(); }
+function pzRival(k){
+  pzSnap(); PZ.rivalSis = k;
+  PZ.rivales = k ? PZ_SISTEMAS[k].map(([l,x,y],i)=>({id:"r"+i, x:Math.round((105-x)*10)/10, y:Math.round((68-y)*10)/10, l:""})) : [];
+  pzGuardar(); render();
+}
+function pzPelota(){ pzSnap(); PZ.pelota = PZ.pelota ? null : {x:30, y:36}; pzGuardar(); render(); }
+function pzLimpiar(){ pzSnap(); PZ.flechas = []; PZ.textos = []; pzGuardar(); pzDibujar(); }
+function pzReiniciar(){ pzSnap(); const t = PZ.titulo; PZ = pzNuevo(PZ.sistema); PZ.titulo = t; pzGuardar(); render(); }
+function pzDescargar(){
+  const W = 2340, H = 1520, cabeza = PZ.titulo ? 120 : 0;
+  const svgTxt = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -4 117 76" width="${W}" height="${H}">${pzContenidoSVG()}</svg>`;
+  const img = new Image();
+  img.onload = ()=>{
+    const c = document.createElement('canvas'); c.width = W; c.height = H + cabeza;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#04285C'; ctx.fillRect(0,0,c.width,c.height);
+    if(cabeza){ ctx.fillStyle = '#fff'; ctx.font = 'bold 56px Arial'; ctx.textBaseline = 'middle'; ctx.fillText(PZ.titulo, 40, cabeza/2); }
+    ctx.drawImage(img, 0, cabeza, W, H);
+    c.toBlob(b=>{
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = 'pizarra-' + (PZ.titulo||PZ.sistema).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '.png';
+      a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  };
+  img.onerror = ()=>mostrarToast("No se pudo generar la imagen.");
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgTxt);
+}
+function renderTabsPizarra(){
+  document.getElementById('tabs').innerHTML = `
+    <button class="back" onclick="irHome()">← Inicio</button>
+    <h1 class="page-title">Pizarra táctica</h1>
+    <p class="page-sub">Armá el parado, flechas y textos, y descargá la imagen</p>`;
+}
+
 function render(){
   actualizarProximoPartido();
   const main = document.getElementById('main');
@@ -6981,6 +7215,9 @@ function render(){
   } else if(vista==="biblioteca"){
     renderTabsBiblioteca();
     main.innerHTML = renderBiblioteca();
+  } else if(vista==="pizarra"){
+    renderTabsPizarra();
+    main.innerHTML = renderPizarra();
   } else if(vista==="rendimiento"){
     renderTabsRendimiento();
     main.innerHTML = renderRendimiento();
